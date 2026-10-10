@@ -45,6 +45,7 @@ the issue.
 - [~] 1.2 World — branch stage-1/block-1.2
   - [x] 1.2.0 Reference notes and block plan — #51
   - [x] 1.2.1 Map geometry and slopes — #53
+  - [x] 1.2.2 TerraGenesis land mask — #55
 - [ ] 1.3 Construction — _(to create)_
 - [ ] 1.4 Trains — _(to create)_
 - [ ] 1.5 Cargo and economy — _(to create)_
