@@ -58,7 +58,21 @@ the issue.
   - [x] 1.2.12 New-game window and background generation — #75
   - [x] 1.2.13 Query tool, town and industry windows — #77
   - [x] 1.2.14 Close block 1.2 — #84
-- [ ] 1.3 Construction — _(to create)_
+- [ ] 1.3 Construction — branch stage-1/block-1.3
+  - [x] 1.3.0 Reference notes and block plan — #87
+  - [ ] 1.3.1 Prices, company money and the command pipeline
+  - [ ] 1.3.2 The bulldozer — natural ground, water, houses and town roads
+  - [ ] 1.3.3 Rail track — pieces, drags and the track tile loop
+  - [ ] 1.3.4 Level crossings over town roads
+  - [ ] 1.3.5 Train depots
+  - [ ] 1.3.6 Rail stations — building, joining and naming
+  - [ ] 1.3.7 Removing stations and deleting unused ones
+  - [ ] 1.3.8 Autorail drags and gesture → command planning
+  - [ ] 1.3.9 Drawing construction and build gestures on the map
+  - [ ] 1.3.10 Construction tools, cost bar, Confirm and error messages
+  - [ ] 1.3.11 Finances window with the loan
+  - [ ] 1.3.12 Query tool for rail, depots, stations and crossings
+  - [ ] 1.3.13 Close block 1.3
 - [ ] 1.4 Trains — _(to create)_
 - [ ] 1.5 Cargo and economy — _(to create)_
 - [ ] 1.6 Art and release — _(to create)_

@@ -160,7 +160,7 @@ Names are per town. A suffix already used by another station of the same town is
 1. An industry with a station name within a spiral of radius 7. The default industries have `station_name = STR_UNDEFINED`, so they are skipped (`table/build_industry.h` MI macro).
 2. Mines: if available and `CountMapSquareAround(tile, CMSAMine) ≥ 2`, use "{Town} Mines". `CountMapSquareAround` scans the 7×7 square dx,dy ∈ [−3,3]. `CMSAMine` matches tiles of an extractive industry that produces a non-liquid, non-passenger, non-mail cargo, so a coal mine counts.
 3. If `DistanceMax(tile, town.xy) < 8`: "{Town}" if available, else "{Town} Central".
-4. Lakeside: `DistanceFromEdge < 20` and at least 5 water tiles in the 7×7. Woods: at least 8 tree tiles or at least 2 forest tiles. Valley/Heights: tile z lower/higher than the town tile z. On a flat Stage 1 map these never apply.
+4. Lakeside: `DistanceFromEdge < 20` and at least 5 water tiles in the 7×7. Woods: at least 8 tree tiles or at least 2 forest tiles. Valley/Heights: tile z lower/higher than the town tile z. Stage 1 maps have sea and trees, so Lakeside and Woods apply; Valley/Heights apply only to a station on a cleared height-0 tile.
 5. Direction from the town: x < town.x rules out South and West, otherwise North and East. y < town.y rules out South and East, otherwise North and West.
 6. Fallbacks in this order: North, South, East, West, Transfer, Halt, Exchange, Annexe, Sidings, Branch, Upper, Lower. Last resort: `STR_SV_STNAME_FALLBACK` "{Town} Station #{NUM}".
 
@@ -433,7 +433,7 @@ PayTransfer: profit = (GetTransportedGoodsIncome(n, dist, periods, c) - feeder_s
 ## 6. Stage 1 needs
 
 - `Station` and `GoodsEntry` with the fields from section 3, for PASS and COAL only. Station tile on the map: type Rail, station index, axis, gfx, railtype (see map.md).
-- `CmdBuildRailStation` for new stations and for extending an adjacent own station: validation, costs, spread limit 12, naming (4.2, with only the "Mines", town/Central, direction and fallback rules reachable on a flat map). Removal at `PR_CLEAR_STATION_RAIL` per tile if Stage 1 allows demolishing.
+- `CmdBuildRailStation` for new stations and for extending an adjacent own station: validation, costs, spread limit 12, naming (4.2; every rule is reachable on a Stage 1 map). Removal at `PR_CLEAR_STATION_RAIL` per tile if Stage 1 allows demolishing.
 - Catchment radius 4 per tile. `stations_near` on towns and industries. `industries_near`. Acceptance every 250 ticks and after building, with the ≥ 8 threshold and `always_accepted`.
 - `MoveGoodsToStation` with the rating-weighted split and `amount_fract`, gated by `last_speed != 0`.
 - `CargoPacket`, `StationCargoList` (single `Invalid` key), `VehicleCargoList` with KEEP/DELIVER/LOAD designations, merging, splitting, `GetDistance`, aging every 185 ticks.
