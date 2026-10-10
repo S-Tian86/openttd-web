@@ -47,6 +47,7 @@ import {
   setTrackBits,
 } from '../map/rail-map';
 import { Slope, getTileSlopeZ } from '../map/slope';
+import { removeTrainDepot } from './depot';
 import {
   Axis,
   countBits,
@@ -329,7 +330,7 @@ export function cmdRailTrackHelper(
   return hadSuccess ? total : lastError;
 }
 
-/** Port of rail_cmd.cpp:ClearTile_Track. Depots are refused until Task 5 adds removeTrainDepot. */
+/** Port of rail_cmd.cpp:ClearTile_Track. */
 export function clearTileTrack(
   state: GameState,
   t: number,
@@ -343,7 +344,7 @@ export function clearTileTrack(
       ? fail('error.mustRemoveRailroadTrack')
       : fail('error.buildingMustBeDemolished');
   }
-  if (!isPlainRail(map, t)) return CMD_ERROR;
+  if (!isPlainRail(map, t)) return removeTrainDepot(state, t, flags, actor);
   let cost = succeed(0);
   for (let bits = getTrackBits(map, t); bits !== 0; bits &= bits - 1) {
     const track = (31 - Math.clz32(bits & -bits)) as Track; // RemoveFirstTrack: lowest bit first
