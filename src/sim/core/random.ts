@@ -38,5 +38,5 @@ export function randomRange(r: Randomizer, limit: number): number {
 
 /** True with probability a/b, using the low 16 bits of r. Port of core/random_func.hpp:Chance16I. */
 export function chance16I(a: number, b: number, r: number): boolean {
-  return Math.floor(((r & 0xffff) * b + Math.floor(b / 2)) / 65536) < a;
+  return (((((r & 0xffff) * b) >>> 0) + (b >>> 1)) >>> 0) >>> 16 < a;
 }

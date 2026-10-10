@@ -38,4 +38,11 @@ describe('Randomizer (port of core/random_func.cpp)', () => {
     const values = [536872454, 3515126559, 4023459891, 1208093797, 4215375298];
     expect(values.map((v) => chance16I(1, 3, v))).toEqual([true, false, true, true, false]);
   });
+  it('wraps Chance16I like uint32 arithmetic for large b', () => {
+    // ((0xffff * b) mod 2^32 + b/2) mod 2^32 >> 16 === 32767 for b = 0xffffffff, 4463 for b = 70000.
+    expect(chance16I(1, 0xffffffff, 0xffff)).toBe(false);
+    expect(chance16I(32768, 0xffffffff, 0xffff)).toBe(true);
+    expect(chance16I(4463, 70000, 0xffff)).toBe(false);
+    expect(chance16I(4464, 70000, 0xffff)).toBe(true);
+  });
 });
