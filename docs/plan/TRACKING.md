@@ -23,7 +23,7 @@ the issue.
 - [x] 0.6 CI, deploy and security baseline — #5
 - [x] 0.7 OpenTTD reference notes for Stage 1 — #6
 - [x] 0.7b Pin sim glob and sub-path guards (review) — #15
-- [ ] 0.8 Close Stage 0 — #7
+- [x] 0.8 Close Stage 0 — #7
 
 ## Stage 1 — First train
 

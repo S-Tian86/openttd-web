@@ -4,8 +4,8 @@ A faithful web implementation of [OpenTTD](https://www.openttd.org) — the open
 transport simulation based on _Transport Tycoon Deluxe_ — reimagined with a colourful
 top-down look and playable in the browser.
 
-> **Status:** Stage 0 (foundations). Nothing playable yet. See the
-> [roadmap](docs/plan/00-master.md#6-roadmap).
+> **Status:** Stage 0 (foundations) complete — [live build](https://s-tian86.github.io/openttd-web/).
+> Next: Stage 1, the first playable train line. See the [roadmap](docs/plan/00-master.md#6-roadmap).
 
 ## What this is
 
