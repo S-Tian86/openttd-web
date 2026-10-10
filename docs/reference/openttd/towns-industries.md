@@ -76,7 +76,7 @@ and payment are covered in [stations-cargo.md](stations-cargo.md) and [economy.m
 | Bits              | Meaning                                                                                              |
 | ----------------- | ---------------------------------------------------------------------------------------------------- |
 | m2                | Town index                                                                                           |
-| m4 + m3 bit 6     | House type (HouseID)                                                                                 |
+| m8 bits 11-0      | House type (HouseID); m8 bits 15-12 are 0                                                            |
 | m3 bit 7          | Completed flag                                                                                       |
 | m5 bits 0-2 / 3-4 | While building: construction tick (0-7) / stage (0-2). After completion m5 is the house age in years |
 | m1                | Random bits                                                                                          |
