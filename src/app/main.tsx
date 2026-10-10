@@ -1,11 +1,13 @@
 import { AUTO, Game, Scale } from 'phaser';
 import { render } from 'preact';
 import { MapScene } from '../render/MapScene';
-import { createGame } from '../sim/world/generate';
+import { createEmptyGame, DEFAULT_GAME_OPTIONS, hashGameState } from '../sim/game';
+import { tileXY } from '../sim/map/map';
 import { App } from '../ui/App';
 import { loadLocale, saveLocale, translate } from '../ui/i18n/i18n';
 import '../ui/styles.css';
 import { GameSession } from './session';
+import { parseStartParams } from './start-params';
 import { applyTokens, FALLBACK_THEME_ID, loadThemes } from './theme-loader';
 
 /** `window.localStorage` itself can throw (private modes, blocked site data). */
@@ -46,24 +48,39 @@ async function start(): Promise<Game | undefined> {
 
   applyTokens(fallback, baseOf(fallback.id));
 
-  const state = createGame({ seed: crypto.getRandomValues(new Uint32Array(1))[0]! });
-  const session = new GameSession(
-    state,
+  const params = parseStartParams(window.location.search);
+  const placeholder = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+  const scene = new MapScene(
+    placeholder,
+    fallback,
+    fallback,
+    baseOf(fallback.id),
+    baseOf(fallback.id),
+  );
+  let focus = params.focus;
+  const session = new GameSession(placeholder, {
     locale,
-    themes.map((theme) => ({ id: theme.id, name: theme.name })),
-    FALLBACK_THEME_ID,
-    (next) => {
+    themes: themes.map((theme) => ({ id: theme.id, name: theme.name })),
+    themeId: FALLBACK_THEME_ID,
+    onLocale: (next) => {
       saveLocale(getStorage(), next);
       document.documentElement.lang = next;
     },
-    (id) => {
+    onTheme: (id) => {
       const theme = themes.find((candidate) => candidate.id === id);
       if (theme !== undefined) applyTokens(theme, baseOf(id));
     },
-  );
-
-  const scene = new MapScene(state, fallback, fallback, baseOf(fallback.id), baseOf(fallback.id));
-  scene.showGame(state);
+    onNewState: (state) => {
+      const tile =
+        focus !== undefined && focus.x < state.map.sizeX && focus.y < state.map.sizeY
+          ? tileXY(state.map, focus.x, focus.y)
+          : undefined;
+      focus = undefined; // only the first world
+      if (tile === undefined) scene.showGame(state);
+      else scene.showGame(state, tile);
+      document.documentElement.dataset['worldHash'] = hashGameState(state);
+    },
+  });
   const game = new Game({
     type: AUTO,
     parent: 'game',
@@ -73,6 +90,23 @@ async function start(): Promise<Game | undefined> {
   });
 
   render(<App session={session} />, ui);
+
+  // Readiness signal for a failed start (no world will ever be shown): e2e and users can tell why.
+  session.subscribe(() => {
+    const { generationError } = session.getSnapshot();
+    if (generationError === null) delete document.documentElement.dataset['generationError'];
+    else document.documentElement.dataset['generationError'] = generationError;
+  });
+
+  const options = {
+    ...DEFAULT_GAME_OPTIONS,
+    seed: params.seed ?? crypto.getRandomValues(new Uint32Array(1))[0]!,
+  };
+  session.newGame(
+    params.mapLogX === undefined || params.mapLogY === undefined
+      ? options
+      : { ...options, mapLogX: params.mapLogX, mapLogY: params.mapLogY },
+  );
 
   const loop = (now: number): void => {
     session.frame(now);

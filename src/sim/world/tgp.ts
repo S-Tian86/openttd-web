@@ -334,19 +334,28 @@ export function heightMapSmoothSlopes(hm: HeightMap, dhMax: number): void {
 /**
  * TerraGenesis up to the second HeightMapSmoothSlopes, thresholded to two levels (ruling R2),
  * then InitializeLandscape's tile types. Port of tgp.cpp:GenerateTerrainPerlin with
- * HeightMapNormalize.
+ * HeightMapNormalize. Yields between steps (progress 0..1) so a 1024x1024 map can be sliced;
+ * the yields draw no random numbers, so the result does not depend on how it is driven.
  */
-export function generateTerrain(map: MapState, r: Randomizer, seed: number): void {
+export function* generateTerrainSteps(
+  map: MapState,
+  r: Randomizer,
+  seed: number,
+): Generator<number, void, void> {
   const hm = createHeightMap(map.sizeX, map.sizeY);
   heightMapGenerate(hm, r, map.logX, map.logY);
+  yield 0.2;
   const hMaxNew = tgpMaxHeight(map.logX, map.logY);
   const roughness = 7 + 3 * WORLD.smoothness;
   heightMapAdjustWaterLevel(hm, WATER_PERCENT[WORLD.quantitySeaLakes], hMaxNew);
   const borders = nextRandom(r) & 0xf; // water_borders == BorderFlag::Random: GB(Random(), 0, 4)
   heightMapCoastLines(hm, borders, Math.min(map.logX, map.logY), seed);
+  yield 0.4;
   heightMapSmoothSlopes(hm, roughness);
   heightMapSmoothCoasts(hm, borders);
+  yield 0.5;
   heightMapSmoothSlopes(hm, roughness);
+  yield 0.6;
   // HeightMapSineTransform and HeightMapCurves never move a vertex across level 1 (world-generation.md §4.3.2).
   for (let y = 0; y < map.sizeY; y++) {
     for (let x = 0; x < map.sizeX; x++) {
@@ -356,5 +365,13 @@ export function generateTerrain(map: MapState, r: Randomizer, seed: number): voi
       // Void tiles keep the height-map height, as OpenTTD does (ruling R2).
       map.height[t] = h2i(hm.h[at(hm, x, y)]!) >= 1 ? 1 : 0;
     }
+    if ((y & 127) === 127) yield 0.6 + (0.4 * (y + 1)) / map.sizeY;
+  }
+}
+
+/** Runs generateTerrainSteps to the end. */
+export function generateTerrain(map: MapState, r: Randomizer, seed: number): void {
+  for (const _ of generateTerrainSteps(map, r, seed)) {
+    // Nothing to do between steps.
   }
 }

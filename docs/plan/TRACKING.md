@@ -55,6 +55,7 @@ the issue.
   - [x] 1.2.9 Town names and town generation — #69
   - [x] 1.2.10 Coal mines and power stations — #71
   - [x] 1.2.11 Drawing the world — #73
+  - [x] 1.2.12 New-game window and background generation — #75
 - [ ] 1.3 Construction — _(to create)_
 - [ ] 1.4 Trains — _(to create)_
 - [ ] 1.5 Cargo and economy — _(to create)_
