@@ -40,7 +40,7 @@ the issue.
   - [x] 1.1.9 Mouse and touch camera — #38
   - [x] 1.1.10 Translations and formatting — #40
   - [x] 1.1.11 HUD shell and app wiring — #42
-  - [ ] 1.1.12 Evaluate reusing OpenTTD translations — _(to create)_
+  - [x] 1.1.12 Evaluate reusing OpenTTD translations — #44
   - [ ] 1.1.13 Close block 1.1 — _(to create)_
 - [ ] 1.2 World — _(to create)_
 - [ ] 1.3 Construction — _(to create)_
