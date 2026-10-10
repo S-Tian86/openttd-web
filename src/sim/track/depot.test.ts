@@ -42,6 +42,17 @@ describe('train depots (port of rail_cmd.cpp:CmdBuildTrainDepot)', () => {
     ]);
   });
 
+  it('is refused on a town-less game before anything changes (S2: OpenTTD assumes a town)', () => {
+    const g = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    const t = at(g, 22, 22);
+    const before = hashGameState(g);
+    expect([depot(g, t, DiagDir.NW, 'test'), depot(g, t, DiagDir.NW)]).toEqual([
+      { ok: false, error: null },
+      { ok: false, error: null },
+    ]);
+    expect(hashGameState(g)).toBe(before);
+  });
+
   it('numbers depots per town and reuses freed numbers and slots (MakeDefaultName)', () => {
     const g = newGame();
     depot(g, at(g, 22, 22), DiagDir.NW);

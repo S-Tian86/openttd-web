@@ -52,6 +52,8 @@ export function cmdBuildTrainDepot(
   dir: DiagDir,
 ): CommandCost {
   const { map } = state;
+  // MakeDefaultName names the depot after ClosestTownFromTile: OpenTTD assumes a town exists.
+  if (state.towns.length === 0) return CMD_ERROR;
   if (!isValidTile(map, t) || dir < 0 || dir > 3) return CMD_ERROR;
   if (!isTileFlat(map, t)) return fail('error.flatLandRequired'); // R26: no foundations
   let cost = succeed(0);
