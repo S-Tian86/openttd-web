@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { execute } from '../sim/command/command';
 import { createEmptyGame } from '../sim/game';
 import { ClearGround, setClearGroundDensity } from '../sim/map/clear';
 import { makeHouseTile } from '../sim/map/house-map';
@@ -6,6 +7,9 @@ import { makeIndustry } from '../sim/map/industry-map';
 import { tileXY } from '../sim/map/map';
 import { makeRoadNormal, RoadBits } from '../sim/map/road-map';
 import { makeTree, TreeGround, TreeGrowth } from '../sim/map/tree-map';
+import { newTown } from '../sim/town/town';
+import { tileLoopTrack } from '../sim/track/rail-cmd';
+import { Axis, Track } from '../sim/track/track';
 import { makeSea, makeShore } from '../sim/map/water';
 import { groundSprite } from './ground';
 
@@ -59,5 +63,26 @@ describe('ground sprites', () => {
       'terrain.grass.2',
       'terrain.rough',
     ]);
+  });
+
+  it('draws rail ground, station platforms and crossings', () => {
+    const g = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    const at = (x: number, y: number): number => tileXY(g.map, x, y);
+    g.towns.push(newTown(0, at(20, 20), 0, false)); // stations and depots are named after a town
+    execute(g, { type: 'buildRail', tile: at(5, 5), track: Track.X }, 'exec');
+    execute(
+      g,
+      { type: 'buildRailStation', tile: at(10, 5), axis: Axis.Y, numTracks: 1, platLength: 1 },
+      'exec',
+    );
+    makeRoadNormal(g.map, at(15, 5), RoadBits.Y, 0);
+    execute(g, { type: 'buildRail', tile: at(15, 5), track: Track.X }, 'exec');
+    expect([
+      groundSprite(g.map, at(5, 5)),
+      groundSprite(g.map, at(10, 5)),
+      groundSprite(g.map, at(15, 5)),
+    ]).toEqual(['terrain.grass.0', 'station.platform.y', 'crossing.y']);
+    tileLoopTrack(g, at(5, 5), () => undefined);
+    expect(groundSprite(g.map, at(5, 5))).toBe('terrain.grass.3');
   });
 });

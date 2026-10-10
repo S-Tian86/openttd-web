@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyPress } from './gesture';
+import { buildPointerAction, buildPressEnds, classifyPress } from './gesture';
 
 const down = { x: 100, y: 100, at: 1000 };
 
@@ -13,5 +13,28 @@ describe('tap, long press and drag (Review Focus 4)', () => {
   it('is a drag once the pointer moved past the slop, even if it came back', () => {
     expect(classifyPress(down, { x: 100, y: 100, at: 1100 }, true)).toBe('drag');
     expect(classifyPress(down, { x: 120, y: 100, at: 1100 }, false)).toBe('drag');
+  });
+});
+
+describe('pointers while a build tool is on (R30, Review Focus 1)', () => {
+  it('builds with the left button or one finger, pans with other buttons, pinches with two fingers', () => {
+    expect([
+      buildPointerAction({ button: 0, touch: false, pointers: 1 }),
+      buildPointerAction({ button: 2, touch: false, pointers: 1 }),
+      buildPointerAction({ button: 1, touch: false, pointers: 1 }),
+      buildPointerAction({ button: 0, touch: true, pointers: 1 }),
+      buildPointerAction({ button: 0, touch: true, pointers: 2 }),
+    ]).toEqual(['build', 'pan', 'pan', 'build', 'pinch']);
+  });
+});
+
+describe('the end of a build press (R30)', () => {
+  it('ends only on the button that started it; a finger always ends its own press', () => {
+    expect([
+      buildPressEnds({ touch: false, button: 0 }, { button: 0 }),
+      buildPressEnds({ touch: false, button: 0 }, { button: 2 }),
+      buildPressEnds({ touch: false, button: 0 }, { button: 1 }),
+      buildPressEnds({ touch: true, button: 0 }, { button: 0 }),
+    ]).toEqual([true, false, false, true]);
   });
 });

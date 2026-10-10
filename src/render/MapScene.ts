@@ -4,16 +4,26 @@ import { tileX, tileXY, tileY } from '../sim/map/map';
 import { townName } from '../sim/town/town-names';
 import { ATLAS_COLUMNS, atlasCell } from './atlas';
 import { pinchZoom, wheelZoom } from './camera';
-import { classifyPress, LONG_PRESS_MS, TAP_SLOP_PX } from './gesture';
+import {
+  buildPointerAction,
+  buildPressEnds,
+  classifyPress,
+  LONG_PRESS_MS,
+  TAP_SLOP_PX,
+  type BuildGesture,
+} from './gesture';
 import { groundSprite } from './ground';
 import { chunkObjects } from './objects';
+import { previewShapes, type MapPreview } from './preview';
 import {
   CHUNK_TILES,
   TILE_PX,
   chunkCellToTile,
   tileToChunkCell,
   visibleChunks,
+  worldToOttd,
   worldToTile,
+  type OttdPoint,
 } from './projection';
 import {
   GROUND_SPRITE_IDS,
@@ -24,10 +34,11 @@ import {
   type Theme,
 } from './theme';
 
-/** What the map reports back for taps and long presses on tiles. */
+/** What the map reports back: taps and long presses on tiles, and build-tool gestures. */
 export interface MapInput {
   onTap(tile: number): void;
   onLongPress(tile: number): void;
+  onBuildGesture(g: BuildGesture): void;
 }
 
 interface Chunk {
@@ -52,6 +63,19 @@ export class MapScene extends Scene {
   /** The single-pointer press in progress, classified once when it ends. */
   private press: { x: number; y: number; at: number; moved: boolean; consumed: boolean } | null =
     null;
+  /** Whether a build tool is on: one pointer then builds instead of panning and tapping (R30). */
+  private buildMode = false;
+  /** The press of a build tool in progress. */
+  private build: {
+    pointerId: number;
+    button: number;
+    press: OttdPoint;
+    current: OttdPoint;
+    touch: boolean;
+  } | null = null;
+  /** Created in create(); the latest preview is kept so one shown earlier is drawn then. */
+  private ghost: GameObjects.Graphics | undefined;
+  private preview: MapPreview | null = null;
 
   constructor(
     private state: GameState,
@@ -67,6 +91,32 @@ export class MapScene extends Scene {
   /** Swaps the world at the next update and centres on `focusTile` (or the map centre). */
   showGame(state: GameState, focusTile?: number): void {
     this.pending = { state, focusTile };
+  }
+
+  /** Turns build gestures on or off; turning them off cancels a gesture in progress. */
+  setBuildMode(on: boolean): void {
+    this.buildMode = on;
+    // A press already held must not turn into a long press under a build tool (R30).
+    if (on) this.press = null;
+    else this.cancelBuild();
+  }
+
+  /** Draws the construction ghost (R31), or clears it for null. Safe before the scene starts. */
+  showPreview(preview: MapPreview | null): void {
+    this.preview = preview;
+    this.drawPreview();
+  }
+
+  private drawPreview(): void {
+    const ghost = this.ghost;
+    if (ghost === undefined) return;
+    ghost.clear();
+    if (this.preview === null) return;
+    const { colour, lines, rects } = previewShapes(this.state.map, this.preview);
+    ghost.lineStyle(12, colour, 0.8);
+    for (const { x1, y1, x2, y2 } of lines) ghost.lineBetween(x1, y1, x2, y2);
+    ghost.fillStyle(colour, 0.35);
+    for (const { x, y, w, h } of rects) ghost.fillRect(x, y, w, h);
   }
 
   preload(): void {
@@ -86,6 +136,8 @@ export class MapScene extends Scene {
 
   create(): void {
     this.createAtlases();
+    this.ghost = this.add.graphics().setDepth(9000); // under the town labels
+    this.drawPreview();
     this.resetView(undefined);
     this.setupInput();
   }
@@ -174,6 +226,8 @@ export class MapScene extends Scene {
     this.chunks.clear();
     for (const label of this.labels) label.destroy();
     this.labels = [];
+    this.preview = null;
+    this.ghost?.clear();
     this.state = state;
     this.resetView(focusTile);
     this.justSwapped = true;
@@ -232,14 +286,24 @@ export class MapScene extends Scene {
   private setupInput(): void {
     const camera = this.cameras.main;
     this.input.addPointer(1);
+    this.input.mouse?.disableContextMenu(); // a right-drag pans while a build tool is on
+
+    const startPinch = (): void => {
+      const { pointer1, pointer2 } = this.input;
+      if (this.press !== null) this.press.moved = true; // a pinch is never a tap
+      this.pinching = true;
+      this.pinchStartZoom = camera.zoom;
+      this.pinchStartDistance = Math.max(1, this.pointerDistance(pointer1, pointer2));
+    };
 
     this.input.on('pointerdown', (pointer: Input.Pointer) => {
       const { pointer1, pointer2 } = this.input;
+      if (this.buildMode) {
+        this.buildPointerDown(pointer, startPinch);
+        return;
+      }
       if (pointer1.isDown && pointer2.isDown) {
-        if (this.press !== null) this.press.moved = true; // a pinch is never a tap
-        this.pinching = true;
-        this.pinchStartZoom = camera.zoom;
-        this.pinchStartDistance = Math.max(1, this.pointerDistance(pointer1, pointer2));
+        startPinch();
         return;
       }
       this.press = {
@@ -261,10 +325,23 @@ export class MapScene extends Scene {
       }, LONG_PRESS_MS);
     });
 
+    const buildPointerUp = (pointer: Input.Pointer): boolean => {
+      const build = this.build;
+      if (build === null || pointer.id !== build.pointerId) return false;
+      if (!buildPressEnds(build, pointer)) return true; // another mouse button: not the build's
+      this.build = null;
+      this.sendBuild('end', build.press, this.ottdUnder(pointer), build.touch, pointer);
+      return true;
+    };
+    // A drag released outside the canvas still ends, as OpenTTD builds on any mouse-up.
+    this.input.on('pointerupoutside', buildPointerUp);
+
     this.input.on('pointerup', (pointer: Input.Pointer) => {
       if (!this.input.pointer1.isDown || !this.input.pointer2.isDown) {
         this.pinching = false;
       }
+      // Before classifyPress: a build press is neither a tap nor a long press (R30).
+      if (buildPointerUp(pointer)) return;
       const press = this.press;
       if (press === null) return;
       if (this.input.pointer1.isDown || this.input.pointer2.isDown) return; // pinch still ending
@@ -286,6 +363,17 @@ export class MapScene extends Scene {
 
     this.input.on('pointermove', (pointer: Input.Pointer) => {
       const { pointer1, pointer2 } = this.input;
+      const build = this.build;
+      if (build !== null && pointer.id === build.pointerId) {
+        build.current = this.ottdUnder(pointer);
+        this.sendBuild('move', build.press, build.current, build.touch, pointer);
+        return;
+      }
+      if (this.buildMode && !pointer.isDown && !pointer.wasTouch) {
+        const p = this.ottdUnder(pointer);
+        this.sendBuild('hover', p, p, false, pointer);
+        return;
+      }
       if (
         this.press !== null &&
         Math.max(Math.abs(pointer.x - this.press.x), Math.abs(pointer.y - this.press.y)) >
@@ -294,6 +382,9 @@ export class MapScene extends Scene {
         this.press.moved = true;
       }
       if (this.pinching && pointer1.isDown && pointer2.isDown) {
+        // The two-finger midpoint moves by half of this finger's movement.
+        camera.scrollX -= (pointer.x - pointer.prevPosition.x) / 2 / camera.zoom;
+        camera.scrollY -= (pointer.y - pointer.prevPosition.y) / 2 / camera.zoom;
         const zoom = pinchZoom(
           this.pinchStartZoom,
           this.pinchStartDistance,
@@ -310,6 +401,67 @@ export class MapScene extends Scene {
     this.input.on('wheel', (pointer: Input.Pointer, _objects: unknown, _dx: number, dy: number) => {
       this.zoomAt(pointer.x, pointer.y, wheelZoom(camera.zoom, dy));
     });
+  }
+
+  /** A press while a build tool is on: build, pan or pinch (R30); never a long-press timer. */
+  private buildPointerDown(pointer: Input.Pointer, startPinch: () => void): void {
+    // Another button of the mouse that is building: the build drag goes on (one pointer id).
+    if (this.build?.pointerId === pointer.id) return;
+    const { pointer1, pointer2 } = this.input;
+    const action = buildPointerAction({
+      button: pointer.button,
+      touch: pointer.wasTouch,
+      pointers: (pointer1.isDown ? 1 : 0) + (pointer2.isDown ? 1 : 0),
+    });
+    if (action === 'build') {
+      const press = this.ottdUnder(pointer);
+      this.build = {
+        pointerId: pointer.id,
+        button: pointer.button,
+        press,
+        current: press,
+        touch: pointer.wasTouch,
+      };
+      this.sendBuild('move', press, press, pointer.wasTouch, pointer);
+    } else if (action === 'pinch') {
+      this.cancelBuild();
+      startPinch();
+    } else {
+      // A pan: consumed up front, so its release is never a tap.
+      const at = performance.now();
+      this.press = { x: pointer.x, y: pointer.y, at, moved: true, consumed: true };
+    }
+  }
+
+  /** Ends a build press without building. */
+  private cancelBuild(): void {
+    const build = this.build;
+    if (build === null) return;
+    this.build = null;
+    this.callbacks.onBuildGesture({
+      phase: 'cancel',
+      press: build.press,
+      current: build.current,
+      touch: build.touch,
+      ctrl: false,
+    });
+  }
+
+  private sendBuild(
+    phase: BuildGesture['phase'],
+    press: OttdPoint,
+    current: OttdPoint,
+    touch: boolean,
+    pointer: Input.Pointer,
+  ): void {
+    const ctrl = (pointer.event as MouseEvent | undefined)?.ctrlKey === true;
+    this.callbacks.onBuildGesture({ phase, press, current, touch, ctrl });
+  }
+
+  /** The OpenTTD world point under a pointer; outside the map is fine (planBuild clamps it). */
+  private ottdUnder(pointer: Input.Pointer): OttdPoint {
+    const w = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    return worldToOttd(w.x, w.y);
   }
 
   /** The map tile under a pointer, or undefined outside the map. */

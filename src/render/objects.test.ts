@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { execute } from '../sim/command/command';
 import { createEmptyGame } from '../sim/game';
+import { DiagDir } from '../sim/map/geometry';
 import { makeHouseTile } from '../sim/map/house-map';
 import { makeIndustry } from '../sim/map/industry-map';
 import { tileXY } from '../sim/map/map';
 import { makeTree, TreeGround, TreeGrowth } from '../sim/map/tree-map';
 import { HOUSE_SPECS } from '../sim/town/house-specs';
+import { newTown } from '../sim/town/town';
+import { Axis, Track } from '../sim/track/track';
 import { chunkObjects, houseSprite, objectSprites, TREE_OFFSETS } from './objects';
 
 describe('object sprites', () => {
@@ -45,5 +49,31 @@ describe('object sprites', () => {
       { sprite: 'house.town-houses', px: 5 * 64 + 32, py: 1 * 64 + 64 },
       { sprite: 'tree.large', px: 3 * 64 + 32, py: 2 * 64 + 64 },
     ]);
+  });
+
+  it('draws one flat sprite per track piece, depots by exit and station buildings by section', () => {
+    const g = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    g.towns.push(newTown(0, tileXY(g.map, 20, 20), 0, false));
+    const at = (x: number, y: number): number => tileXY(g.map, x, y);
+    execute(g, { type: 'buildRail', tile: at(5, 5), track: Track.Y }, 'exec');
+    execute(g, { type: 'buildRail', tile: at(5, 5), track: Track.Upper }, 'exec');
+    execute(g, { type: 'buildTrainDepot', tile: at(6, 5), dir: DiagDir.SW }, 'exec');
+    execute(
+      g,
+      { type: 'buildRailStation', tile: at(10, 5), axis: Axis.X, numTracks: 2, platLength: 3 },
+      'exec',
+    );
+    expect(objectSprites(g.map, at(5, 5)).map((o) => o.sprite)).toEqual([
+      'rail.track.y',
+      'rail.track.upper',
+    ]);
+    expect(objectSprites(g.map, at(6, 5)).map((o) => o.sprite)).toEqual(['depot.rail.sw']);
+    expect(objectSprites(g.map, at(10, 5)).map((o) => o.sprite)).toEqual(['station.roof.x']); // 2×3 layout: sections 4 and 6
+    execute(
+      g,
+      { type: 'buildRailStation', tile: at(10, 20), axis: Axis.Y, numTracks: 1, platLength: 1 },
+      'exec',
+    );
+    expect(objectSprites(g.map, at(10, 20)).map((o) => o.sprite)).toEqual(['station.building.y']);
   });
 });

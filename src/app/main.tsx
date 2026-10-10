@@ -60,6 +60,7 @@ async function start(): Promise<Game | undefined> {
     {
       onTap: (tile) => session.tapTile(tile, false),
       onLongPress: (tile) => session.tapTile(tile, true),
+      onBuildGesture: () => undefined, // build tools arrive with task 1.3.10
     },
   );
   let focus = params.focus;
