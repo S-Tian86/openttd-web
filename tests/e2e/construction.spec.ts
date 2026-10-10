@@ -217,7 +217,14 @@ test('a build drag released outside the map canvas still ends', async ({ page, i
   const bar = (await page.locator('.status-bar').boundingBox())!;
   await page.mouse.move(a.x, bar.y + bar.height / 2, { steps: 8 });
   await page.mouse.up(); // over the status bar, not the canvas
-  // The gesture ended: its cost bar is gone (built, or refused with an error message).
+  // The gesture ended as an 'end', not a 'cancel': the command was posted, so it either built
+  // or was refused with an error message; a cancel would do neither.
+  await expect
+    .poll(async () => ({
+      built: (await lastCommand(page)) !== null,
+      refused: (await page.getByRole('alert').count()) > 0,
+    }))
+    .not.toEqual({ built: false, refused: false });
   await expect(page.getByRole('status')).toHaveCount(0);
 });
 

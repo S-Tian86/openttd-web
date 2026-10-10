@@ -220,11 +220,11 @@ body {
 }
 
 .build-bar.ok {
-  color: #1d7a45;
+  color: var(--color-ok);
 }
 
 .build-bar.bad {
-  color: #c4282e;
+  color: var(--color-bad);
 }
 
 .error-message {
@@ -234,7 +234,7 @@ body {
   max-width: min(90vw, 420px);
   padding: var(--space) calc(2 * var(--space));
   background: var(--color-panel);
-  border: 2px solid #c4282e;
+  border: 2px solid var(--color-bad);
   border-radius: var(--radius);
   text-align: center;
   cursor: pointer;

@@ -9,12 +9,16 @@ import type { UiSession, UiSnapshot } from './session';
 export function BuildBar({ session, snapshot }: { session: UiSession; snapshot: UiSnapshot }) {
   const { preview, locale } = snapshot;
   if (preview === null) return null;
+  // A failed test with no message (CMD_ERROR, e.g. a void edge tile) has nothing to show: the
+  // build would be refused silently. A demolition the cash cannot cover keeps its estimate.
   const text =
     preview.error !== null
       ? errorText(locale, preview.error)
-      : translate(locale, preview.cost < 0 ? 'build.estimatedIncome' : 'build.estimatedCost', {
-          money: formatMoney(locale, Math.abs(preview.cost)),
-        });
+      : !preview.ok && preview.cost === 0
+        ? ''
+        : translate(locale, preview.cost < 0 ? 'build.estimatedIncome' : 'build.estimatedCost', {
+            money: formatMoney(locale, Math.abs(preview.cost)),
+          });
   return (
     <div class={'build-bar ' + (preview.ok ? 'ok' : 'bad')} role="status">
       <span>{text}</span>

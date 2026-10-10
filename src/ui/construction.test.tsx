@@ -62,6 +62,19 @@ describe('cost bar', () => {
     expect(screen.getByRole('status').textContent).toContain('Estimated Income: £265');
   });
 
+  it('shows no cost for a refusal without a message (CMD_ERROR, R31)', () => {
+    const preview = { ok: false, cost: 0, error: null, needsConfirm: false };
+    render(<BuildBar session={fakeSession()} snapshot={{ ...BASE_SNAPSHOT, preview }} />);
+    const bar = screen.getByRole('status');
+    expect([bar.className, bar.textContent]).toEqual(['build-bar bad', '']);
+  });
+
+  it('keeps the estimate of a demolition the cash cannot cover (R22, R31)', () => {
+    const preview = { ok: false, cost: 300, error: null, needsConfirm: false };
+    render(<BuildBar session={fakeSession()} snapshot={{ ...BASE_SNAPSHOT, preview }} />);
+    expect(screen.getByRole('status').textContent).toBe('Estimated Cost: £300');
+  });
+
   it('asks a touch user to confirm, and shows a failing reason in Spanish', () => {
     const session = fakeSession();
     const preview = {
