@@ -21,6 +21,9 @@ export const ERROR_KEYS = [
   'error.areaIsOwnedByAnother',
   'error.noRailroadTrack',
   'error.flatLandRequired',
+  'error.adjoinsMoreThanOne',
+  'error.stationTooSpreadOut',
+  'error.mustDemolishRailroad',
 ] as const;
 export type ErrorKey = (typeof ERROR_KEYS)[number];
 

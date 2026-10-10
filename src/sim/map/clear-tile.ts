@@ -83,6 +83,11 @@ function clearTileProc(state: GameState, t: number, flags: number, actor: number
       return clearTileRoad(state, t, flags, actor);
     case TileType.Railway:
       return clearTileTrack(state, t, flags, actor);
+    case TileType.Station:
+      // Port of station_cmd.cpp:ClearTile_Station's Auto refusal (rail stations only so far);
+      // the bulldozer comes with RemoveRailStation.
+      if ((flags & DoFlag.Auto) !== 0) return fail('error.mustDemolishRailroad');
+      return CMD_ERROR;
     default:
       return CMD_ERROR;
   }
