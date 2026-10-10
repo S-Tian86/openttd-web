@@ -90,10 +90,22 @@ test('dragging the map with the query tool does not query (Review Focus 4)', asy
   await openWorld(page, grassTile);
   await page.getByRole('button', { name: 'Query tile' }).click();
   const { x, y } = await tileCentre(page, grassTile);
+  const game = page.locator('#game');
+  const before = [
+    await game.getAttribute('data-camera-x'),
+    await game.getAttribute('data-camera-y'),
+  ];
   await page.mouse.move(x, y);
   await page.mouse.down();
   await page.mouse.move(x - 120, y - 60, { steps: 6 });
   await page.mouse.up();
+  // Positive control: the gesture really scrolled the map, so "no dialog" is not vacuous.
+  await expect
+    .poll(async () => [
+      await game.getAttribute('data-camera-x'),
+      await game.getAttribute('data-camera-y'),
+    ])
+    .not.toEqual(before);
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
@@ -106,4 +118,33 @@ test('a long press queries without the tool', async ({ page, isMobile }) => {
   await page.waitForTimeout(700);
   await page.mouse.up();
   await expect(page.getByRole('dialog', { name: 'Land area information' })).toBeVisible();
+});
+
+test('a two-finger pinch with the query tool does not query', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'touch pinch');
+  await openWorld(page, grassTile);
+  await page.getByRole('button', { name: 'Query tile' }).click();
+  const game = page.locator('#game');
+  const zoomBefore = await game.getAttribute('data-camera-zoom');
+  const { x, y } = await tileCentre(page, grassTile);
+  const cdp = await page.context().newCDPSession(page);
+  const touch = async (
+    type: 'touchStart' | 'touchMove' | 'touchEnd',
+    gap: number,
+  ): Promise<void> => {
+    const touchPoints =
+      type === 'touchEnd'
+        ? []
+        : [
+            { x: x - gap, y, id: 1 },
+            { x: x + gap, y, id: 2 },
+          ];
+    await cdp.send('Input.dispatchTouchEvent', { type, touchPoints });
+  };
+  await touch('touchStart', 20);
+  for (const gap of [30, 45, 60, 80]) await touch('touchMove', gap);
+  await touch('touchEnd', 0);
+  // Positive control: the fingers really pinched the map.
+  await expect.poll(() => game.getAttribute('data-camera-zoom')).not.toBe(zoomBefore);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 });
