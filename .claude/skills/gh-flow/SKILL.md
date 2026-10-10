@@ -10,10 +10,10 @@ GitHub is in English.
 
 ## 0. Path triggers
 
-| If you are about to touch… | Load first |
-|---|---|
-| `docs/NEXT-SESSION.md` or `docs/quality-log.md` | `close-session` |
-| any `git push`, `gh pr create`, `gh pr merge` | `gh-flow` (you are here) |
+| If you are about to touch…                      | Load first               |
+| ----------------------------------------------- | ------------------------ |
+| `docs/NEXT-SESSION.md` or `docs/quality-log.md` | `close-session`          |
+| any `git push`, `gh pr create`, `gh pr merge`   | `gh-flow` (you are here) |
 
 ## 1. Issue (just-in-time)
 

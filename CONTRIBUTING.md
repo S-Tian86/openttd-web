@@ -14,10 +14,10 @@ The `gh-flow` skill (`.claude/skills/gh-flow/`) executes this document step by s
 
 ## Labels
 
-| Label | Use |
-|---|---|
+| Label   | Use                                      |
+| ------- | ---------------------------------------- |
 | `infra` | Tooling, CI/CD, repository configuration |
-| `docs` | Documentation only |
+| `docs`  | Documentation only                       |
 
 Other labels (`bug`, `sim`, `render`, `ui`, `fidelity`, …) are created when the first issue
 needs them and documented here.
@@ -39,7 +39,7 @@ needs them and documented here.
 - Test first: the test is written and seen failing before the code that makes it pass, and it
   travels in the same commit as that code.
 - Before committing: `npm run lint`, `npm run typecheck`, `npm test` (the pre-commit hook runs
-  lint, the type check and Prettier on staged files).
+  lint, the type check and the format check).
 
 ## Pull requests
 

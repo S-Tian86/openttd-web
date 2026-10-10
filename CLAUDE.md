@@ -16,10 +16,10 @@ issues, PRs, skills — is in English.
 
 Bound to paths, not to recognising intent. Load the skill **before** the first edit or command.
 
-| If you are about to touch… | Load first |
-|---|---|
+| If you are about to touch…                      | Load first      |
+| ----------------------------------------------- | --------------- |
 | `docs/NEXT-SESSION.md` or `docs/quality-log.md` | `close-session` |
-| any `git push`, `gh pr create` or `gh pr merge` | `gh-flow` |
+| any `git push`, `gh pr create` or `gh pr merge` | `gh-flow`       |
 
 ## Rules
 

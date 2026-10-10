@@ -1,7 +1,7 @@
-import Phaser from 'phaser';
+import { Scene } from 'phaser';
 
 /** Placeholder scene until Stage 1 draws the map. */
-export class BootScene extends Phaser.Scene {
+export class BootScene extends Scene {
   constructor() {
     super('boot');
   }

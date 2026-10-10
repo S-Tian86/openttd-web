@@ -27,12 +27,12 @@ npm ci
 npm run dev        # http://localhost:5173
 ```
 
-| Command                              | What it does                                           |
-| ------------------------------------ | ------------------------------------------------------ |
-| `npm test`                           | Unit, fidelity and architecture tests (Vitest)         |
+| Command                              | What it does                                          |
+| ------------------------------------ | ----------------------------------------------------- |
+| `npm test`                           | Unit, fidelity and architecture tests (Vitest)        |
 | `npm run test:e2e`                   | End-to-end tests on the production build (Playwright) |
-| `npm run lint` / `npm run typecheck` | Static checks                                          |
-| `npm run build`                      | Production build in `dist/`                            |
+| `npm run lint` / `npm run typecheck` | Static checks                                         |
+| `npm run build`                      | Production build in `dist/`                           |
 
 ## Documentation
 
