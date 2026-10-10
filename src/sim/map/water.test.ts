@@ -213,3 +213,14 @@ describe('landscape clearing for towns, industries and water (port of CMD_LANDSC
     expect(getClearDensity(map, t)).toBe(3);
   });
 });
+
+describe('isCoastTile on trees (water_map.h:IsCoastTile)', () => {
+  it('counts a tree tile with shore ground as coast and a tree tile on grass as not', () => {
+    const { map } = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    const shore = tileXY(map, 20, 20);
+    const grass = tileXY(map, 21, 20);
+    makeTree(map, shore, 0, 0, TreeGrowth.Grown, TreeGround.Shore, 0);
+    makeTree(map, grass, 0, 0, TreeGrowth.Grown, TreeGround.Grass, 0);
+    expect([isCoastTile(map, shore), isCoastTile(map, grass)]).toEqual([true, false]);
+  });
+});

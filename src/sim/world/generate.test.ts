@@ -12,7 +12,7 @@ import { countLandTiles, createGame, generateGame, SETTLE_PASSES } from './gener
  * Golden replay hash of the 64×64 world for seed 1 (ruling R9). Pinned from the first run
  * (Step 6); every later task that changes generation re-pins it and says why in its commit.
  */
-const GOLDEN_64_SEED_1 = '11e1df20';
+const GOLDEN_64_SEED_1 = 'ccd559e6';
 
 const countClear = (seed: number, ground: ClearGround): number => {
   const game = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
