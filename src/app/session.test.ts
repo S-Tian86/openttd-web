@@ -12,9 +12,10 @@ import {
 } from '../sim/game';
 import { makeHouseTile } from '../sim/map/house-map';
 import { makeIndustry } from '../sim/map/industry-map';
+import { DiagDir } from '../sim/map/geometry';
 import { tileXY } from '../sim/map/map';
 import { getTrackBits } from '../sim/map/rail-map';
-import { Track, TrackBits } from '../sim/track/track';
+import { Axis, Track, TrackBits } from '../sim/track/track';
 import { industryInfo, townInfo } from '../sim/query';
 import { newTown } from '../sim/town/town';
 import { WorldGenerationError } from '../sim/world/errors';
@@ -235,6 +236,47 @@ describe('GameSession construction (R20, R25, R31)', () => {
     expect(onExecuted.mock.calls).toEqual([[DRAG, 450]]);
   });
 
+  it('keeps a plan waiting for Confirm when the next finger gesture turns into a pinch (C1)', () => {
+    const onPreview = vi.fn<(p: MapPreview | null) => void>();
+    const onExecuted = vi.fn<(c: Command, cost: number) => void>();
+    const session = builder({ onPreview, onExecuted });
+    session.setTool('rail');
+    session.buildGesture(gesture('move', P(10, 10), P(14, 10), true));
+    session.buildGesture(gesture('end', P(10, 10), P(14, 10), true));
+    const waiting = session.getSnapshot().preview;
+    const ghost = onPreview.mock.lastCall?.[0];
+    // The pinch's first finger arrives alone and starts a build, then the second cancels it.
+    session.buildGesture(gesture('move', P(20, 30), P(20, 30), true));
+    session.buildGesture(gesture('cancel', P(20, 30), P(20, 30), true));
+    expect(session.getSnapshot().preview).toEqual(waiting);
+    expect(onPreview.mock.lastCall?.[0]).toEqual(ghost);
+    session.confirmBuild();
+    expect(onExecuted.mock.calls).toEqual([[DRAG, 450]]);
+  });
+
+  it('replaces a plan waiting for Confirm with the next finger gesture that ends', () => {
+    const onExecuted = vi.fn<(c: Command, cost: number) => void>();
+    const session = builder({ onExecuted });
+    session.setTool('rail');
+    session.buildGesture(gesture('end', P(10, 10), P(14, 10), true));
+    session.buildGesture(gesture('move', P(10, 12), P(14, 12), true));
+    session.buildGesture(gesture('end', P(10, 12), P(14, 12), true));
+    session.buildGesture(gesture('move', P(20, 30), P(20, 30), true));
+    session.buildGesture(gesture('cancel', P(20, 30), P(20, 30), true));
+    session.confirmBuild();
+    expect(onExecuted.mock.calls).toEqual([
+      [
+        {
+          type: 'buildRailroadTrack',
+          endTile: 14 + (12 << 6),
+          startTile: 10 + (12 << 6),
+          track: Track.X,
+        },
+        450,
+      ],
+    ]);
+  });
+
   it('cancels a pending preview without building', () => {
     const session = builder();
     session.setTool('rail');
@@ -351,6 +393,32 @@ describe('GameSession construction state', () => {
     expect(session.getSnapshot().removeMode).toBe(true);
     session.setTool('station');
     expect(session.getSnapshot().removeMode).toBe(false);
+  });
+
+  it('posts the Remove toggle, the station axis and the depot direction (C3)', () => {
+    const onExecuted = vi.fn<(c: Command, cost: number) => void>();
+    const session = builder({ onExecuted });
+    const t = (x: number, y: number): number => tileXY(session.state.map, x, y);
+    const commands = (): Command[] => onExecuted.mock.calls.map(([c]) => c);
+    session.setTool('rail');
+    session.buildGesture(gesture('end', P(10, 10), P(14, 10)));
+    session.setRemoveMode(true);
+    session.buildGesture(gesture('end', P(10, 10), P(14, 10)));
+    session.setTool('station');
+    session.setStationAxis(Axis.Y);
+    session.buildGesture(gesture('end', P(30, 20), P(30, 22)));
+    session.setRemoveMode(true);
+    session.buildGesture(gesture('end', P(30, 20), P(30, 22)));
+    session.setTool('depot');
+    session.setDepotDir(DiagDir.SE);
+    session.buildGesture(gesture('end', P(40, 40), P(40, 40)));
+    expect(commands()).toEqual([
+      DRAG,
+      { type: 'removeRailroadTrack', endTile: t(14, 10), startTile: t(10, 10), track: Track.X },
+      { type: 'buildRailStation', tile: t(30, 20), axis: Axis.Y, numTracks: 1, platLength: 3 },
+      { type: 'removeFromRailStation', start: t(30, 22), end: t(30, 20) },
+      { type: 'buildTrainDepot', tile: t(40, 40), dir: DiagDir.SE },
+    ]);
   });
 
   it('drops a build waiting for Confirm when a new world arrives', () => {

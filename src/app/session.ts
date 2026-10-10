@@ -55,6 +55,12 @@ export function toUiError(state: GameState, error: CommandError | null): UiComma
   };
 }
 
+interface PendingBuild {
+  plan: PlannedBuild;
+  ghost: MapPreview;
+  preview: UiPreview;
+}
+
 /** Owns the game state, runs ticks on time and feeds the UI. */
 export class GameSession implements UiSession {
   private readonly listeners = new Set<() => void>();
@@ -74,8 +80,13 @@ export class GameSession implements UiSession {
   private stationAxis: Axis = Axis.X;
   private depotDir: DiagDir = DiagDir.NW;
   private preview: UiPreview | null = null;
-  /** The plan a finger left on the map, built by confirmBuild (R20). */
-  private pending: PlannedBuild | null = null;
+  /** The plan a finger left on the map, built by confirmBuild (R20), with what it shows. */
+  private pending: PendingBuild | null = null;
+  /**
+   * The plan waiting for Confirm when a new finger gesture began. The first finger of a pinch
+   * arrives alone and starts a build, so a gesture that ends in 'cancel' gives it back (C1).
+   */
+  private setAside: PendingBuild | null = null;
   private error: UiError | null = null;
   /** Which window is open; its data is rebuilt from the state on every refresh. */
   private windowRef:
@@ -157,12 +168,13 @@ export class GameSession implements UiSession {
    */
   buildGesture = (g: BuildGesture): void => {
     const tool = this.tool;
-    if (!isBuildTool(tool) || g.phase === 'cancel') return this.cancelBuild();
+    if (!isBuildTool(tool) || g.phase === 'cancel') return this.cancelGesture();
     const plan = planBuild(this.state.map, tool, this.buildOptions(), g.press, g.current, g.ctrl);
     const test = execute(this.state, plan.command, 'test');
     // `clearArea` is NO_TEST, so `execute` does not check the cash for it: checked here (R31).
     const ok = test.ok && checkCompanyHasMoney(this.state.company, test.cost);
-    this.deps.onPreview?.({ ok, rails: plan.rails, tiles: plan.tiles });
+    const ghost: MapPreview = { ok, rails: plan.rails, tiles: plan.tiles };
+    this.deps.onPreview?.(ghost);
     if (g.phase === 'hover') return;
     const preview: UiPreview = {
       ok,
@@ -171,12 +183,14 @@ export class GameSession implements UiSession {
       needsConfirm: false,
     };
     if (g.phase === 'move') {
+      if (g.touch && this.pending !== null) this.setAside = this.pending;
       this.pending = null;
       this.preview = preview;
       this.refresh();
     } else if (g.touch) {
-      this.pending = plan;
+      this.setAside = null;
       this.preview = { ...preview, needsConfirm: true };
+      this.pending = { plan, ghost, preview: this.preview };
       this.refresh();
     } else {
       this.runBuild(plan);
@@ -184,7 +198,7 @@ export class GameSession implements UiSession {
   };
 
   confirmBuild = (): void => {
-    if (this.pending !== null) this.runBuild(this.pending);
+    if (this.pending !== null) this.runBuild(this.pending.plan);
   };
 
   cancelBuild = (): void => {
@@ -305,9 +319,22 @@ export class GameSession implements UiSession {
     return { remove: this.removeMode, stationAxis: this.stationAxis, depotDir: this.depotDir };
   }
 
+  /** A gesture that ends without building: gives back a plan a finger set aside (C1). */
+  private cancelGesture(): void {
+    const setAside = this.setAside;
+    this.clearBuild();
+    if (setAside !== null) {
+      this.pending = setAside;
+      this.preview = setAside.preview;
+      this.deps.onPreview?.(setAside.ghost);
+    }
+    this.refresh();
+  }
+
   /** Forgets the gesture's preview and any build waiting for Confirm, and clears the ghost. */
   private clearBuild(): void {
     this.pending = null;
+    this.setAside = null;
     this.preview = null;
     this.deps.onPreview?.(null);
   }

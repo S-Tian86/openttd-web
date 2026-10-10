@@ -147,13 +147,16 @@ for (const button of ['right', 'middle'] as const) {
   });
 }
 
-test('a second finger turns a build drag into a pinch that builds nothing (R30)', async ({
+test('a pinch keeps the build waiting for Confirm and builds nothing itself (R30, C1)', async ({
   page,
   isMobile,
 }) => {
   test.skip(!isMobile, 'touch pinch');
   await openWorld(page, world, SEED, A);
   await page.getByRole('button', { name: 'Build railway track' }).click();
+  await touchDrag(page, await tileCentre(page, world, A), await tileCentre(page, world, C));
+  const confirm = page.getByRole('button', { name: 'Build', exact: true });
+  await expect(confirm).toBeVisible();
   const { x, y } = await tileCentre(page, world, A);
   const zoomBefore = await page.locator('#game').getAttribute('data-camera-zoom');
   const cdp = await page.context().newCDPSession(page);
@@ -162,10 +165,11 @@ test('a second finger turns a build drag into a pinch that builds nothing (R30)'
       type,
       touchPoints: points.map(([px, py], i) => ({ x: px!, y: py!, id: i + 1 })),
     });
+  // The first finger arrives alone and starts a new build, which drops the waiting Confirm...
   await touch('touchStart', [[x, y]]);
   await touch('touchMove', [[x, y + 40]]);
-  // Positive control: the first finger really started a build.
-  await expect(page.getByRole('status')).toContainText('Estimated Cost');
+  await expect(confirm).toHaveCount(0);
+  // ...until the second finger makes it a pinch, which gives the waiting build back.
   await touch('touchStart', [
     [x, y + 40],
     [x + 30, y + 40],
@@ -180,9 +184,12 @@ test('a second finger turns a build drag into a pinch that builds nothing (R30)'
   await expect
     .poll(() => page.locator('#game').getAttribute('data-camera-zoom'))
     .not.toBe(zoomBefore);
-  await expect(page.getByRole('button', { name: 'Build', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('status')).toHaveCount(0);
+  await expect(confirm).toBeVisible();
   expect(await lastCommand(page)).toBeNull();
+  await confirm.tap();
+  await expect
+    .poll(() => lastCommand(page))
+    .toEqual({ type: 'buildRailroadTrack', endTile: C, startTile: A, track: 0 });
 });
 
 test('a build drag held past the long-press time builds and opens no query (R30)', async ({
@@ -255,4 +262,55 @@ test('querying built track shows it belongs to the player', async ({ page, isMob
   const dialog = page.getByRole('dialog', { name: 'Land area information' });
   await expect(dialog).toContainText('Railway track');
   await expect(dialog).toContainText('Owner: Your company');
+});
+
+test('the Remove toggle takes away the rail just built (C3)', async ({ page, isMobile }) => {
+  await openWorld(page, world, SEED, A);
+  await page.getByRole('button', { name: 'Build railway track' }).click();
+  await gestureAndConfirm(page, isMobile, A, E);
+  await expect.poll(() => lastCommand(page)).not.toBeNull();
+  await page.getByRole('button', { name: 'Remove' }).click();
+  await gestureAndConfirm(page, isMobile, A, E);
+  await expect
+    .poll(() => lastCommand(page))
+    .toEqual({ type: 'removeRailroadTrack', endTile: E, startTile: A, track: 0 });
+  await page.getByRole('button', { name: 'Query tile' }).click();
+  const { x, y } = await tileCentre(page, world, C);
+  if (isMobile) await page.touchscreen.tap(x, y);
+  else await page.mouse.click(x, y);
+  const dialog = page.getByRole('dialog', { name: 'Land area information' });
+  await expect(dialog).toContainText(/Bare land|Grass/);
+  await expect(dialog).not.toContainText('Railway track');
+});
+
+test.describe('at 800x600', () => {
+  test.use({ viewport: { width: 800, height: 600 } });
+
+  test('an error message shows above an open window (C2)', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'a desktop width');
+    await openWorld(page, world, SEED, A);
+    await page.getByRole('button', { name: 'Finances' }).click();
+    await expect(page.getByRole('dialog', { name: 'Finances' })).toBeVisible();
+    await page.getByRole('button', { name: 'Pause' }).click();
+    await page.getByRole('button', { name: 'Build railway track' }).click();
+    const a = await tileCentre(page, world, A);
+    await page.mouse.click(a.x, a.y);
+    const alert = page.getByRole('alert');
+    await expect(alert).toContainText('Not allowed while paused');
+    await expect(alert).toBeVisible();
+    // Its centre and its four corners (8 px in, clear of the rounded border) are the error,
+    // not the window above it.
+    const covered = await alert.evaluate((el) => {
+      const { left, right, top, bottom } = el.getBoundingClientRect();
+      const points = [
+        [(left + right) / 2, (top + bottom) / 2],
+        [left + 8, top + 8],
+        [right - 8, top + 8],
+        [left + 8, bottom - 8],
+        [right - 8, bottom - 8],
+      ];
+      return points.filter(([x, y]) => !el.contains(document.elementFromPoint(x!, y!)));
+    });
+    expect(covered).toEqual([]);
+  });
 });

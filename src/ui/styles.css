@@ -227,8 +227,10 @@ body {
   color: var(--color-bad);
 }
 
+/* Above any open window (.panel), which comes later in the page and covers it otherwise. */
 .error-message {
   position: absolute;
+  z-index: 2;
   left: 50%;
   transform: translateX(-50%);
   max-width: min(90vw, 420px);
