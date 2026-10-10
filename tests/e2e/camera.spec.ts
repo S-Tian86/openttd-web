@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
+import { MIN_ZOOM } from '../../src/render/camera';
 import { TILE_PX } from '../../src/render/projection';
-import { DEFAULT_GAME_OPTIONS } from '../../src/sim/game';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('./');
@@ -30,13 +30,16 @@ test('drag pans and wheel zooms (desktop)', async ({ page, isMobile }) => {
 
 test('the map edges can be dragged to the middle of the screen', async ({ page, isMobile }) => {
   test.skip(isMobile, 'mouse drag; the clamp is the same code on phones');
+  // A small world: at the lowest zoom a full one redraws too much per drag on CI runners.
+  await page.goto('./?seed=1&size=64x64');
+  await expect(page.locator('html')).toHaveAttribute('data-game-ready', 'true');
   const game = page.locator('#game');
-  const lastCorner = (2 ** DEFAULT_GAME_OPTIONS.mapLogY - 1) * TILE_PX;
+  const lastCorner = (64 - 1) * TILE_PX;
   const view = page.viewportSize();
   if (view === null) throw new Error('no viewport');
   await page.mouse.move(view.width / 2, view.height / 2);
   for (let i = 0; i < 10; i++) await page.mouse.wheel(0, 300);
-  await expect(game).toHaveAttribute('data-camera-zoom', '0.25');
+  await expect(game).toHaveAttribute('data-camera-zoom', MIN_ZOOM.toFixed(2));
 
   // Drags across the screen until the camera stops, then returns the world x under its middle.
   const dragToEnd = async (direction: 1 | -1): Promise<number> => {

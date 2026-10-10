@@ -188,10 +188,14 @@ export class MapScene extends Scene {
     }
   }
 
-  /** Centres the camera on the focus tile (or the map) and builds the town labels. */
+  /**
+   * Starts every world at the normal zoom, centred on the focus tile (or the map), as OpenTTD
+   * recreates its main window for a new game (genworld.cpp), and builds the town labels.
+   */
   private resetView(focusTile: number | undefined): void {
     const { map, towns } = this.state;
     const camera = this.cameras.main;
+    camera.setZoom(1);
     if (focusTile === undefined) {
       camera.centerOn((map.sizeY * TILE_PX) / 2, (map.sizeX * TILE_PX) / 2);
     } else {

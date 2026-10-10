@@ -22,6 +22,21 @@ test('generates a new 64×128 world from the new-game window', async ({ page }) 
   await expect(dialog).toBeHidden();
 });
 
+test('a new game starts at the normal zoom (genworld.cpp)', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'wheel zoom');
+  const game = page.locator('#game');
+  const box = (await game.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.wheel(0, 600);
+  await expect(game).not.toHaveAttribute('data-camera-zoom', '1.00');
+  await page.getByRole('button', { name: 'New game' }).click();
+  const dialog = page.getByRole('dialog', { name: 'New game' });
+  await dialog.getByLabel('Seed').fill('4242');
+  await dialog.getByRole('button', { name: 'Generate' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(game).toHaveAttribute('data-camera-zoom', '1.00');
+});
+
 test('shows the generating state for a large map', async ({ page }) => {
   await page.getByRole('button', { name: 'New game' }).click();
   const dialog = page.getByRole('dialog', { name: 'New game' });
