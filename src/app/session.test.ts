@@ -12,9 +12,10 @@ import {
 } from '../sim/game';
 import { makeHouseTile } from '../sim/map/house-map';
 import { makeIndustry } from '../sim/map/industry-map';
+import { DiagDir } from '../sim/map/geometry';
 import { tileXY } from '../sim/map/map';
 import { getTrackBits } from '../sim/map/rail-map';
-import { Track, TrackBits } from '../sim/track/track';
+import { Axis, Track, TrackBits } from '../sim/track/track';
 import { industryInfo, townInfo } from '../sim/query';
 import { newTown } from '../sim/town/town';
 import { WorldGenerationError } from '../sim/world/errors';
@@ -392,6 +393,32 @@ describe('GameSession construction state', () => {
     expect(session.getSnapshot().removeMode).toBe(true);
     session.setTool('station');
     expect(session.getSnapshot().removeMode).toBe(false);
+  });
+
+  it('posts the Remove toggle, the station axis and the depot direction (C3)', () => {
+    const onExecuted = vi.fn<(c: Command, cost: number) => void>();
+    const session = builder({ onExecuted });
+    const t = (x: number, y: number): number => tileXY(session.state.map, x, y);
+    const commands = (): Command[] => onExecuted.mock.calls.map(([c]) => c);
+    session.setTool('rail');
+    session.buildGesture(gesture('end', P(10, 10), P(14, 10)));
+    session.setRemoveMode(true);
+    session.buildGesture(gesture('end', P(10, 10), P(14, 10)));
+    session.setTool('station');
+    session.setStationAxis(Axis.Y);
+    session.buildGesture(gesture('end', P(30, 20), P(30, 22)));
+    session.setRemoveMode(true);
+    session.buildGesture(gesture('end', P(30, 20), P(30, 22)));
+    session.setTool('depot');
+    session.setDepotDir(DiagDir.SE);
+    session.buildGesture(gesture('end', P(40, 40), P(40, 40)));
+    expect(commands()).toEqual([
+      DRAG,
+      { type: 'removeRailroadTrack', endTile: t(14, 10), startTile: t(10, 10), track: Track.X },
+      { type: 'buildRailStation', tile: t(30, 20), axis: Axis.Y, numTracks: 1, platLength: 3 },
+      { type: 'removeFromRailStation', start: t(30, 22), end: t(30, 20) },
+      { type: 'buildTrainDepot', tile: t(40, 40), dir: DiagDir.SE },
+    ]);
   });
 
   it('drops a build waiting for Confirm when a new world arrives', () => {

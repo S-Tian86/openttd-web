@@ -263,3 +263,22 @@ test('querying built track shows it belongs to the player', async ({ page, isMob
   await expect(dialog).toContainText('Railway track');
   await expect(dialog).toContainText('Owner: Your company');
 });
+
+test('the Remove toggle takes away the rail just built (C3)', async ({ page, isMobile }) => {
+  await openWorld(page, world, SEED, A);
+  await page.getByRole('button', { name: 'Build railway track' }).click();
+  await gestureAndConfirm(page, isMobile, A, E);
+  await expect.poll(() => lastCommand(page)).not.toBeNull();
+  await page.getByRole('button', { name: 'Remove' }).click();
+  await gestureAndConfirm(page, isMobile, A, E);
+  await expect
+    .poll(() => lastCommand(page))
+    .toEqual({ type: 'removeRailroadTrack', endTile: E, startTile: A, track: 0 });
+  await page.getByRole('button', { name: 'Query tile' }).click();
+  const { x, y } = await tileCentre(page, world, C);
+  if (isMobile) await page.touchscreen.tap(x, y);
+  else await page.mouse.click(x, y);
+  const dialog = page.getByRole('dialog', { name: 'Land area information' });
+  await expect(dialog).toContainText(/Bare land|Grass/);
+  await expect(dialog).not.toContainText('Railway track');
+});
