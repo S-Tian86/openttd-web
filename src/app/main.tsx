@@ -91,6 +91,13 @@ async function start(): Promise<Game | undefined> {
 
   render(<App session={session} />, ui);
 
+  // Readiness signal for a failed start (no world will ever be shown): e2e and users can tell why.
+  session.subscribe(() => {
+    const { generationError } = session.getSnapshot();
+    if (generationError === null) delete document.documentElement.dataset['generationError'];
+    else document.documentElement.dataset['generationError'] = generationError;
+  });
+
   const options = {
     ...DEFAULT_GAME_OPTIONS,
     seed: params.seed ?? crypto.getRandomValues(new Uint32Array(1))[0]!,

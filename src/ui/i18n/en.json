@@ -37,5 +37,6 @@
   "newGame.randomSeed": "Random seed",
   "newGame.generate": "Generate",
   "newGame.generating": "Generating world… {percent}%",
-  "error.noTownCreated": "Could not place any town on this map. Try another seed or a larger map."
+  "error.noTownCreated": "Could not place any town on this map. Try another seed or a larger map.",
+  "newGame.retry": "Change settings"
 }

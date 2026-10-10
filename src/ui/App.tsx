@@ -40,6 +40,14 @@ export function App({ session }: { session: UiSession }) {
           <NewGame session={session} snapshot={snapshot} onDone={() => setOpen(null)} />
         </Panel>
       ) : null}
+      {snapshot.generationError !== null && open !== 'newGame' ? (
+        <div class="generation-error">
+          <p role="alert">{t(snapshot.generationError)}</p>
+          <button type="button" onClick={() => setOpen('newGame')}>
+            {t('newGame.retry')}
+          </button>
+        </div>
+      ) : null}
       {snapshot.generating === null ? null : (
         <div class="generating" role="status">
           {translate(snapshot.locale, 'newGame.generating', {

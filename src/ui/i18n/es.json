@@ -37,5 +37,6 @@
   "newGame.randomSeed": "Semilla aleatoria",
   "newGame.generate": "Generar",
   "newGame.generating": "Generando mundo… {percent} %",
-  "error.noTownCreated": "No se pudo colocar ningún pueblo en este mapa. Prueba otra semilla o un mapa más grande."
+  "error.noTownCreated": "No se pudo colocar ningún pueblo en este mapa. Prueba otra semilla o un mapa más grande.",
+  "newGame.retry": "Cambiar ajustes"
 }
