@@ -1,0 +1,20 @@
+# Dependencies and builds
+node_modules/
+dist/
+coverage/
+
+# Test output
+playwright-report/
+test-results/
+
+# Local OpenTTD clone used as reference (see docs/plan/00-master.md §1)
+reference/
+
+# Plan execution scratch
+.superpowers/
+
+# Local tooling
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+*.log
+.DS_Store
