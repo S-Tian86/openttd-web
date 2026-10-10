@@ -5,7 +5,7 @@ import type { CommandError } from '../sim/command/cost';
 import { checkCompanyHasMoney } from '../sim/economy/company';
 import { tick, type GameOptions, type GameState } from '../sim/game';
 import { DiagDir, isValidTile } from '../sim/map/geometry';
-import { describeTile, industryInfo, townInfo } from '../sim/query';
+import { depotInfo, describeTile, industryInfo, stationInfo, townInfo } from '../sim/query';
 import { convertDateToYMD } from '../sim/time/date';
 import { depotExtraRail } from '../sim/track/depot';
 import { Axis } from '../sim/track/track';
@@ -348,7 +348,13 @@ export class GameSession implements UiSession {
       if (ref.tile >= this.state.map.size) return null;
       const info = describeTile(this.state, ref.tile);
       const town = info.townIndex === null ? null : townInfo(this.state, info.townIndex);
-      return { kind: 'tile', info, townName: town === null ? null : town.name };
+      return {
+        kind: 'tile',
+        info,
+        townName: town === null ? null : town.name,
+        station: info.stationIndex === null ? null : stationInfo(this.state, info.stationIndex),
+        depot: info.depotIndex === null ? null : depotInfo(this.state, info.depotIndex),
+      };
     }
     if (ref.kind === 'town') {
       const info = townInfo(this.state, ref.index);

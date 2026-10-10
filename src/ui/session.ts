@@ -1,7 +1,7 @@
 import type { ErrorKey } from '../sim/command/cost';
 import type { GameOptions } from '../sim/game';
 import type { DiagDir } from '../sim/map/geometry';
-import type { IndustryInfo, TileInfo, TownInfo } from '../sim/query';
+import type { DepotInfo, IndustryInfo, StationInfo, TileInfo, TownInfo } from '../sim/query';
 import type { Axis } from '../sim/track/track';
 
 export type GameSpeed = 'normal' | 'x2' | 'x4' | 'fast';
@@ -48,7 +48,13 @@ export interface UiError {
 }
 
 export type UiWindow =
-  | { kind: 'tile'; info: TileInfo; townName: string | null }
+  | {
+      kind: 'tile';
+      info: TileInfo;
+      townName: string | null;
+      station: StationInfo | null;
+      depot: DepotInfo | null;
+    }
   | { kind: 'town'; info: TownInfo }
   | { kind: 'industry'; info: IndustryInfo };
 

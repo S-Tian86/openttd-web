@@ -1,14 +1,17 @@
 import { describe, expect, it } from 'vitest';
+import { execute } from './command/command';
 import { createEmptyGame } from './game';
 import { IndustryType } from './industry/industry-specs';
 import { makeHouseTile } from './map/house-map';
 import { makeIndustry } from './map/industry-map';
 import { makeClear, ClearGround } from './map/clear';
+import { DiagDir } from './map/geometry';
 import { tileXY } from './map/map';
 import { makeRoadNormal, RoadBits } from './map/road-map';
 import { makeSea } from './map/water';
-import { describeTile, industryInfo, townInfo } from './query';
+import { depotInfo, describeTile, industryInfo, stationInfo, townInfo } from './query';
 import { newTown } from './town/town';
+import { Axis, Track } from './track/track';
 
 describe('query functions for the UI', () => {
   it('reports grass with density 0 as bare land (GetTileDesc_Clear)', () => {
@@ -36,19 +39,31 @@ describe('query functions for the UI', () => {
       owner: 'none',
       townIndex: null,
       industryIndex: null,
+      stationIndex: null,
+      depotIndex: null,
+      costToClear: 15,
     });
     expect(describeTile(game, tileXY(map, 20, 20))).toMatchObject({
       kind: 'road',
       owner: 'town',
       townIndex: 0,
+      costToClear: null, // a town road is refused (R33)
     });
     expect(describeTile(game, tileXY(map, 21, 20))).toMatchObject({
       kind: 'house',
       owner: 'town',
       townIndex: 0,
+      costToClear: 375,
     });
-    expect(describeTile(game, tileXY(map, 5, 5))).toMatchObject({ kind: 'sea', owner: 'water' });
-    expect(describeTile(game, tileXY(map, 0, 5))).toMatchObject({ kind: 'void' });
+    expect(describeTile(game, tileXY(map, 5, 5))).toMatchObject({
+      kind: 'sea',
+      owner: 'water',
+      costToClear: 7500,
+    });
+    expect(describeTile(game, tileXY(map, 0, 5))).toMatchObject({
+      kind: 'void',
+      costToClear: null,
+    });
   });
 
   it('summarises towns and industries', () => {
@@ -93,5 +108,60 @@ describe('query functions for the UI', () => {
       industryIndex: 0,
     });
     expect([townInfo(game, 5), industryInfo(game, 5)]).toEqual([null, null]);
+  });
+
+  it('describes rail, depots, stations and crossings with their cost to clear', () => {
+    const game = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    const at = (x: number, y: number): number => tileXY(game.map, x, y);
+    game.towns.push(newTown(0, at(20, 20), 0, false));
+    execute(game, { type: 'buildRail', tile: at(10, 10), track: Track.X }, 'exec');
+    execute(game, { type: 'buildTrainDepot', tile: at(12, 10), dir: DiagDir.NW }, 'exec');
+    execute(
+      game,
+      { type: 'buildRailStation', tile: at(14, 10), axis: Axis.X, numTracks: 1, platLength: 2 },
+      'exec',
+    );
+    makeRoadNormal(game.map, at(20, 30), RoadBits.Y, 0);
+    execute(game, { type: 'buildRail', tile: at(20, 30), track: Track.X }, 'exec');
+    expect(describeTile(game, at(10, 10))).toEqual({
+      tile: at(10, 10),
+      x: 10,
+      y: 10,
+      z: 1,
+      kind: 'rail',
+      owner: 'company',
+      townIndex: null,
+      industryIndex: null,
+      stationIndex: null,
+      depotIndex: null,
+      costToClear: -53,
+    });
+    expect(describeTile(game, at(12, 10))).toMatchObject({
+      kind: 'depot',
+      owner: 'company',
+      depotIndex: 0,
+      costToClear: 60,
+    });
+    expect(describeTile(game, at(15, 10))).toMatchObject({
+      kind: 'station',
+      owner: 'company',
+      stationIndex: 0,
+      costToClear: 74,
+    });
+    expect(describeTile(game, at(20, 30))).toMatchObject({
+      kind: 'crossing',
+      owner: 'company',
+      townIndex: 0,
+      costToClear: -53,
+    });
+    expect(stationInfo(game, 0)).toEqual({ index: 0, townName: 'Invenville', nameKind: 'north' });
+    expect(depotInfo(game, 0)).toEqual({ index: 0, townName: 'Invenville', townCn: 0 });
+    expect([stationInfo(game, 3), depotInfo(game, 3)]).toEqual([null, null]);
+  });
+
+  it('keeps a town with no houses left describable (Review Focus 3)', () => {
+    const game = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    game.towns.push(newTown(0, tileXY(game.map, 20, 30), 0, true));
+    expect(townInfo(game, 0)).toMatchObject({ population: 0, houses: 0 });
   });
 });
