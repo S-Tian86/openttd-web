@@ -59,7 +59,7 @@ New rules for this block:
 - **Prices** come from `state.prices` (never a literal £ amount in `src/sim/` code; tests use literals).
 - **Import cycles:** `map/clear-tile.ts` ↔ `track/rail-cmd.ts` ↔ `track/depot.ts` ↔ `station/*` ↔ `town/road-removal.ts` call each other (as OpenTTD's tile procs do). They may only use each other's exports inside functions, never at module top level.
 - **Hash:** `hashGameState` covers every new persistent field; empty collections add no bytes, so `GOLDEN_64_SEED_1` is re-pinned once (Task 1) and stays after that.
-- **Error keys** live in `ERROR_KEYS` (`src/sim/command/cost.ts`); a UI test fails if `en.json` lacks one. Error params are numbers: `money` (formatted as currency by the UI) and `industry` (an industry index, shown by name).
+- **Error keys** live in `ERROR_KEYS` (`src/sim/command/cost.ts`); a UI test fails if `en.json` lacks one. Error params are numbers: `money` (formatted as currency by the UI), `industry` (an industry index, shown by name) and `town` (a town index, shown by name). Every `{placeholder}` in an error string has the name of its param.
 
 ## Review Focus
 
@@ -114,10 +114,10 @@ Sources: economy.md §4.2 (`RecomputePrices`), §4.7 (`CheckCompanyHasMoney`, `S
 
 **Interfaces:**
 
-- Consumes (1.1/1.2): `GameState`, `newGameState`, `createEmptyGame`, `tick`, `hashGameState` (`game.ts`); `LOAN_INTERVAL`, `INITIAL_LOAN`, `DEFAULT_MAX_LOAN`, `createCompany` (`economy/company.ts`); `execute`, `COMMAND_PAUSE_LEVEL` (`command/command.ts`); `isValidTile` (`map/geometry.ts`).
+- Consumes (1.1/1.2): `GameState`, `newGameState`, `createEmptyGame`, `tick`, `hashGameState` (`game.ts`); `LOAN_INTERVAL`, `INITIAL_LOAN`, `DEFAULT_MAX_LOAN`, `createCompany` (`economy/company.ts`, which has a private `INFLATION_ONE` copy that this task deletes); `execute`, `COMMAND_PAUSE_LEVEL` (`command/command.ts`); `isValidTile` (`map/geometry.ts`).
 - Produces (`map/map.ts`): `COMPANY_FIRST = 0x00` (the player's company; single player), `getTileOwner(map, t): number` (`m1 & 0x1f`), `setTileOwner(map, t, owner): void` (keeps `m1` bits 7..5).
 - Produces (`economy/prices.ts`): `type PriceName = 'stationValue' | 'buildRail' | 'buildRoad' | 'buildDepotTrain' | 'buildStationRail' | 'buildStationRailLength' | 'buildFoundation' | 'clearGrass' | 'clearRough' | 'clearRocks' | 'clearFields' | 'clearTrees' | 'clearRail' | 'clearDepotTrain' | 'clearStationRail' | 'clearHouse' | 'clearRoad' | 'clearWater'`, `type Prices = Readonly<Record<PriceName, number>>`, `PRICE_BASES: Readonly<Record<PriceName, { start: number; category: 'none' | 'construction' | 'running' }>>`, `INFLATION_ONE = 1 << 16`, `computePrices(constructionCost: number, runningCost: number, inflationPrices: number): Prices`.
-- Produces (`economy/company.ts`): `ExpensesType = { Construction: 0, NewVehicles: 1, TrainRun: 2, RoadVehRun: 3, AircraftRun: 4, ShipRun: 5, Property: 6, TrainRevenue: 7, RoadVehRevenue: 8, AircraftRevenue: 9, ShipRevenue: 10, LoanInterest: 11, Other: 12 }` + type, `EXPENSES_END = 13`, `CLEAR_FRAME_BURST = 4096`, `CLEAR_PER_64K_FRAMES = 64 << 16`, `interface CompanyState { money: number; currentLoan: number; maxLoan: number; clearLimit: number; yearlyExpenses: number[][]; infrastructure: { rail: number; station: number } }`, `createCompany(maxLoan: number): CompanyState`, `economyMaxLoan(maxLoanSetting: number, inflationPrices: number): number`, `checkCompanyHasMoney(c: CompanyState, cost: number): boolean`, `subtractMoneyFromCompany(c: CompanyState, cost: number, expense: ExpensesType): void`, `updateLandscapingLimit(c: CompanyState): void`.
+- Produces (`economy/company.ts`): `ExpensesType = { Construction: 0, NewVehicles: 1, TrainRun: 2, RoadVehRun: 3, AircraftRun: 4, ShipRun: 5, Property: 6, TrainRevenue: 7, RoadVehRevenue: 8, AircraftRevenue: 9, ShipRevenue: 10, LoanInterest: 11, Other: 12 }` + type, `EXPENSES_END = 13`, `CLEAR_FRAME_BURST = 4096`, `CLEAR_PER_64K_FRAMES = 64 << 16`, `interface CompanyState { money: number; currentLoan: number; maxLoan: number; clearLimit: number; yearlyExpenses: number[][]; infrastructure: { rail: number; station: number } }`, `createCompany(maxLoan: number): CompanyState` (imports `INFLATION_ONE` from `prices.ts`), `economyMaxLoan(maxLoanSetting: number, inflationPrices: number): number`, `checkCompanyHasMoney(c: CompanyState, cost: number): boolean`, `subtractMoneyFromCompany(c: CompanyState, cost: number, expense: ExpensesType): void`, `updateLandscapingLimit(c: CompanyState): void`.
 - Produces (`command/cost.ts`): `DoFlag = { None: 0, Execute: 1, Auto: 2, NoWater: 4, ForceClearTile: 8 }`, `ERROR_KEYS` (`as const` array; this task: `'error.notAllowedWhilePaused'`, `'error.notEnoughCash'`, `'error.maximumPermittedLoan'`, `'error.loanAlreadyRepaid'`, `'error.currencyRequired'`), `type ErrorKey`, `interface CommandError { key: ErrorKey; params: Readonly<Record<string, number>> }`, `type CommandCost = { ok: true; cost: number; expense: ExpensesType; extraCash: number } | { ok: false; error: CommandError | null }`, `succeed(cost?: number, expense?: ExpensesType): CommandCost` (defaults `0`, `Construction`, `extraCash: 0`), `fail(key: ErrorKey, params?: Record<string, number>): CommandCost`, `CMD_ERROR: CommandCost` (`{ ok: false, error: null }`), `addCost(total: CommandCost, part: CommandCost): CommandCost` (a failed `part` is returned as is; otherwise costs add, `total`'s expense type kept).
 - Produces (`economy/loan.ts`): `type LoanAmount = 'interval' | 'max'`, `cmdIncreaseLoan(state: GameState, flags: number, amount: LoanAmount): CommandCost`, `cmdDecreaseLoan(state: GameState, flags: number, amount: LoanAmount): CommandCost`.
 - Produces (`command/command.ts`): `type Command = { type: 'pause'; paused: boolean } | { type: 'increaseLoan'; amount: LoanAmount } | { type: 'decreaseLoan'; amount: LoanAmount }` (later tasks add variants), `type CommandResult = { ok: true; cost: number } | { ok: false; error: CommandError | null }`, `COMMAND_PAUSE_LEVEL = 1`, `pauseLevel(type: Command['type']): number`, `commandTile(command: Command): number | null` (the command's first `TileIndex` parameter, `null` for pause and loans; each later task adds its commands to this exhaustive switch), `execute(state, command, mode: 'test' | 'exec'): CommandResult`. Internally `COMMAND_TYPE: Record<Command['type'], 'serverSetting' | 'moneyManagement' | 'landscapeConstruction'>`, `COMMAND_FLAGS: Record<Command['type'], number>` (the command's own `CommandFlag`s turned into `DoFlag`s: `Auto`, `NoWater`), `NO_TEST: ReadonlySet<Command['type']>` and `run(state, command, flags): CommandCost`.
@@ -271,11 +271,13 @@ describe('loans (port of misc_cmd.cpp)', () => {
 
   it('refuses loans while paused and changes nothing in test mode (R24)', () => {
     const game = newGame();
+    const untouched = hashGameState(game);
     expect(execute(game, { type: 'increaseLoan', amount: 'interval' }, 'test')).toEqual({
       ok: true,
       cost: 0,
     });
     expect(game.company.currentLoan).toBe(100000);
+    expect(hashGameState(game)).toBe(untouched); // test mode changes nothing
     game.paused = true;
     const before = hashGameState(game);
     expect(execute(game, { type: 'increaseLoan', amount: 'interval' }, 'exec')).toEqual({
@@ -291,14 +293,16 @@ describe('loans (port of misc_cmd.cpp)', () => {
 
 ```ts
 import { describe, expect, it } from 'vitest';
-import { createEmptyGame } from '../game';
+import { createEmptyGame, hashGameState } from '../game';
 import { execute, pauseLevel } from './command';
 
 describe('commands (port of command.cpp)', () => {
   it('pauses and unpauses, and test mode changes nothing', () => {
     const game = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    const before = hashGameState(game);
     expect(execute(game, { type: 'pause', paused: true }, 'test')).toEqual({ ok: true, cost: 0 });
     expect(game.paused).toBe(false);
+    expect(hashGameState(game)).toBe(before); // test mode changes nothing
     expect(execute(game, { type: 'pause', paused: true }, 'exec')).toEqual({ ok: true, cost: 0 });
     expect(game.paused).toBe(true);
     // Pause is a server setting (level 0): always allowed, even while paused.
@@ -371,7 +375,8 @@ export function computePrices(
 
 - [ ] **Step 3: Extend `company.ts`, `map.ts` and write `cost.ts`**
 
-- `createCompany(maxLoan)`: keeps the 1.1 loan formula; adds `maxLoan`, `clearLimit: CLEAR_FRAME_BURST << 16` (`Company::Company`), `yearlyExpenses` (3 × 13 zeros), `infrastructure: { rail: 0, station: 0 }`.
+- `company.ts`: `import { INFLATION_ONE } from './prices'` and delete the private `const INFLATION_ONE = 1 << 16` (`prices.ts` must not import `company.ts`).
+- `createCompany(maxLoan)`: the loan term is `Math.min(economyMaxLoan(INITIAL_LOAN, INFLATION_ONE), maxLoan)` instead of the inline `floor(floor(x * INFLATION_ONE / 65536) / LOAN_INTERVAL) * LOAN_INTERVAL` (same value, one formula); adds `maxLoan`, `clearLimit: CLEAR_FRAME_BURST << 16` (`Company::Company`), `yearlyExpenses` (3 × 13 zeros), `infrastructure: { rail: 0, station: 0 }`.
 - `economyMaxLoan(setting, inflation) = Math.floor(Math.floor((setting * inflation) / 65536) / LOAN_INTERVAL) * LOAN_INTERVAL` (`RecomputePrices`).
 - `checkCompanyHasMoney(c, cost) = cost <= 0 || cost <= c.money` (`infinite_money` is off).
 - `subtractMoneyFromCompany(c, cost, expense)`: `if (cost === 0) return; c.money -= cost; c.yearlyExpenses[0][expense] += cost;` (`cur_economy` arrives in block 1.5).
@@ -475,9 +480,9 @@ Sources: construction.md §4.1–4.4, §4.2.1, §4.2.2, §4.8 (hooks, R15), open
 - Consumes: Task 1 (`DoFlag`, `CommandCost`, `succeed`, `fail`, `CMD_ERROR`, `addCost`, `COMPANY_FIRST`, `execute`, `state.prices`, `CompanyState.clearLimit`); 1.2: `doClearSquare`, `makeClear`, `getClearGround`, `getClearDensity`, `getTreeCount`, `getWaterTileType`, `isCoastTile`, `makeSea`, `getTileSlopeZ`, `isSlopeWithOneCornerRaised`, `getIndustryIndex`, `getHouseType`, `isHouseCompleted`, `Town`, `updateTownRadius`, `TownFlag`, `HOUSE_SPECS`, `getRoadBits`, `setRoadBits`, `getRoadOwner`, `getTownIndex`, `isNormalRoadTile`, `RoadBits`.
 - Produces (`map/tile-area.ts`): `orthogonalTiles(map, corner1: number, corner2: number): number[]` (min/max rectangle, X fastest), `diagonalTiles(map, corner1: number, corner2: number): number[]` (`DiagonalTileIterator`, tiles outside the map skipped), `tileIterator(map, corner1, corner2, diagonal: boolean): number[]` (`TileIterator::Create`).
 - Produces (`map/clear-tile.ts`): `landscapeClear(state: GameState, t: number, flags: number, actor: number): CommandCost` (`CmdLandscapeClear`; `actor` is OpenTTD's `_current_company`: `COMPANY_FIRST` or `OWNER_WATER`), `clearArea(state: GameState, flags: number, endTile: number, startTile: number, diagonal: boolean, actor: number): CommandCost` (`CmdClearArea`). Private procs `clearTileClear`, `clearTileTrees`, `clearTileWater`, `clearTileIndustry`; dispatch by tile type (later tasks add Railway and Station cases).
-- Produces (`town/house-specs.ts`): `HouseSpec.removalCost: number` (`removal_cost`, 5th `MS` argument), `findHouseSpec(id: number): HouseSpec | undefined`.
+- Produces (`town/house-specs.ts`): `HouseSpec.removalCost: number` (`removal_cost`, 5th `MS` argument), `findHouseSpec(id: number): HouseSpec | undefined` (the one `BY_ID` lookup; the existing `houseSpec(id)` becomes `findHouseSpec(id) ?? <its current throw>`).
 - Produces (`town/house-removal.ts`): `getHouseNorthPart(id: number): { id: number; dx: number; dy: number }`, `clearTownHouse(state: GameState, town: Town, t: number): void`, `clearTileTown(state: GameState, t: number, flags: number, actor: number): CommandCost`.
-- Produces (`town/road-removal.ts`): `checkAllowRemoveRoad(state: GameState, t: number, remove: number, owner: number, actor: number): CommandCost`, `removeRoad(state: GameState, t: number, flags: number, pieces: number, actor: number): CommandCost` (normal road; Task 4 adds the crossing branch), `clearTileRoad(state: GameState, t: number, flags: number, actor: number): CommandCost` (R33: the company's non-`Auto` clear of a town-owned road fails with `error.localAuthorityRefuses`).
+- Produces (`town/road-removal.ts`): `checkAllowRemoveRoad(state: GameState, t: number, remove: number, owner: number, actor: number): CommandCost`, `removeRoad(state: GameState, t: number, flags: number, pieces: number, actor: number): CommandCost` (normal road; Task 4 adds the crossing branch), `clearTileRoad(state: GameState, t: number, flags: number, actor: number): CommandCost` (R33: the company's non-`Auto` clear of a town-owned normal road fails with `error.localAuthorityRefuses`; this task has normal roads only).
 - Produces (`map/flood.ts`): `tileLoopWater(state: GameState, t: number, markDirty)` and `tileLoopVoid` now take the state; a flat target is flooded with `landscapeClear(state, target, DoFlag.Execute, OWNER_WATER)` then `makeSea` (any tile type); a sloped target keeps the 1.2 clear/tree behaviour.
 - Produces (`command/command.ts`): `{ type: 'landscapeClear'; tile: number }`, `{ type: 'clearArea'; endTile: number; startTile: number; diagonal: boolean }` — both `landscapeConstruction`, flags 0; `clearArea` is in `NO_TEST`; `commandTile`: `tile` / `endTile`.
 - Produces (`command/cost.ts`): new keys `'error.buildingMustBeDemolished'`, `'error.cantBuildOnWater'`, `'error.mustRemoveRoadFirst'`, `'error.objectInTheWay'` (param `industry`), `'error.clearingLimitReached'`, `'error.localAuthorityRefuses'` (param `town`, a town index).
@@ -538,7 +543,7 @@ describe('tile iterators (port of tilearea.cpp)', () => {
 import { describe, expect, it } from 'vitest';
 import { execute } from '../command/command';
 import { DoFlag } from '../command/cost';
-import { createEmptyGame, type GameState } from '../game';
+import { createEmptyGame, hashGameState, type GameState } from '../game';
 import { IndustryType } from '../industry/industry-specs';
 import { ClearGround, getClearDensity, getClearGround, makeClear } from './clear';
 import { clearArea, landscapeClear } from './clear-tile';
@@ -668,7 +673,9 @@ describe('CmdClearArea (landscape.cpp)', () => {
       diagonal: false,
     } as const;
     g.company.money = 300;
+    const before = hashGameState(g);
     expect(execute(g, area, 'test')).toEqual({ ok: true, cost: 450 }); // the estimate is never refused for money
+    expect(hashGameState(g)).toBe(before); // test mode changes nothing
     expect(execute(g, area, 'exec')).toEqual({ ok: true, cost: 300 });
     expect(g.company.money).toBe(0);
     expect([10, 11, 12].map((x) => getClearGround(g.map, at(g, x, 10)))).toEqual([
@@ -1041,7 +1048,7 @@ export function clearArea(
 }
 ```
 
-- [ ] **Step 4: Houses** — `house-specs.ts`: add `removalCost` to every row (from `table/town_land.h`, 5th `MS` argument; parts carry their head's value): 0x00 150, 0x01 140, 0x02 100, 0x03 90, 0x04 160, 0x06 80, 0x07 180, 0x08 180, 0x09 65, 0x0a 65, 0x0b 60, 0x0c 60, 0x0d 130, 0x0e 110, 0x0f 105, 0x10 107, 0x11 200, 0x12 145, 0x13 155, 0x14–0x17 250, 0x18 70, 0x19 75, 0x1a 71, 0x1b 135, 0x1c 145, 0x1d 132, 0x1e 155, 0x1f 220, 0x20–0x23 250, 0x24 170, 0x27 210, 0x28–0x2b 250. `findHouseSpec(id)` returns `undefined` for ids without a temperate row (e.g. 0x05).
+- [ ] **Step 4: Houses** — `house-specs.ts`: add `removalCost` to every row (from `table/town_land.h`, 5th `MS` argument; parts carry their head's value): 0x00 150, 0x01 140, 0x02 100, 0x03 90, 0x04 160, 0x06 80, 0x07 180, 0x08 180, 0x09 65, 0x0a 65, 0x0b 60, 0x0c 60, 0x0d 130, 0x0e 110, 0x0f 105, 0x10 107, 0x11 200, 0x12 145, 0x13 155, 0x14–0x17 250, 0x18 70, 0x19 75, 0x1a 71, 0x1b 135, 0x1c 145, 0x1d 132, 0x1e 155, 0x1f 220, 0x20–0x23 250, 0x24 170, 0x27 210, 0x28–0x2b 250. `findHouseSpec(id)` returns `undefined` for ids without a temperate row (e.g. 0x05); rewrite `houseSpec(id)` as `findHouseSpec(id) ?? <the RangeError throw it has today>` (a `const found = findHouseSpec(id); if (found === undefined) throw new RangeError(...); return found;`) so there is one lookup.
 
 `house-removal.ts` — port of `town_cmd.cpp`:
 
@@ -1053,7 +1060,7 @@ export function clearArea(
 
 - `checkAllowRemoveRoad(state, t, remove, owner, actor)`: `remove === 0` or `actor === OWNER_WATER` or `actor !== COMPANY_FIRST` → ok; `owner === OWNER_NONE` → ok; `owner !== OWNER_TOWN` → company ownership (always ours in Stage 1) → ok; town road: `CheckforTownRating` with rating 500 ≥ 16 (Lenient) passes and `extra_dynamite` is on, so ok without a rating change (R15).
 - `removeRoad(state, t, flags, pieces, actor)`: normal road: `pieces &= present`; none → `CMD_ERROR`; `checkAllowRemoveRoad`; exec: `present ^= pieces`; `present === 0` → `doClearSquare`, else `setRoadBits`; mark dirty; cost `popcount(pieces) * p.clearRoad`.
-- `clearTileRoad(state, t, flags, actor)`: R33 first — `actor === COMPANY_FIRST && !(flags & Auto) && getRoadOwner(map, t) === OWNER_TOWN` → `fail('error.localAuthorityRefuses', { town: getTownIndex(map, t) })` (D2: the player's bulldozer never removes town roads; the message is OpenTTD's refusal for town roads, `CheckAllowRemoveRoad`); then OpenTTD's code: normal: `popcount(bits) === 1 || !(flags & Auto)` → `removeRoad(state, t, flags, bits, actor)`, else `fail('error.mustRemoveRoadFirst')` (so a builder's `Auto` clear still removes a one-piece stub, R16).
+- `clearTileRoad(state, t, flags, actor)`: for the normal-road branch, R33 first — `actor === COMPANY_FIRST && !(flags & Auto) && getRoadOwner(map, t) === OWNER_TOWN` → `fail('error.localAuthorityRefuses', { town: getTownIndex(map, t) })` (D2: the player's bulldozer never removes town roads; the message is OpenTTD's refusal for town roads, `CheckAllowRemoveRoad`); then OpenTTD's code for a normal road: `popcount(bits) === 1 || !(flags & Auto)` → `removeRoad(state, t, flags, bits, actor)`, else `fail('error.mustRemoveRoadFirst')` (so a builder's `Auto` clear still removes a one-piece stub, R16).
 
 - [ ] **Step 6: Flooding and wiring** — `flood.ts`: `doFloodTile(state, target, markDirty)`: sloped targets keep the 1.2 code; a flat target: `if (landscapeClear(state, target, DoFlag.Execute, OWNER_WATER).ok) { makeSea(map, target); markDirty(target); }`. `tileLoopWater`/`tileLoopVoid` take `state` (`state.map` inside); `trees.ts` and the `game.ts` procs pass `state`. `command.ts`: `landscapeClear` → `landscapeClear(state, cmd.tile, flags, COMPANY_FIRST)`, `clearArea` → `clearArea(state, flags, cmd.endTile, cmd.startTile, cmd.diagonal, COMPANY_FIRST)`; both `landscapeConstruction`; `clearArea` ∈ `NO_TEST`. Extend the pause-level test with `(['landscapeClear', 'clearArea'] as const).map(pauseLevel)` → `[3, 3]`.
 
@@ -1064,7 +1071,7 @@ export function clearArea(
 | `error.buildingMustBeDemolished` | Building must be demolished first            | El edificio debe demolerse primero              |
 | `error.cantBuildOnWater`         | ... can't build on water                     | ... no se puede construir sobre el agua         |
 | `error.mustRemoveRoadFirst`      | Must remove road first                       | Primero se debe retirar la carretera            |
-| `error.objectInTheWay`           | {name} in the way                            | {name} en medio                                 |
+| `error.objectInTheWay`           | {industry} in the way                        | {industry} en medio                             |
 | `error.clearingLimitReached`     | ... tile clearing limit reached              | ... límite de casillas despejadas alcanzado     |
 | `error.localAuthorityRefuses`    | {town} local authority refuses to allow this | Las autoridades locales de {town} rechazan esto |
 
@@ -1516,16 +1523,15 @@ export function cmdBuildSingleRail(
 const errorKey = (c: CommandCost): ErrorKey | null =>
   c.ok || c.error === null ? null : c.error.key; // module scope
 
-let td = validateAutoDrag(track, sx, sy, ex, ey); // TrackToTrackdir(track) === track
-if (td === null) return CMD_ERROR;
+const pieces = railDragPieces(state.map, startTile, endTile, track); // validateAutoDrag + the TRACKDELTA walk, once
+if (pieces === null) return CMD_ERROR;
 let hadSuccess = false;
 let lastError: CommandCost = CMD_ERROR;
 let total = succeed(0);
-let tile = startTile;
-for (;;) {
+for (const piece of pieces) {
   const ret = remove
-    ? cmdRemoveSingleRail(state, flags, tile, (td & 7) as Track, COMPANY_FIRST)
-    : cmdBuildSingleRail(state, flags, tile, (td & 7) as Track);
+    ? cmdRemoveSingleRail(state, flags, piece.tile, piece.track, COMPANY_FIRST)
+    : cmdBuildSingleRail(state, flags, piece.tile, piece.track);
   if (!remove && errorKey(lastError) === 'error.alreadyBuilt') hadSuccess = true;
   if (!ret.ok) {
     lastError = ret;
@@ -1534,14 +1540,11 @@ for (;;) {
     hadSuccess = true;
     total = addCost(total, ret);
   }
-  if (tile === endTile) break;
-  tile += tileDiffXY(state.map, TRACKDELTA[td]![0], TRACKDELTA[td]![1]);
-  if ((td & 7) > 1) td ^= 1; // toggle UPPER/LOWER, LEFT/RIGHT
 }
 return hadSuccess ? total : lastError;
 ```
 
-`railDragPieces(map, start, end, track)` runs the same walk without commands and returns the pieces (or `null` when `validateAutoDrag` fails); the ghost of Task 9 draws them.
+`railDragPieces(map, start, end, track)` is the only place with the walk: `validateAutoDrag(track, sx, sy, ex, ey)` (`TrackToTrackdir(track) === track`; `null` → return `null`), then from `startTile` push `{ tile, track: (td & 7) as Track }`, stop after `endTile`, else `tile += tileDiffXY(map, TRACKDELTA[td]![0], TRACKDELTA[td]![1])` and `if ((td & 7) > 1) td ^= 1` (toggle UPPER/LOWER, LEFT/RIGHT). `cmdRailTrackHelper` iterates these pieces with the same `hadSuccess`/`lastError` updates, in the same order and with the same early `break` (R17), so its result is unchanged; the ghost of Task 9 draws the same pieces.
 
 `clearTileTrack(state, t, flags, actor)` (`ClearTile_Track`): `Auto` → owner ≠ `actor` → `fail('error.areaIsOwnedByAnother')`, plain → `fail('error.mustRemoveRailroadTrack')`, else `fail('error.buildingMustBeDemolished')`; plain rail → for each set bit, lowest first (`RemoveFirstTrack`): `addCost(cost, cmdRemoveSingleRail(state, flags, t, track, actor))`, returning the first failure; depot → `CMD_ERROR` until Task 5 adds `removeTrainDepot`.
 
@@ -1579,7 +1582,7 @@ Sources: roads.md §3 (field table: on a crossing `m1` is the rail owner and `m7
 - Consumes: Tasks 1–3 (`cmdBuildSingleRail`, `cmdRemoveSingleRail`, `removeRoad`, `clearTileRoad`, `makeRailNormal`, `Track`, `Axis`, `axisToTrack`, `trackToTrackBits`, `countBits`, `railClearCost`); 1.2 road helpers.
 - Produces (`map/road-map.ts`): `LEVELCROSSING_TRACKBIT_FACTOR = 2`, `makeRoadCrossing(map, t, roadOwner: number, railOwner: number, roadAxis: Axis, railType: number, townIndex: number): void`, `isLevelCrossingTile(map, t): boolean`, `getCrossingRoadAxis(map, t): Axis` (`m5 & 1`), `getCrossingRoadBits(map, t): number` (`RoadBits.X` for axis X, else `RoadBits.Y`), `getCrossingRailTrack(map, t): Track` (the other axis), `getCrossingRailBits(map, t): number`, `hasTownOwnedRoad(map, t): boolean`; `getRoadOwner` now reads `m7` on crossings (`GB(IsNormalRoadTile(t) ? m1 : m7, 0, 5)`); `getTownRoadBits` returns `getCrossingRoadBits` on crossings.
 - Produces (`track/rail-cmd.ts`): `roadBuildCost(p: Prices): number` (`(p.buildRoad * 8) >> 3` = 71); the `MP_ROAD` branches of `cmdBuildSingleRail` and `cmdRemoveSingleRail`.
-- Produces (`town/road-removal.ts`): the `Crossing` branches of `removeRoad` and `clearTileRoad`; the company's bulldozer on a crossing removes only the rail (R33): `cmdRemoveSingleRail(state, flags, t, getCrossingRailTrack(map, t), actor)`.
+- Produces (`town/road-removal.ts`): the `Crossing` branches of `removeRoad` and `clearTileRoad`; the company's bulldozer on a crossing removes only the rail (R33): `cmdRemoveSingleRail(state, flags, t, getCrossingRailTrack(map, t), actor)`. The crossing dispatch comes first in `clearTileRoad`; Task 2's R33 refusal applies to normal roads only.
 - Produces (`town/town.ts`): `closestTownFromTile` returns the tile's town for any road tile with a town-owned road (normal or crossing).
 - Produces (`render/ground.ts`): a crossing draws its straight road sprite (`road.10` / `road.5`) until Task 9.
 
@@ -1797,7 +1800,7 @@ if (getTileType(map, t) === TileType.Road) {
 
 In `cmdRemoveSingleRail` (`case MP_ROAD`): not a crossing or other rail bits → `fail('error.noRailroadTrack')`; ownership unless `OWNER_WATER`; cost `railClearCost`; exec: `infrastructure.rail -= LEVELCROSSING_TRACKBIT_FACTOR`, `makeRoadNormal(map, t, getCrossingRoadBits(map, t), getTownIndex(map, t))` (roads are town-owned in Stage 1), dirty.
 
-- [ ] **Step 4: Road removal and town helpers** — `clearTileRoad` crossing: `Auto` → `fail('error.mustRemoveRoadFirst')`; the company (R33, D2) → `cmdRemoveSingleRail(state, flags, t, getCrossingRailTrack(map, t), actor)` (rail only, £53 refund, the tile is the town's normal road again); other actors (the sea, towns: OpenTTD's code, unreachable on Stage 1 maps) → `ret = removeRoad(state, t, flags, getCrossingRoadBits(map, t), actor)`, and on success with exec `landscapeClear(state, t, flags, actor)` with its cost ignored; return `ret`. `removeRoad` crossing: `pieces & ~crossingRoadBits` → `CMD_ERROR`; `checkAllowRemoveRoad(state, t, pieces, getRoadOwner(map, t), actor)`; exec: `makeRailNormal(map, t, getTileOwner(map, t), getCrossingRailBits(map, t), getRailType(map, t))`, `infrastructure.rail -= LEVELCROSSING_TRACKBIT_FACTOR - 1`, dirty; cost `2 * p.clearRoad`. `closestTownFromTile`: `type === House || (type === Road && getRoadTileType(map, t) !== RoadTileType.Depot && hasTownOwnedRoad(map, t))` → the tile's town.
+- [ ] **Step 4: Road removal and town helpers** — `clearTileRoad` crossing (dispatch on `isLevelCrossingTile` **before** Task 2's R33 town-road refusal, which applies to normal roads only: `getRoadOwner` reads `m7` = `OWNER_TOWN` on a crossing, but the refusal must not fire there, or the company's bulldozer would be refused instead of removing the rail): `Auto` → `fail('error.mustRemoveRoadFirst')`; the company (R33, D2) → `cmdRemoveSingleRail(state, flags, t, getCrossingRailTrack(map, t), actor)` (rail only, £53 refund, the tile is the town's normal road again); other actors (the sea, towns: OpenTTD's code, unreachable on Stage 1 maps) → `ret = removeRoad(state, t, flags, getCrossingRoadBits(map, t), actor)`, and on success with exec `landscapeClear(state, t, flags, actor)` with its cost ignored; return `ret`. `removeRoad` crossing: `pieces & ~crossingRoadBits` → `CMD_ERROR`; `checkAllowRemoveRoad(state, t, pieces, getRoadOwner(map, t), actor)`; exec: `makeRailNormal(map, t, getTileOwner(map, t), getCrossingRailBits(map, t), getRailType(map, t))`, `infrastructure.rail -= LEVELCROSSING_TRACKBIT_FACTOR - 1`, dirty; cost `2 * p.clearRoad`. `closestTownFromTile`: `type === House || (type === Road && getRoadTileType(map, t) !== RoadTileType.Depot && hasTownOwnedRoad(map, t))` → the tile's town.
 
 - [ ] **Step 5: Run** — `npx vitest run src/sim` — all passed; `npm test && npm run lint && npm run typecheck` green.
 
@@ -3013,7 +3016,7 @@ export function planBuild(
 **Files:**
 
 - Create: `src/render/preview.ts`, `src/render/preview.test.ts`
-- Modify: `src/render/theme.ts`, `src/render/ground.ts`, `src/render/ground.test.ts`, `src/render/objects.ts`, `src/render/objects.test.ts`, `src/render/gesture.ts`, `src/render/gesture.test.ts`, `src/render/MapScene.ts`, `tools/blocks-theme.mjs`, `public/themes/blocks/theme.json`, `public/themes/blocks/sprites/*.svg` (generated)
+- Modify: `src/render/theme.ts`, `src/render/ground.ts`, `src/render/ground.test.ts`, `src/render/objects.ts`, `src/render/objects.test.ts`, `src/render/gesture.ts`, `src/render/gesture.test.ts`, `src/render/MapScene.ts`, `src/app/main.tsx`, `tools/blocks-theme.mjs`, `public/themes/blocks/theme.json`, `public/themes/blocks/sprites/*.svg` (generated)
 
 Sources: spec §4 (map, construction preview, themes), §5 (phone gestures); ruling R7 (sprites only through the theme contract), R30, R31, R32.
 
@@ -3206,11 +3209,11 @@ Run `node tools/blocks-theme.mjs`; the theme coverage test (`src/render/theme.te
 
 - [ ] **Step 4: `MapScene` changes** (no unit test; covered by the Task 10 e2e and screenshots):
 
-- `MapInput` gains `onBuildGesture(g: BuildGesture): void`; `main.tsx` passes a no-op until Task 10.
+- `MapInput` gains `onBuildGesture(g: BuildGesture): void`; `src/app/main.tsx` builds the `MapInput` literal, so it passes `onBuildGesture: () => undefined` until Task 10 (typecheck fails otherwise).
 - `this.ghost = this.add.graphics().setDepth(9000)` (under the town labels at 10000); `showPreview(p)`: `ghost.clear()`, then for `previewShapes(map, p)`: `lineStyle(12, colour, 0.8)` + `lineBetween` per line, `fillStyle(colour, 0.35)` + `fillRect` per rect. `applyPending` clears it.
 - `setBuildMode(on)`: stores the flag; turning it off sends `cancel` for a gesture in progress.
 - `this.input.mouse?.disableContextMenu()` so a right-drag pans.
-- `pointerdown` with build mode on: `action = buildPointerAction({ button: pointer.button, touch: pointer.wasTouch, pointers: <pointers down> })`; `'build'` → remember `{ pointerId, press: ottdUnder(pointer), touch }` and send `{ phase: 'move', press, current: press }`; `'pinch'` → send `cancel` for a gesture in progress, start the pinch (1.2 code); `'pan'` → remember a pan with no tap. No long-press timer while build mode is on (R30). Build mode off: the 1.2 code unchanged.
+- `pointerdown` with build mode on: `action = buildPointerAction({ button: pointer.button, touch: pointer.wasTouch, pointers: <pointers down> })`; `'build'` → remember `{ pointerId, press: ottdUnder(pointer), touch }` and send `{ phase: 'move', press, current: press }`; `'pinch'` → send `cancel` for a gesture in progress, start the pinch (1.2 code); `'pan'` → remember a pan with no tap. No long-press timer while build mode is on (R30). In build mode the build pointer's `pointerup` sends `end` and returns before `classifyPress`, so neither a tap nor a long press is reported (R30). Note: since PR #91, `pointerup` itself reports a long press for an unconsumed press held ≥500 ms, so the early return is required. Build mode off: the 1.2 code unchanged.
 - `pointermove`: the build pointer → `{ phase: 'move', current: ottdUnder(pointer) }`, no panning; pinch → zoom (1.2) **and** pan by the movement of the two-finger midpoint; a pan → scroll; a mouse with no button down in build mode → `{ phase: 'hover', press: p, current: p }`.
 - `pointerup` of the build pointer → `{ phase: 'end', press, current: ottdUnder(pointer) }`.
 - `ottdUnder(pointer)`: `const w = camera.getWorldPoint(pointer.x, pointer.y); return worldToOttd(w.x, w.y);` (outside the map is fine: `planBuild` returns `null`); `ctrl = (pointer.event as MouseEvent | undefined)?.ctrlKey === true`.
@@ -3232,7 +3235,7 @@ Sources: spec §4 (preview, pause), §5 (tools, phone layout and gestures); cons
 
 **Interfaces:**
 
-- Consumes: Task 8 (`planBuild`, `PlannedBuild`, `BuildTool`, `BuildOptions`), Task 9 (`BuildGesture`, `MapPreview`, `MapScene.setBuildMode`, `MapScene.showPreview`, `MapInput.onBuildGesture`), Task 5 (`depotExtraRail`), `execute`, `industryInfo`, `ERROR_KEYS`.
+- Consumes: Task 8 (`planBuild`, `PlannedBuild`, `BuildTool`, `BuildOptions`), Task 9 (`BuildGesture`, `MapPreview`, `MapScene.setBuildMode`, `MapScene.showPreview`, `MapInput.onBuildGesture`), Task 5 (`depotExtraRail`), `execute`, `industryInfo`, `ERROR_KEYS`, `checkCompanyHasMoney` (`sim/economy/company.ts`; `app/` may import `sim/`).
 - Produces (`ui/session.ts`): `type Tool = 'query' | 'rail' | 'station' | 'depot' | 'demolish'`, `isBuildTool(tool: Tool | null): tool is 'rail' | 'station' | 'depot' | 'demolish'`, `interface UiCommandError { key: ErrorKey; money: number | null; industry: IndustryInfo | null; town: string | null }`, `interface UiPreview { ok: boolean; cost: number; error: UiCommandError | null; needsConfirm: boolean }`, `type ErrorHeader = 'header.cantBuildRail' | 'header.cantRemoveRail' | 'header.cantBuildStation' | 'header.cantRemoveStationPart' | 'header.cantBuildDepot' | 'header.cantClearArea' | 'header.cantBorrow' | 'header.cantRepay'`, `interface UiError { header: ErrorHeader; detail: UiCommandError | null }`; `UiSnapshot` gains `removeMode: boolean`, `stationAxis: Axis`, `depotDir: DiagDir`, `preview: UiPreview | null`, `error: UiError | null`; `UiSession` gains `setRemoveMode(on: boolean)`, `setStationAxis(axis: Axis)`, `setDepotDir(dir: DiagDir)`, `confirmBuild()`, `cancelBuild()`, `dismissError()`.
 - Produces (`app/session.ts`): `GameSession.buildGesture(g: BuildGesture): void`; `SessionDeps` gains `onPreview?(preview: MapPreview | null): void` and `onExecuted?(command: Command, cost: number): void`; `toUiError(state: GameState, error: CommandError | null): UiCommandError | null`.
 - Produces (`ui/errors.ts`): `errorText(locale: Locale, e: UiCommandError): string` (`money` formatted with `formatMoney`, `industry` with `industryName`, `town` as the town name).
@@ -3639,7 +3642,7 @@ buildGesture = (g: BuildGesture): void => {
   const plan = planBuild(this.state.map, tool, this.buildOptions(), g.press, g.current, g.ctrl);
   if (plan === null) return this.cancelBuild();
   const test = execute(this.state, plan.command, 'test');
-  const ok = test.ok && (test.cost <= 0 || test.cost <= this.state.company.money); // R31
+  const ok = test.ok && checkCompanyHasMoney(this.state.company, test.cost); // R31 (`clearArea` is NO_TEST, so `execute` does not check the cash)
   this.deps.onPreview?.({ ok, rails: plan.rails, tiles: plan.tiles });
   if (g.phase === 'hover') return;
   const preview: UiPreview = { ok, cost: test.ok ? test.cost : 0, error: test.ok ? null : toUiError(this.state, test.error), needsConfirm: false };
@@ -3699,7 +3702,7 @@ private runBuild(plan: PlannedBuild): void {
 **Files:**
 
 - Create: `src/ui/FinancesWindow.tsx`, `src/ui/FinancesWindow.test.tsx`, `tests/e2e/finances.spec.ts`
-- Modify: `src/ui/session.ts`, `src/ui/testing.ts`, `src/app/session.ts`, `src/app/session.test.ts`, `src/ui/App.tsx`, `src/ui/Toolbar.tsx`, `src/ui/styles.css`, `src/ui/i18n/en.json`, `src/ui/i18n/es.json`
+- Modify: `src/ui/session.ts`, `src/ui/testing.ts`, `src/app/session.ts`, `src/app/session.test.ts`, `src/ui/App.tsx`, `src/ui/Toolbar.tsx`, `src/ui/construction.test.tsx`, `src/ui/styles.css`, `src/ui/i18n/en.json`, `src/ui/i18n/es.json`
 
 Sources: economy.md §4.8 (commands, GUI: click = one `LOAN_INTERVAL`, Ctrl+click = max); spec §5 (finances window: loan + / −; the yearly table is block 1.5); R24, R25. C++: `company_gui.cpp` (`WID_CF_INCREASE_LOAN`, `WID_CF_REPAY_LOAN`: `_ctrl_pressed ? LoanCommand::Max : LoanCommand::Interval`, headers `STR_ERROR_CAN_T_BORROW_ANY_MORE_MONEY`, `STR_ERROR_CAN_T_REPAY_LOAN`).
 
