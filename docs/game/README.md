@@ -5,3 +5,4 @@ It grows with every stage.
 
 - [Differences from OpenTTD](differences.md)
 - [Block 1.1 playtest guide](block-1.1.md)
+- [Block 1.2 playtest guide](block-1.2.md)

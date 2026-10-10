@@ -42,7 +42,7 @@ the issue.
   - [x] 1.1.11 HUD shell and app wiring — #42
   - [x] 1.1.12 Evaluate reusing OpenTTD translations — #44
   - [x] 1.1.13 Close block 1.1 — #48
-- [~] 1.2 World — branch stage-1/block-1.2
+- [~] 1.2 World — branch stage-1/block-1.2 — awaiting playtest
   - [x] 1.2.0 Reference notes and block plan — #51
   - [x] 1.2.1 Map geometry and slopes — #53
   - [x] 1.2.2 TerraGenesis land mask — #55
@@ -57,6 +57,7 @@ the issue.
   - [x] 1.2.11 Drawing the world — #73
   - [x] 1.2.12 New-game window and background generation — #75
   - [x] 1.2.13 Query tool, town and industry windows — #77
+  - [x] 1.2.14 Close block 1.2 — #84
 - [ ] 1.3 Construction — _(to create)_
 - [ ] 1.4 Trains — _(to create)_
 - [ ] 1.5 Cargo and economy — _(to create)_
