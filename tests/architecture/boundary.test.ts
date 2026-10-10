@@ -39,7 +39,7 @@ describe('sim/ boundary', () => {
     expect(status).not.toBe(0);
     expect(output).toContain("'phaser' import is restricted");
     expect(output).toContain("'node:fs' import is restricted");
-    expect(output).toContain("'../../src/render/BootScene' import is restricted");
+    expect(output).toContain("'../../src/render/projection' import is restricted");
     expect(output).toContain("'../../reference/OpenTTD/src/economy' import is restricted");
     expect(output).not.toContain("'../../src/sim/core/constants' import is restricted");
   });
