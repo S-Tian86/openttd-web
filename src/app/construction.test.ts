@@ -16,7 +16,7 @@ const OPTIONS: BuildOptions = { remove: false, stationAxis: Axis.X, depotDir: Di
 
 describe('planBuild: one gesture, one command (rail_gui.cpp, terraform_gui.cpp)', () => {
   it('turns a rail drag into CMD_BUILD_RAILROAD_TRACK with its ghost pieces', () => {
-    const plan = planBuild(map, 'rail', OPTIONS, P(10, 10), P(14, 10), false)!;
+    const plan = planBuild(map, 'rail', OPTIONS, P(10, 10), P(14, 10), false);
     expect([plan.command, plan.header, plan.rails.length, plan.tiles]).toEqual([
       { type: 'buildRailroadTrack', endTile: T(14, 10), startTile: T(10, 10), track: Track.X },
       'header.cantBuildRail',
@@ -33,7 +33,7 @@ describe('planBuild: one gesture, one command (rail_gui.cpp, terraform_gui.cpp)'
       tiles: [],
     });
     expect(
-      planBuild(map, 'rail', { ...OPTIONS, remove: true }, P(10, 10), P(14, 10), false)?.command,
+      planBuild(map, 'rail', { ...OPTIONS, remove: true }, P(10, 10), P(14, 10), false).command,
     ).toEqual({
       type: 'removeRailroadTrack',
       endTile: T(14, 10),
@@ -43,7 +43,7 @@ describe('planBuild: one gesture, one command (rail_gui.cpp, terraform_gui.cpp)'
   });
 
   it('sizes a station from the dragged rectangle and the chosen axis (HandleStationPlacement)', () => {
-    expect(planBuild(map, 'station', OPTIONS, P(10, 10, 3, 3), P(30, 10), false)?.command).toEqual({
+    expect(planBuild(map, 'station', OPTIONS, P(10, 10, 3, 3), P(30, 10), false).command).toEqual({
       type: 'buildRailStation',
       tile: T(10, 10),
       axis: Axis.X,
@@ -57,17 +57,17 @@ describe('planBuild: one gesture, one command (rail_gui.cpp, terraform_gui.cpp)'
       P(12, 11),
       P(10, 10),
       false,
-    )!;
+    );
     expect([y.command, y.tiles.length]).toEqual([
       { type: 'buildRailStation', tile: T(10, 10), axis: Axis.Y, numTracks: 3, platLength: 2 },
       6,
     ]);
     expect(
-      planBuild(map, 'station', { ...OPTIONS, remove: true }, P(10, 10), P(12, 10), false)?.command,
+      planBuild(map, 'station', { ...OPTIONS, remove: true }, P(10, 10), P(12, 10), false).command,
     ).toEqual({
       type: 'removeFromRailStation',
-      start: T(10, 10),
-      end: T(12, 10),
+      start: T(12, 10),
+      end: T(10, 10),
     });
   });
 
@@ -81,16 +81,25 @@ describe('planBuild: one gesture, one command (rail_gui.cpp, terraform_gui.cpp)'
   });
 
   it('demolishes the dragged area, diagonally with Ctrl (CMD_CLEAR_AREA)', () => {
-    const plan = planBuild(map, 'demolish', OPTIONS, P(10, 10), P(11, 11), false)!;
+    const plan = planBuild(map, 'demolish', OPTIONS, P(10, 10), P(11, 11), false);
     expect([plan.command, plan.tiles.length]).toEqual([
       { type: 'clearArea', endTile: T(11, 11), startTile: T(10, 10), diagonal: false },
       4,
     ]);
-    expect(planBuild(map, 'demolish', OPTIONS, P(10, 10), P(10, 12), true)?.tiles.length).toBe(5);
+    expect(planBuild(map, 'demolish', OPTIONS, P(10, 10), P(10, 12), true).tiles.length).toBe(5);
   });
 
-  it('ignores gestures that start or end outside the map', () => {
-    expect(planBuild(map, 'rail', OPTIONS, P(10, 10), { x: -3, y: 40 }, false)).toBeNull();
-    expect(planBuild(map, 'demolish', OPTIONS, { x: 40, y: 64 * 16 }, P(10, 10), false)).toBeNull();
+  it('clamps points past the map edge into the map, so a drag builds up to the edge', () => {
+    // 64×64 map: the cursor is clamped to MaxX * 16 - 1, inside tile 62
+    expect(planBuild(map, 'rail', OPTIONS, P(60, 10), P(80, 10), false).command).toEqual({
+      type: 'buildRailroadTrack',
+      endTile: T(62, 10),
+      startTile: T(60, 10),
+      track: Track.X,
+    });
+    expect(
+      planBuild(map, 'demolish', OPTIONS, { x: 40, y: 64 * 16 }, { x: -50, y: 2000 }, false)
+        .command,
+    ).toEqual({ type: 'clearArea', endTile: T(0, 62), startTile: T(2, 62), diagonal: false });
   });
 });

@@ -32,29 +32,40 @@ export interface PlannedBuild {
   tiles: readonly number[];
 }
 
-const insideMap = (map: MapState, p: OttdPoint): boolean =>
-  p.x >= 0 && p.y >= 0 && p.x < map.sizeX * TILE_UNITS && p.y < map.sizeY * TILE_UNITS;
+const clamp = (v: number, lo: number, hi: number): number => Math.min(Math.max(v, lo), hi);
+
+/**
+ * Port of landscape.cpp:InverseRemapCoords2 with clamp_to_map (as TranslateXYToTileCoord
+ * calls it): a point past the edge moves to the nearest point at most MaxX/MaxY * 16 - 1.
+ * Negative points clamp to 0 rather than OpenTTD's extra rows above the north edge.
+ */
+const clampToMap = (map: MapState, p: OttdPoint): OttdPoint => ({
+  x: clamp(p.x, 0, (map.sizeX - 1) * TILE_UNITS - 1),
+  y: clamp(p.y, 0, (map.sizeY - 1) * TILE_UNITS - 1),
+});
 
 /** viewport.cpp:TileVirtXY. */
 const ottdTile = (map: MapState, p: OttdPoint): number => tileXY(map, p.x >> 4, p.y >> 4);
 
 /**
  * Plans the command of one press/release gesture of a build tool, as OpenTTD's GUI does on
- * mouse-up. Null when either point is outside the map (OpenTTD ignores such a release).
+ * mouse-up. Points past the map edge are clamped into it, so a drag released beyond the
+ * edge builds up to the edge.
  */
 export function planBuild(
   map: MapState,
   tool: BuildTool,
   options: BuildOptions,
-  press: OttdPoint,
-  current: OttdPoint,
+  pressPoint: OttdPoint,
+  currentPoint: OttdPoint,
   ctrl: boolean,
-): PlannedBuild | null {
-  if (!insideMap(map, press) || !insideMap(map, current)) return null;
+): PlannedBuild {
+  const press = clampToMap(map, pressPoint);
+  const current = clampToMap(map, currentPoint);
   const startTile = ottdTile(map, press);
   switch (tool) {
     case 'rail': {
-      // rail_gui.cpp:HandleAutodirPlacement
+      // Port of rail_gui.cpp:HandleAutodirPlacement
       const s = calcRaildirsDrawstyle(press, current);
       const endTile = ottdTile(map, s.end);
       const header = options.remove ? 'header.cantRemoveRail' : 'header.cantBuildRail';
@@ -85,7 +96,7 @@ export function planBuild(
       };
     }
     case 'station': {
-      // rail_gui.cpp:PlaceRail_Station drags with VPM_X_AND_Y_LIMITED
+      // Port of rail_gui.cpp:PlaceRail_Station (VPM_X_AND_Y_LIMITED drag)
       const end = limitedAreaEnd(
         press,
         current,
@@ -95,7 +106,8 @@ export function planBuild(
       const tiles = orthogonalTiles(map, startTile, endTile);
       if (options.remove) {
         return {
-          command: { type: 'removeFromRailStation', start: startTile, end: endTile },
+          // Port of rail_gui.cpp:BuildRailToolbarWindow::OnPlaceMouseUp (l.768): (end, start)
+          command: { type: 'removeFromRailStation', start: endTile, end: startTile },
           header: 'header.cantRemoveStationPart',
           rails: [],
           tiles,
@@ -119,7 +131,8 @@ export function planBuild(
       };
     }
     case 'depot': {
-      // rail_gui.cpp:BuildRailToolbarWindow::OnPlaceObject, on the tile under the pointer
+      // Port of rail_gui.cpp:BuildRailToolbarWindow::OnPlaceObject (l.691-693). OpenTTD
+      // builds on the press; we deliberately use the release tile so a finger can aim.
       const tile = ottdTile(map, current);
       return {
         command: { type: 'buildTrainDepot', tile, dir: options.depotDir },
@@ -129,7 +142,7 @@ export function planBuild(
       };
     }
     case 'demolish': {
-      // terraform_gui.cpp:GUIPlaceProcDragXY: CMD_CLEAR_AREA(end, start, Ctrl)
+      // Port of terraform_gui.cpp:GUIPlaceProcDragXY: CMD_CLEAR_AREA(end, start, Ctrl)
       const endTile = ottdTile(map, current);
       return {
         command: { type: 'clearArea', endTile, startTile, diagonal: ctrl },
