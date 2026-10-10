@@ -7,6 +7,7 @@
   --color-accent-text: #ffffff;
   --color-ok: #1d7a45;
   --color-bad: #c4282e;
+  --color-backdrop: rgb(45 74 62 / 40%);
   --radius: 14px;
   --space: 8px;
   --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
