@@ -20,6 +20,15 @@ export default defineConfig({
         ...(process.env['CI'] ? {} : { channel: 'chrome' }),
       },
     },
+    {
+      name: 'phone',
+      use: {
+        ...devices['Pixel 7'],
+        hasTouch: true,
+        isMobile: true,
+        ...(process.env['CI'] ? {} : { channel: 'chrome' }),
+      },
+    },
   ],
   // Always the production build: it is what GitHub Pages serves, CSP included.
   webServer: {

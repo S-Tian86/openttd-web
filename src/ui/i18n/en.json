@@ -15,5 +15,6 @@
   "panel.close": "Close",
   "language.en": "English",
   "language.es": "Español",
+  "error.themeLoad": "Could not load the game theme. Please reload the page.",
   "error.notAllowedWhilePaused": "Not allowed while paused"
 }

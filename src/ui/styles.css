@@ -15,3 +15,133 @@ body {
   height: 100%;
   touch-action: none;
 }
+
+#ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  font-family: var(--font);
+  color: var(--color-text);
+}
+
+#ui > * {
+  pointer-events: auto;
+}
+
+#ui button,
+#ui select {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-panel);
+  border: 2px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+#ui button[aria-pressed='true'] {
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+.status-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space);
+  padding: var(--space);
+  background: var(--color-panel);
+  border-bottom: 2px solid var(--color-panel-border);
+  font-weight: 600;
+}
+
+.status-controls {
+  display: flex;
+  gap: calc(var(--space) / 2);
+}
+
+.panel {
+  position: absolute;
+  background: var(--color-panel);
+  border: 2px solid var(--color-panel-border);
+  color: var(--color-text);
+  box-sizing: border-box;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space);
+  padding: var(--space);
+  border-bottom: 2px solid var(--color-panel-border);
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.panel-body {
+  padding: var(--space);
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space);
+}
+
+.settings label {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space) / 2);
+}
+
+.ui-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space);
+  background: var(--color-panel);
+  font-weight: 600;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .panel {
+    top: calc(var(--touch-target) + 4 * var(--space));
+    right: calc(2 * var(--space));
+    width: 320px;
+    border-radius: var(--radius);
+  }
+}
+
+@media (max-width: 767px) {
+  .status-bar {
+    top: auto;
+    bottom: 0;
+    border-bottom: 0;
+    border-top: 2px solid var(--color-panel-border);
+    padding-bottom: calc(var(--space) + env(safe-area-inset-bottom));
+  }
+
+  .panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 60%;
+    overflow: auto;
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 1;
+  }
+}

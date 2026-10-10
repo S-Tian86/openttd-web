@@ -1,0 +1,53 @@
+// @vitest-environment happy-dom
+import { cleanup, fireEvent, render, screen } from '@testing-library/preact';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { GameSpeed, Locale, UiSession, UiSnapshot } from './session';
+import { StatusBar } from './StatusBar';
+
+const snapshot: UiSnapshot = {
+  year: 1950,
+  month: 0,
+  day: 1,
+  money: 100000,
+  paused: false,
+  speed: 'normal',
+  locale: 'en',
+  themeId: 'blocks',
+  themes: [{ id: 'blocks', name: 'Blocks' }],
+};
+
+function fakeSession(s: UiSnapshot): UiSession {
+  return {
+    getSnapshot: () => s,
+    subscribe: () => () => undefined,
+    togglePause: vi.fn<() => void>(),
+    setSpeed: vi.fn<(speed: GameSpeed) => void>(),
+    setLocale: vi.fn<(locale: Locale) => void>(),
+    setTheme: vi.fn<(id: string) => void>(),
+  };
+}
+
+afterEach(cleanup);
+
+describe('StatusBar', () => {
+  it('shows date and money in the current language', () => {
+    render(
+      <StatusBar
+        session={fakeSession(snapshot)}
+        snapshot={snapshot}
+        onSettings={() => undefined}
+      />,
+    );
+    expect(screen.getByText('£100,000')).toBeTruthy();
+    expect(screen.getByText(/1950/)).toBeTruthy();
+  });
+
+  it('pauses and changes speed through the session', () => {
+    const session = fakeSession(snapshot);
+    render(<StatusBar session={session} snapshot={snapshot} onSettings={() => undefined} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Fast forward' }));
+    expect(session.togglePause).toHaveBeenCalled();
+    expect(session.setSpeed).toHaveBeenCalledWith('fast');
+  });
+});
