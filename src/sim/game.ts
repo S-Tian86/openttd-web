@@ -3,7 +3,7 @@ import { createCompany, DEFAULT_MAX_LOAN, type CompanyState } from './economy/co
 import { ClearGround, makeClear, tileLoopClear } from './map/clear';
 import { createMap, isInnerTile, makeVoid, TileType, type MapState } from './map/map';
 import { tileLoopVoid, tileLoopWater } from './map/flood';
-import { runTileLoop } from './map/tile-loop';
+import { runTileLoop, type TileLoopProcs } from './map/tile-loop';
 import { advanceDate, createDateState, type DateState } from './time/clock';
 import { DEF_START_YEAR } from './time/date';
 
@@ -12,6 +12,10 @@ export interface GameOptions {
   mapLogY: number;
   seed: number;
   startingYear: number;
+  /** difficulty.number_towns, 0..3. */
+  townCount: number;
+  /** difficulty.industry_density, 0..5. */
+  industryDensity: number;
 }
 
 export const DEFAULT_GAME_OPTIONS: GameOptions = {
@@ -19,6 +23,8 @@ export const DEFAULT_GAME_OPTIONS: GameOptions = {
   mapLogY: 8,
   seed: 0,
   startingYear: DEF_START_YEAR,
+  townCount: 2,
+  industryDensity: 4,
 };
 
 export interface GameState {
@@ -33,12 +39,30 @@ export interface GameState {
   company: CompanyState;
   /** Tiles to redraw (port of MarkTileDirtyByTile). Transient: not part of the hash. */
   dirtyTiles: Set<number>;
+  /** Port of _settings_game.game_creation.initial_land_count; 0 until generated. */
+  initialLandCount: number;
+}
+
+/** Allocates the map and seeds the generator; no tile is touched. Port of misc.cpp:InitializeGame. */
+export function newGameState(options: GameOptions): GameState {
+  return {
+    options,
+    random: createRandomizer(options.seed),
+    map: createMap(options.mapLogX, options.mapLogY),
+    tickCounter: 0,
+    calendar: createDateState(options.startingYear),
+    economy: createDateState(options.startingYear),
+    paused: false,
+    company: createCompany(DEFAULT_MAX_LOAN),
+    dirtyTiles: new Set(),
+    initialLandCount: 0,
+  };
 }
 
 /** Flat land at height 1, void border. Port of heightmap.cpp:FlatEmptyWorld (flat height 1). */
 export function createEmptyGame(options: Partial<GameOptions> = {}): GameState {
-  const opts = { ...DEFAULT_GAME_OPTIONS, ...options };
-  const map = createMap(opts.mapLogX, opts.mapLogY);
+  const state = newGameState({ ...DEFAULT_GAME_OPTIONS, ...options });
+  const { map } = state;
   for (let t = 0; t < map.size; t++) {
     if (isInnerTile(map, t)) {
       makeClear(map, t, ClearGround.Grass, 3);
@@ -47,21 +71,18 @@ export function createEmptyGame(options: Partial<GameOptions> = {}): GameState {
     }
     map.height[t] = 1; // FlatEmptyWorld raises every row and column, the void border too
   }
-  return {
-    options: opts,
-    random: createRandomizer(opts.seed),
-    map,
-    tickCounter: 0,
-    calendar: createDateState(opts.startingYear),
-    economy: createDateState(opts.startingYear),
-    paused: false,
-    company: createCompany(DEFAULT_MAX_LOAN),
-    dirtyTiles: new Set(),
-  };
+  return state;
 }
 
-/** Replaced by the world generator in Task 4. */
-export const createGame = createEmptyGame;
+/** The tile-loop handlers of the tile types that exist so far. */
+export function tileLoopProcs(state: GameState): TileLoopProcs {
+  const markDirty = (t: number): void => void state.dirtyTiles.add(t);
+  return {
+    [TileType.Clear]: (t) => tileLoopClear(state.map, t, markDirty),
+    [TileType.Water]: (t) => tileLoopWater(state.map, t, markDirty),
+    [TileType.Void]: (t) => tileLoopVoid(state.map, t, markDirty),
+  };
+}
 
 /** One game tick, in OpenTTD's order. Port of openttd.cpp:StateGameLoop. */
 export function tick(state: GameState): void {
@@ -69,12 +90,7 @@ export function tick(state: GameState): void {
   advanceDate(state.calendar);
   advanceDate(state.economy);
   state.tickCounter++;
-  const markDirty = (t: number): void => void state.dirtyTiles.add(t);
-  runTileLoop(state.map, state.tickCounter, {
-    [TileType.Clear]: (t) => tileLoopClear(state.map, t, markDirty),
-    [TileType.Water]: (t) => tileLoopWater(state.map, t, markDirty),
-    [TileType.Void]: (t) => tileLoopVoid(state.map, t, markDirty),
-  });
+  runTileLoop(state.map, state.tickCounter, tileLoopProcs(state));
 }
 
 /** Returns the tiles to redraw since the last call and forgets them. */
@@ -107,6 +123,7 @@ export function hashGameState(state: GameState): string {
   }
   const o = state.options;
   [o.mapLogX, o.mapLogY, o.seed, o.startingYear].forEach(num);
+  [o.townCount, o.industryDensity, state.initialLandCount].forEach(num);
   [state.random.state0, state.random.state1, map.tileLoopTile, state.tickCounter].forEach(num);
   for (const d of [state.calendar, state.economy])
     [d.date, d.dateFract, d.year, d.month].forEach(num);
