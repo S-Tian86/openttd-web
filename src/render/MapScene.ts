@@ -3,7 +3,7 @@ import { takeDirtyTiles, type GameState } from '../sim/game';
 import { tileX, tileXY, tileY } from '../sim/map/map';
 import { townName } from '../sim/town/town-names';
 import { ATLAS_COLUMNS, atlasCell } from './atlas';
-import { pinchZoom, wheelZoom } from './camera';
+import { clampScrollToMap, pinchZoom, wheelZoom } from './camera';
 import {
   buildPointerAction,
   buildPressEnds,
@@ -186,11 +186,10 @@ export class MapScene extends Scene {
     }
   }
 
-  /** Sets camera bounds for the current map, centres on the focus tile and builds the town labels. */
+  /** Centres the camera on the focus tile (or the map) and builds the town labels. */
   private resetView(focusTile: number | undefined): void {
     const { map, towns } = this.state;
     const camera = this.cameras.main;
-    camera.setBounds(0, 0, map.sizeY * TILE_PX, map.sizeX * TILE_PX);
     if (focusTile === undefined) {
       camera.centerOn((map.sizeY * TILE_PX) / 2, (map.sizeX * TILE_PX) / 2);
     } else {
@@ -248,6 +247,9 @@ export class MapScene extends Scene {
   override update(): void {
     this.applyPending();
     const { map } = this.state;
+    const camera = this.cameras.main;
+    camera.scrollX = clampScrollToMap(camera.scrollX, camera.width, map.sizeY, TILE_PX);
+    camera.scrollY = clampScrollToMap(camera.scrollY, camera.height, map.sizeX, TILE_PX);
     const wanted = visibleChunks(this.cameras.main.worldView, map.sizeX, map.sizeY);
     const wantedKeys = new Set<string>();
     for (const { col, row } of wanted) {
