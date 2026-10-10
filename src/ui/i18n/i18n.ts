@@ -59,6 +59,14 @@ export function formatDate(locale: Locale, year: number, month: number, day: num
   }).format(Date.UTC(year, month, day));
 }
 
+// The map formats every town sign each frame, so the formatters are built once per locale.
+const NUMBER_FORMATS = new Map<Locale, Intl.NumberFormat>();
+
 export function formatNumber(locale: Locale, n: number): string {
-  return new Intl.NumberFormat(locale === 'en' ? 'en-GB' : 'es').format(n);
+  let format = NUMBER_FORMATS.get(locale);
+  if (format === undefined) {
+    format = new Intl.NumberFormat(locale === 'en' ? 'en-GB' : 'es');
+    NUMBER_FORMATS.set(locale, format);
+  }
+  return format.format(n);
 }
