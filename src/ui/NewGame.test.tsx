@@ -88,4 +88,18 @@ describe('NewGame window', () => {
     const levels = vi.mocked(session.newGame).mock.calls.map(([options]) => options.townCount);
     expect(levels.every((level) => [0, 1, 2, 3].includes(level))).toBe(true);
   });
+
+  it('closes only after the generation it started, not the startup one', () => {
+    const session = fakeSession();
+    const onDone = vi.fn<() => void>();
+    const busy = { ...snapshot, generating: 0.3 };
+    const { rerender } = render(<NewGame session={session} snapshot={busy} onDone={onDone} />);
+    rerender(<NewGame session={session} snapshot={snapshot} onDone={onDone} />);
+    expect(onDone).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Generate' }));
+    rerender(<NewGame session={session} snapshot={busy} onDone={onDone} />);
+    expect(onDone).not.toHaveBeenCalled();
+    rerender(<NewGame session={session} snapshot={snapshot} onDone={onDone} />);
+    expect(onDone).toHaveBeenCalledOnce();
+  });
 });

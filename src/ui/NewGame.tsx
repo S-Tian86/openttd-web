@@ -34,12 +34,13 @@ export function NewGame({ session, snapshot, onDone }: NewGameProps) {
   const [townCount, setTownCount] = useState<number>(gameOptions.townCount);
   const [industryDensity, setIndustryDensity] = useState<number>(gameOptions.industryDensity);
   const [seedText, setSeedText] = useState(String(gameOptions.seed));
-  const sawBusy = useRef(false);
+  const started = useRef(false);
 
-  // Close once the generation this window started has finished without an error.
+  // Close once the generation this window started has finished without an error. A generation
+  // already running when the window opened (the startup world) is not this window's.
   useEffect(() => {
-    if (snapshot.generating !== null) sawBusy.current = true;
-    else if (sawBusy.current && snapshot.generationError === null) onDone();
+    if (snapshot.generating !== null) return;
+    if (started.current && snapshot.generationError === null) onDone();
   }, [snapshot.generating, snapshot.generationError, onDone]);
 
   const seed = parseSeed(seedText);
@@ -72,6 +73,7 @@ export function NewGame({ session, snapshot, onDone }: NewGameProps) {
 
   const generate = (): void => {
     if (seed === null || busy) return;
+    started.current = true;
     session.newGame({ ...gameOptions, mapLogX, mapLogY, townCount, industryDensity, seed });
   };
 
