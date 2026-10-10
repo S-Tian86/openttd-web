@@ -1,5 +1,12 @@
 import { createRandomizer, type Randomizer } from './core/random';
-import { createCompany, DEFAULT_MAX_LOAN, type CompanyState } from './economy/company';
+import {
+  createCompany,
+  DEFAULT_MAX_LOAN,
+  economyMaxLoan,
+  updateLandscapingLimit,
+  type CompanyState,
+} from './economy/company';
+import { computePrices, INFLATION_ONE, type Prices } from './economy/prices';
 import { ClearGround, makeClear, tileLoopClear } from './map/clear';
 import { createMap, isInnerTile, makeVoid, TileType, type MapState } from './map/map';
 import { tileLoopVoid, tileLoopWater } from './map/flood';
@@ -42,6 +49,8 @@ export interface GameState {
   economy: DateState;
   paused: boolean;
   company: CompanyState;
+  /** Derived from the settings (port of _price); not hashed. */
+  prices: Prices;
   /** Tiles to redraw (port of MarkTileDirtyByTile). Transient: not part of the hash. */
   dirtyTiles: Set<number>;
   /** Port of _settings_game.game_creation.initial_land_count; 0 until generated. */
@@ -62,7 +71,8 @@ export function newGameState(options: GameOptions): GameState {
     calendar: createDateState(options.startingYear),
     economy: createDateState(options.startingYear),
     paused: false,
-    company: createCompany(DEFAULT_MAX_LOAN),
+    company: createCompany(economyMaxLoan(DEFAULT_MAX_LOAN, INFLATION_ONE)),
+    prices: computePrices(0, 0, INFLATION_ONE),
     dirtyTiles: new Set(),
     initialLandCount: 0,
     treeTickCounter: 0,
@@ -102,12 +112,16 @@ export function tileLoopProcs(state: GameState): TileLoopProcs {
 
 /** One game tick, in OpenTTD's order. Port of openttd.cpp:StateGameLoop. */
 export function tick(state: GameState): void {
-  if (state.paused) return;
+  if (state.paused) {
+    updateLandscapingLimit(state.company);
+    return;
+  }
   advanceDate(state.calendar);
   advanceDate(state.economy);
   state.tickCounter++;
   runTileLoop(state.map, state.tickCounter, tileLoopProcs(state));
   onTickTrees(state);
+  updateLandscapingLimit(state.company);
 }
 
 /** Returns the tiles to redraw since the last call and forgets them. */
@@ -153,6 +167,9 @@ export function hashGameState(state: GameState): string {
     [i.index, i.type, i.tile, i.width, i.height, i.townIndex, i.layoutIndex].forEach(num);
     [i.productionRate, i.counter, i.randomColour, i.random, i.prodLevel].forEach(num);
   }
-  [state.paused ? 1 : 0, state.company.money, state.company.currentLoan].forEach(num);
+  const c = state.company;
+  [state.paused ? 1 : 0, c.money, c.currentLoan, c.maxLoan, c.clearLimit].forEach(num);
+  c.yearlyExpenses.forEach((year) => year.forEach(num));
+  [c.infrastructure.rail, c.infrastructure.station].forEach(num);
   return h.toString(16).padStart(8, '0');
 }

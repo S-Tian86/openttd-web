@@ -1,26 +1,102 @@
+import { checkCompanyHasMoney, ExpensesType, subtractMoneyFromCompany } from '../economy/company';
+import { cmdDecreaseLoan, cmdIncreaseLoan, type LoanAmount } from '../economy/loan';
 import type { GameState } from '../game';
+import { isValidTile } from '../map/geometry';
+import { DoFlag, succeed, type CommandCost, type CommandError } from './cost';
 
-export type Command = { type: 'pause'; paused: boolean };
+export type Command =
+  | { type: 'pause'; paused: boolean }
+  | { type: 'increaseLoan'; amount: LoanAmount }
+  | { type: 'decreaseLoan'; amount: LoanAmount };
 export type CommandMode = 'test' | 'exec';
-export type CommandResult = { ok: true; cost: number } | { ok: false; error: string };
+export type CommandResult = { ok: true; cost: number } | { ok: false; error: CommandError | null };
 
 /** construction.command_pause_level default: no construction while paused (time.md §4.8). */
 export const COMMAND_PAUSE_LEVEL = 1;
 
-/** Level per command type. Port of command.cpp:IsCommandAllowedWhilePaused. */
-const PAUSE_LEVEL: Record<Command['type'], number> = {
-  pause: 0, // CommandType::ServerSetting
+type CommandType = 'serverSetting' | 'moneyManagement' | 'landscapeConstruction';
+
+const COMMAND_TYPE: Record<Command['type'], CommandType> = {
+  pause: 'serverSetting',
+  increaseLoan: 'moneyManagement',
+  decreaseLoan: 'moneyManagement',
 };
 
-/** Runs a command in test or exec mode. Port of command.cpp:Command<>::Do (single player). */
-export function execute(state: GameState, command: Command, mode: CommandMode): CommandResult {
-  if (state.paused && PAUSE_LEVEL[command.type] > COMMAND_PAUSE_LEVEL) {
-    return { ok: false, error: 'error.notAllowedWhilePaused' };
+/** Port of command.cpp:IsCommandAllowedWhilePaused: pause level per command type. */
+const PAUSE_LOOKUP: Record<CommandType, number> = {
+  serverSetting: 0,
+  moneyManagement: 2,
+  landscapeConstruction: 3,
+};
+
+/** The command's own CommandFlags as DoFlags (Auto, NoWater). */
+const COMMAND_FLAGS: Record<Command['type'], number> = {
+  pause: 0,
+  increaseLoan: 0,
+  decreaseLoan: 0,
+};
+
+/** Commands flagged CommandFlag::NoTest: the test run is skipped. */
+const NO_TEST: ReadonlySet<Command['type']> = new Set();
+
+export const pauseLevel = (type: Command['type']): number => PAUSE_LOOKUP[COMMAND_TYPE[type]];
+
+/** The command's first TileIndex parameter, or null when it has none. */
+export function commandTile(command: Command): number | null {
+  switch (command.type) {
+    case 'pause':
+    case 'increaseLoan':
+    case 'decreaseLoan':
+      return null;
+    default: {
+      const unreachable: never = command;
+      return unreachable;
+    }
   }
+}
+
+function run(state: GameState, command: Command, flags: number): CommandCost {
   switch (command.type) {
     case 'pause':
       // Port of misc_cmd.cpp:CmdPause (PauseMode::Normal only).
-      if (mode === 'exec') state.paused = command.paused;
-      return { ok: true, cost: 0 };
+      if ((flags & DoFlag.Execute) !== 0) state.paused = command.paused;
+      return succeed(0, ExpensesType.Other);
+    case 'increaseLoan':
+      return cmdIncreaseLoan(state, flags, command.amount);
+    case 'decreaseLoan':
+      return cmdDecreaseLoan(state, flags, command.amount);
+    default: {
+      const unreachable: never = command;
+      return unreachable;
+    }
   }
+}
+
+/**
+ * Runs a command in test or exec mode (single player). Port of
+ * command.cpp:CommandHelperBase::InternalPost / InternalExecuteProcessResult.
+ */
+export function execute(state: GameState, command: Command, mode: CommandMode): CommandResult {
+  // "do not even think about executing out-of-bounds tile-commands"
+  const tile = commandTile(command);
+  if (tile !== null && tile !== 0 && !isValidTile(state.map, tile)) {
+    return { ok: false, error: null };
+  }
+  if (state.paused && pauseLevel(command.type) > COMMAND_PAUSE_LEVEL) {
+    return { ok: false, error: { key: 'error.notAllowedWhilePaused', params: {} } };
+  }
+  const flags = COMMAND_FLAGS[command.type];
+  const test = run(state, command, flags);
+  if (!test.ok) return { ok: false, error: test.error };
+  if (!NO_TEST.has(command.type) && !checkCompanyHasMoney(state.company, test.cost)) {
+    return { ok: false, error: { key: 'error.notEnoughCash', params: { money: test.cost } } };
+  }
+  if (mode === 'test') return { ok: true, cost: test.cost };
+  const res = run(state, command, flags | DoFlag.Execute);
+  if (!res.ok) return { ok: false, error: res.error };
+  if (res.extraCash !== 0 && res.cost === 0) {
+    return { ok: false, error: { key: 'error.notEnoughCash', params: { money: res.extraCash } } };
+  }
+  subtractMoneyFromCompany(state.company, res.cost, res.expense);
+  return { ok: true, cost: res.cost };
 }

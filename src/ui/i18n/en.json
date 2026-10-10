@@ -64,5 +64,9 @@
   "industry.coalMine": "Coal Mine",
   "industry.powerStation": "Power Station",
   "industry.name": "{town} {type}",
-  "industry.location": "Location: {x} × {y}"
+  "industry.location": "Location: {x} × {y}",
+  "error.notEnoughCash": "Not enough cash - requires {money}",
+  "error.maximumPermittedLoan": "... maximum permitted loan size is {money}",
+  "error.loanAlreadyRepaid": "... no loan to repay",
+  "error.currencyRequired": "... {money} required"
 }

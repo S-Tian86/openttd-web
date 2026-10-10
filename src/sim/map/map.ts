@@ -19,6 +19,8 @@ export const MIN_MAP_SIZE_BITS = 6;
 export const MAX_MAP_SIZE_BITS = 12;
 
 /** Owner values used on tiles. Port of company_type.h. */
+/** The player's company (single player). */
+export const COMPANY_FIRST = 0x00;
 export const OWNER_TOWN = 0x0f;
 export const OWNER_NONE = 0x10;
 export const OWNER_WATER = 0x11;
@@ -120,4 +122,12 @@ export function resetTileKeepingHeight(map: MapState, t: number): void {
   const h = map.height[t]!;
   clearTile(map, t);
   map.height[t] = h;
+}
+
+/** Port of tile_map.h:GetTileOwner (m1 bits 4..0). */
+export const getTileOwner = (map: MapState, t: number): number => map.m1[t]! & 0x1f;
+
+/** Port of tile_map.h:SetTileOwner: keeps m1 bits 7..5. */
+export function setTileOwner(map: MapState, t: number, owner: number): void {
+  map.m1[t] = (map.m1[t]! & 0xe0) | (owner & 0x1f);
 }
