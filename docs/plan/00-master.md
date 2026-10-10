@@ -258,6 +258,9 @@ skills in `.claude/skills/` execute it.
 
 **Goal:** the core OpenTTD loop, playable: build a line, run a train, earn money.
 
+> Design: [`stage-1-first-train.md`](stage-1-first-train.md) (decisions D1–D10, blocks 1.1–1.6,
+> chained block branches with preview deploys).
+
 - UI foundations: translations (`en`, `es`) with a language selector, theme contract,
   responsive HUD shell, camera with mouse and touch (pan, zoom).
 - Flat generated map: grass, water, trees.
