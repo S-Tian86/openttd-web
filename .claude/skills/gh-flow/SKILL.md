@@ -36,9 +36,13 @@ A new area label is created with the first issue that needs it
 ## 2. Branch
 
 ```bash
-git checkout main && git pull --ff-only
+BASE=main                          # or the current block branch, e.g. stage-1/block-1.1
+git checkout "$BASE" && git pull --ff-only
 git checkout -b <type>/<short-description>   # feat fix chore docs refactor test
 ```
+
+During a stage, `BASE` is the current block branch and every PR targets it
+(`gh pr create --base "$BASE"`). See CONTRIBUTING "Block branches".
 
 Mark the line `[~]` in `TRACKING.md`.
 
@@ -58,7 +62,7 @@ in the stage plan or amend `00-master.md` in place (`AMENDED in #N (PR #M)`).
 
 ```bash
 git push -u origin <branch>
-gh pr create --base main --title "<what it does>" --body-file -   # template, "Closes #N"
+gh pr create --base "$BASE" --title "<what it does>" --body-file -   # template, "Closes #N"
 ```
 
 Over ~400 lines of code (excluding tests and lock files) → chained PRs:
@@ -72,7 +76,7 @@ git diff --numstat main...HEAD -- . ':!*.test.ts' ':!*.spec.ts' ':!package-lock.
 ```bash
 gh pr checks <pr> --watch          # red → fix on the branch, never merge
 gh pr merge <pr> --merge --delete-branch
-git checkout main && git pull --ff-only
+git checkout "$BASE" && git pull --ff-only
 gh issue view <N> -R S-Tian86/openttd-web --json state   # expect CLOSED
 ```
 

@@ -2,40 +2,59 @@ name: Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'stage-*/block-*']
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: gh-pages
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      dir: ${{ steps.target.outputs.dir }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npm run build
-      - uses: actions/configure-pages@v6
-      - uses: actions/upload-pages-artifact@v5
+      - id: target
+        # main → site root; stage-1/block-1.1 → preview/block-1-1
+        run: |
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            echo "dir=." >> "$GITHUB_OUTPUT"
+          else
+            slug=$(echo "$GITHUB_REF_NAME" | sed 's|^stage-[0-9]*/||; s|\.|-|g')
+            echo "dir=preview/$slug" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/upload-artifact@v7
         with:
+          name: site
           path: dist
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: write
     steps:
-      - id: deployment
-        uses: actions/deploy-pages@v5
+      - uses: actions/download-artifact@v7
+        with:
+          name: site
+          path: dist
+      - uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dist
+          destination_dir: ${{ needs.build.outputs.dir }}
+          # Keep the other previews and the root when one target is redeployed.
+          keep_files: true
