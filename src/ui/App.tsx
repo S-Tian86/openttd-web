@@ -101,6 +101,8 @@ export function App({ session }: { session: UiSession }) {
               locale={snapshot.locale}
               info={queryWindow.info}
               townName={queryWindow.townName}
+              station={queryWindow.station}
+              depot={queryWindow.depot}
               onOpenTown={(index) => session.openTown(index)}
             />
           ) : null}

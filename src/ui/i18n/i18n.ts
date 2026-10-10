@@ -62,3 +62,12 @@ export function formatDate(locale: Locale, year: number, month: number, day: num
 export function formatNumber(locale: Locale, n: number): string {
   return new Intl.NumberFormat(locale === 'en' ? 'en-GB' : 'es').format(n);
 }
+
+/**
+ * {VELOCITY} for trains in OpenTTD's default (metric) units: ConvertKmhishSpeedToDisplaySpeed,
+ * which truncates, then STR_UNITS_VELOCITY_METRIC (same text in English and Spanish).
+ */
+export function formatSpeed(locale: Locale, kmhish: number): string {
+  const kmh = Math.trunc(Math.trunc(kmhish * 10 * 1.609344) / 16);
+  return translate(locale, 'unit.kmh', { speed: kmh });
+}

@@ -71,7 +71,7 @@ the issue.
   - [x] 1.3.9 Drawing construction and build gestures on the map — #109
   - [x] 1.3.10 Construction tools, cost bar, Confirm and error messages — #111
   - [x] 1.3.11 Finances window with the loan — #113
-  - [ ] 1.3.12 Query tool for rail, depots, stations and crossings
+  - [x] 1.3.12 Query tool for rail, depots, stations and crossings — #115
   - [ ] 1.3.13 Close block 1.3
 - [ ] 1.4 Trains — _(to create)_
 - [ ] 1.5 Cargo and economy — _(to create)_

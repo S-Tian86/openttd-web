@@ -242,3 +242,17 @@ test('turning a tool on while a press is held opens no query (R30)', async ({ pa
   await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(await lastCommand(page)).toBeNull();
 });
+
+test('querying built track shows it belongs to the player', async ({ page, isMobile }) => {
+  await openWorld(page, world, SEED, A);
+  await page.getByRole('button', { name: 'Build railway track' }).click();
+  await gestureAndConfirm(page, isMobile, A, E);
+  await expect.poll(() => lastCommand(page)).not.toBeNull();
+  await page.getByRole('button', { name: 'Query tile' }).click();
+  const { x, y } = await tileCentre(page, world, C);
+  if (isMobile) await page.touchscreen.tap(x, y);
+  else await page.mouse.click(x, y);
+  const dialog = page.getByRole('dialog', { name: 'Land area information' });
+  await expect(dialog).toContainText('Railway track');
+  await expect(dialog).toContainText('Owner: Your company');
+});
