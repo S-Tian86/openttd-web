@@ -42,6 +42,8 @@ the issue.
   - [x] 1.1.11 HUD shell and app wiring — #42
   - [x] 1.1.12 Evaluate reusing OpenTTD translations — #44
   - [x] 1.1.13 Close block 1.1 — #48
+  - [x] 1.1.15 Let the map edges scroll out from under the HUD — #125
+  - [x] 1.1.16 Replace native selects with a themed dropdown — #127
 - [~] 1.2 World — branch stage-1/block-1.2 — awaiting playtest
   - [x] 1.2.0 Reference notes and block plan — #51
   - [x] 1.2.1 Map geometry and slopes — #53
