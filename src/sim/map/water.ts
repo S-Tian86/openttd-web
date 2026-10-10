@@ -42,7 +42,8 @@ export const isWaterTile = (map: MapState, t: number): boolean =>
   getTileType(map, t) === TileType.Water && getWaterTileType(map, t) === WaterTileType.Clear;
 /** Port of water_map.h:IsCoastTile. */
 export const isCoastTile = (map: MapState, t: number): boolean =>
-  getTileType(map, t) === TileType.Water && getWaterTileType(map, t) === WaterTileType.Coast;
+  (getTileType(map, t) === TileType.Water && getWaterTileType(map, t) === WaterTileType.Coast) ||
+  (getTileType(map, t) === TileType.Trees && getWaterClass(map, t) !== WaterClass.Invalid);
 
 /** Port of water_map.h:HasTileWaterClass. */
 export function hasTileWaterClass(map: MapState, t: number): boolean {

@@ -250,7 +250,11 @@ export function growTownAtRoad(state: GameState, town: Town, start: number): boo
   return false;
 }
 
-/** Port of town_cmd.cpp:GrowTown (both expand modes). */
+/**
+ * Port of town_cmd.cpp:GrowTown (both expand modes).
+ * Precondition: the town centre is at least 12 tiles from the map edge (townCanBePlacedHere
+ * guarantees it), so the walk's tile offsets never leave the map; there is no bounds check here.
+ */
 export function growTown(state: GameState, town: Town): boolean {
   const { map } = state;
   // Find a road that we can base the construction on.

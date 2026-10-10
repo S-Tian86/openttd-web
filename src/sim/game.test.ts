@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getClearDensity } from './map/clear';
 import { getTileType, TileType, tileXY } from './map/map';
+import { newTown } from './town/town';
 import { createEmptyGame, hashGameState, takeDirtyTiles, tick } from './game';
 
 describe('createEmptyGame', () => {
@@ -65,5 +66,26 @@ describe('determinism', () => {
     const before = hashGameState(game);
     tick(game);
     expect(hashGameState(game)).not.toBe(before);
+  });
+
+  it('changes the hash when a town field changes', () => {
+    const game = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    game.towns.push(newTown(0, tileXY(game.map, 32, 32), 7, false));
+    const base = hashGameState(game);
+    const town = game.towns[0]!;
+    const hashes = new Set([base]);
+    for (const change of [
+      () => (town.xy += 1),
+      () => (town.nameParts += 1),
+      () => (town.isCity = true),
+      () => (town.numHouses += 1),
+      () => (town.population += 1),
+      () => (town.squaredZoneRadius[2] = 99),
+      () => (town.flags |= 1),
+    ]) {
+      change();
+      hashes.add(hashGameState(game));
+    }
+    expect(hashes.size).toBe(8);
   });
 });
