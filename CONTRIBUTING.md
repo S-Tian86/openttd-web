@@ -49,6 +49,21 @@ needs them and documented here.
 - If a PR exceeds ~400 lines of code (tests and lock files excluded), split it into chained PRs.
 - Merge only with CI green: `gh pr checks <n> --watch`, then `gh pr merge <n> --merge --delete-branch`.
 
+## Block branches (from Stage 1)
+
+Each block of a stage has a branch, `stage-N/block-N.M`, created from the previous block's
+branch (the first block from `main`). Task PRs target the **block branch**. Branches matching
+`stage-*/**` are protected by a ruleset: changes only through PRs with the `check` status green.
+
+- Every push to a block branch deploys a preview to
+  `https://s-tian86.github.io/openttd-web/preview/block-N-M/`.
+- When a block is complete, the author gets the preview link and its playtest guide
+  (`docs/game/block-N.M.md`), and work continues on the next block.
+- Playtest fixes go to the tested block's branch; then a PR **merges** (never rebases) that
+  branch into each later block branch.
+- An approved block merges into `main` through a PR, in order.
+- At most three completed blocks may wait for a playtest.
+
 ## Fidelity
 
 - Every module in `src/sim/` cites the OpenTTD file and function it ports:
