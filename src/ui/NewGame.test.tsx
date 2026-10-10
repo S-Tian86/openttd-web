@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/preact';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_GAME_OPTIONS, type GameOptions } from '../sim/game';
 import { NewGame, parseSeed } from './NewGame';
-import type { GameSpeed, Locale, UiSession, UiSnapshot } from './session';
+import type { GameSpeed, Locale, Tool, UiSession, UiSnapshot } from './session';
 
 const snapshot: UiSnapshot = {
   year: 1950,
@@ -18,6 +18,8 @@ const snapshot: UiSnapshot = {
   generating: null,
   generationError: null,
   gameOptions: { ...DEFAULT_GAME_OPTIONS, seed: 7 },
+  tool: null,
+  window: null,
 };
 
 afterEach(cleanup);
@@ -30,6 +32,9 @@ const fakeSession = (): UiSession => ({
   setLocale: vi.fn<(locale: Locale) => void>(),
   setTheme: vi.fn<(id: string) => void>(),
   newGame: vi.fn<(options: GameOptions) => void>(),
+  setTool: vi.fn<(tool: Tool | null) => void>(),
+  openTown: vi.fn<(index: number) => void>(),
+  closeWindow: vi.fn<() => void>(),
 });
 
 describe('parseSeed (Review Focus 3)', () => {

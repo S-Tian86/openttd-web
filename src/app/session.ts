@@ -1,9 +1,10 @@
 import { execute } from '../sim/command/command';
 import { tick, type GameOptions, type GameState } from '../sim/game';
+import { describeTile, industryInfo, townInfo } from '../sim/query';
 import { convertDateToYMD } from '../sim/time/date';
 import { WorldGenerationError } from '../sim/world/errors';
 import { generateGame, type GenerationProgress } from '../sim/world/generate';
-import type { GameSpeed, Locale, UiSession, UiSnapshot } from '../ui/session';
+import type { GameSpeed, Locale, Tool, UiSession, UiSnapshot, UiWindow } from '../ui/session';
 import { GENERATION_SLICE_MS, runGenerationSlice } from './generation';
 import { gameIntervalMs, SPEED_PERCENT, ticksDue, type LoopClock } from './loop';
 
@@ -31,6 +32,10 @@ export class GameSession implements UiSession {
   private generation: Generator<GenerationProgress, GameState, void> | null = null;
   private generatingFraction = 0;
   private generationError: UiSnapshot['generationError'] = null;
+  private tool: Tool | null = null;
+  /** Which window is open; its data is rebuilt from the state on every refresh. */
+  private windowRef:
+    { kind: 'tile'; tile: number } | { kind: 'town' | 'industry'; index: number } | null = null;
 
   constructor(
     state: GameState,
@@ -75,11 +80,41 @@ export class GameSession implements UiSession {
     this.refresh();
   };
 
+  setTool = (tool: Tool | null): void => {
+    this.tool = tool;
+    this.refresh();
+  };
+
+  openTown = (index: number): void => {
+    this.windowRef = { kind: 'town', index };
+    this.refresh();
+  };
+
+  closeWindow = (): void => {
+    this.windowRef = null;
+    this.refresh();
+  };
+
+  /** A tap or long press on a map tile: queries it when the tool is on or the press was long. */
+  tapTile = (tile: number, long: boolean): void => {
+    if (!long && this.tool !== 'query') return;
+    const info = describeTile(this.state, tile);
+    if (info.kind === 'house' && info.townIndex !== null) {
+      this.windowRef = { kind: 'town', index: info.townIndex };
+    } else if (info.kind === 'industry' && info.industryIndex !== null) {
+      this.windowRef = { kind: 'industry', index: info.industryIndex };
+    } else {
+      this.windowRef = { kind: 'tile', tile };
+    }
+    this.refresh();
+  };
+
   /** Starts a new world; a request that is still running is dropped (only the latest finishes). */
   newGame = (options: GameOptions): void => {
     this.generation = (this.deps.generate ?? generateGame)(options);
     this.generatingFraction = 0;
     this.generationError = null;
+    this.windowRef = null;
     this.refresh();
   };
 
@@ -111,6 +146,7 @@ export class GameSession implements UiSession {
       if (result.done) {
         this.generation = null;
         this.currentState = result.value;
+        this.windowRef = null;
         this.clock.nextTickAt = 0;
         this.deps.onNewState(result.value);
         this.refresh();
@@ -126,6 +162,23 @@ export class GameSession implements UiSession {
       return;
     }
     if (Math.round(this.generatingFraction * 100) !== before) this.refresh();
+  }
+
+  private buildWindow(): UiWindow | null {
+    const ref = this.windowRef;
+    if (ref === null) return null;
+    if (ref.kind === 'tile') {
+      if (ref.tile >= this.state.map.size) return null;
+      const info = describeTile(this.state, ref.tile);
+      const town = info.townIndex === null ? null : townInfo(this.state, info.townIndex);
+      return { kind: 'tile', info, townName: town === null ? null : town.name };
+    }
+    if (ref.kind === 'town') {
+      const info = townInfo(this.state, ref.index);
+      return info === null ? null : { kind: 'town', info };
+    }
+    const info = industryInfo(this.state, ref.index);
+    return info === null ? null : { kind: 'industry', info };
   }
 
   private buildSnapshot(): UiSnapshot {
@@ -144,6 +197,8 @@ export class GameSession implements UiSession {
       generating: this.generation === null ? null : this.generatingFraction,
       generationError: this.generationError,
       gameOptions: this.state.options,
+      tool: this.tool,
+      window: this.buildWindow(),
     };
   }
 

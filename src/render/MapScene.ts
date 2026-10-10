@@ -4,6 +4,7 @@ import { tileX, tileXY, tileY } from '../sim/map/map';
 import { townName } from '../sim/town/town-names';
 import { ATLAS_COLUMNS, atlasCell } from './atlas';
 import { pinchZoom, wheelZoom } from './camera';
+import { classifyPress, LONG_PRESS_MS, TAP_SLOP_PX } from './gesture';
 import { groundSprite } from './ground';
 import { chunkObjects } from './objects';
 import {
@@ -12,6 +13,7 @@ import {
   chunkCellToTile,
   tileToChunkCell,
   visibleChunks,
+  worldToTile,
 } from './projection';
 import {
   GROUND_SPRITE_IDS,
@@ -21,6 +23,12 @@ import {
   type SpriteId,
   type Theme,
 } from './theme';
+
+/** What the map reports back for taps and long presses on tiles. */
+export interface MapInput {
+  onTap(tile: number): void;
+  onLongPress(tile: number): void;
+}
 
 interface Chunk {
   map: Tilemaps.Tilemap;
@@ -41,6 +49,9 @@ export class MapScene extends Scene {
   private pinchStartDistance = 0;
   private pinching = false;
   private cameraReadout = '';
+  /** The single-pointer press in progress, classified once when it ends. */
+  private press: { x: number; y: number; at: number; moved: boolean; consumed: boolean } | null =
+    null;
 
   constructor(
     private state: GameState,
@@ -48,6 +59,7 @@ export class MapScene extends Scene {
     private readonly fallback: Theme,
     private readonly themeBase: string,
     private readonly fallbackBase: string,
+    private readonly callbacks: MapInput,
   ) {
     super('map');
   }
@@ -221,23 +233,62 @@ export class MapScene extends Scene {
     const camera = this.cameras.main;
     this.input.addPointer(1);
 
-    this.input.on('pointerdown', () => {
+    this.input.on('pointerdown', (pointer: Input.Pointer) => {
       const { pointer1, pointer2 } = this.input;
       if (pointer1.isDown && pointer2.isDown) {
+        if (this.press !== null) this.press.moved = true; // a pinch is never a tap
         this.pinching = true;
         this.pinchStartZoom = camera.zoom;
         this.pinchStartDistance = Math.max(1, this.pointerDistance(pointer1, pointer2));
+        return;
       }
+      this.press = {
+        x: pointer.x,
+        y: pointer.y,
+        at: performance.now(),
+        moved: false,
+        consumed: false,
+      };
+      const press = this.press;
+      // A wall-clock timer, not the scene clock: Phaser slows its clock on a slow frame rate,
+      // which would stretch the hold time on exactly the devices that need it to be 500 ms.
+      window.setTimeout(() => {
+        if (this.press !== press || press.moved || press.consumed || this.pinching) return;
+        if (!pointer.isDown) return;
+        press.consumed = true;
+        const tile = this.tileUnder(pointer);
+        if (tile !== undefined) this.callbacks.onLongPress(tile);
+      }, LONG_PRESS_MS);
     });
 
-    this.input.on('pointerup', () => {
+    this.input.on('pointerup', (pointer: Input.Pointer) => {
       if (!this.input.pointer1.isDown || !this.input.pointer2.isDown) {
         this.pinching = false;
       }
+      const press = this.press;
+      if (press === null) return;
+      if (this.input.pointer1.isDown || this.input.pointer2.isDown) return; // pinch still ending
+      this.press = null;
+      if (press.consumed) return;
+      const kind = classifyPress(
+        press,
+        { x: pointer.x, y: pointer.y, at: performance.now() },
+        press.moved,
+      );
+      if (kind !== 'tap') return;
+      const tile = this.tileUnder(pointer);
+      if (tile !== undefined) this.callbacks.onTap(tile);
     });
 
     this.input.on('pointermove', (pointer: Input.Pointer) => {
       const { pointer1, pointer2 } = this.input;
+      if (
+        this.press !== null &&
+        Math.max(Math.abs(pointer.x - this.press.x), Math.abs(pointer.y - this.press.y)) >
+          TAP_SLOP_PX
+      ) {
+        this.press.moved = true;
+      }
       if (this.pinching && pointer1.isDown && pointer2.isDown) {
         const zoom = pinchZoom(
           this.pinchStartZoom,
@@ -255,6 +306,15 @@ export class MapScene extends Scene {
     this.input.on('wheel', (pointer: Input.Pointer, _objects: unknown, _dx: number, dy: number) => {
       this.zoomAt(pointer.x, pointer.y, wheelZoom(camera.zoom, dy));
     });
+  }
+
+  /** The map tile under a pointer, or undefined outside the map. */
+  private tileUnder(pointer: Input.Pointer): number | undefined {
+    const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    const { x, y } = worldToTile(world.x, world.y);
+    const { map } = this.state;
+    if (x < 0 || y < 0 || x >= map.sizeX || y >= map.sizeY) return undefined;
+    return tileXY(map, x, y);
   }
 
   private pointerDistance(a: Input.Pointer, b: Input.Pointer): number {

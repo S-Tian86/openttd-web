@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/preact';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_GAME_OPTIONS, type GameOptions } from '../sim/game';
-import type { GameSpeed, Locale, UiSession, UiSnapshot } from './session';
+import type { GameSpeed, Locale, Tool, UiSession, UiSnapshot } from './session';
 import { StatusBar } from './StatusBar';
 
 const snapshot: UiSnapshot = {
@@ -18,6 +18,8 @@ const snapshot: UiSnapshot = {
   generating: null,
   generationError: null,
   gameOptions: DEFAULT_GAME_OPTIONS,
+  tool: null,
+  window: null,
 };
 
 function fakeSession(s: UiSnapshot): UiSession {
@@ -29,6 +31,9 @@ function fakeSession(s: UiSnapshot): UiSession {
     setLocale: vi.fn<(locale: Locale) => void>(),
     setTheme: vi.fn<(id: string) => void>(),
     newGame: vi.fn<(options: GameOptions) => void>(),
+    setTool: vi.fn<(tool: Tool | null) => void>(),
+    openTown: vi.fn<(index: number) => void>(),
+    closeWindow: vi.fn<() => void>(),
   };
 }
 
