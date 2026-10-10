@@ -54,6 +54,8 @@ needs them and documented here.
 Each block of a stage has a branch, `stage-N/block-N.M`, created from the previous block's
 branch (the first block from `main`). Task PRs target the **block branch**. Branches matching
 `stage-*/**` are protected by a ruleset: changes only through PRs with the `check` status green.
+Creating a new block branch needs the ruleset disabled for the push; the steps are in the
+`gh-flow` skill ("Creating a new block branch").
 
 - Every push to a block branch deploys a preview to
   `https://s-tian86.github.io/openttd-web/preview/block-N-M/`.
