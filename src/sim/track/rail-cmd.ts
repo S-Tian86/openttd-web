@@ -118,7 +118,7 @@ export function checkRailSlope(
   return succeed(0);
 }
 
-/** Port of rail_cmd.cpp:CmdBuildSingleRail (MP_RAILWAY and default branches). */
+/** Port of rail_cmd.cpp:CmdBuildSingleRail (MP_RAILWAY, MP_ROAD and default branches). */
 export function cmdBuildSingleRail(
   state: GameState,
   flags: number,

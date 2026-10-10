@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { execute } from '../command/command';
-import { createEmptyGame, type GameState } from '../game';
-import { COMPANY_FIRST, getTileOwner, getTileType, OWNER_TOWN, tileXY, TileType } from '../map/map';
+import { DoFlag } from '../command/cost';
+import { createEmptyGame, hashGameState, type GameState } from '../game';
+import { landscapeClear } from '../map/clear-tile';
+import {
+  COMPANY_FIRST,
+  getTileOwner,
+  getTileType,
+  OWNER_TOWN,
+  OWNER_WATER,
+  tileXY,
+  TileType,
+} from '../map/map';
 import { getTrackBits } from '../map/rail-map';
 import {
   getCrossingRailBits,
@@ -138,5 +148,25 @@ describe('level crossings (port of rail_cmd.cpp case MP_ROAD, roads.md §4.1)', 
     expect(closestTownFromTile(g, t, Infinity)?.index).toBe(0);
     tileLoopRoad(g, t, NOOP); // edge zone: barren → grass, as on any town road
     expect(getRoadside(g.map, t)).toBe(Roadside.Grass);
+  });
+
+  it('changes nothing in test mode and prices it like exec', () => {
+    const { g, t } = withRoad(RoadBits.Y);
+    const before = hashGameState(g);
+    const built = rail(g, t, Track.X, 'test');
+    expect(hashGameState(g)).toBe(before);
+    expect(rail(g, t, Track.X)).toEqual(built);
+    const crossed = hashGameState(g);
+    const removal = execute(g, { type: 'removeRail', tile: t, track: Track.X }, 'test');
+    expect(hashGameState(g)).toBe(crossed);
+    expect(execute(g, { type: 'removeRail', tile: t, track: Track.X }, 'exec')).toEqual(removal);
+  });
+
+  it('is cleared whole by the sea: rail then road (road_cmd.cpp ClearTile_Road)', () => {
+    const { g, t } = withRoad(RoadBits.Y);
+    rail(g, t, Track.X);
+    // RemoveRoad leaves plain rail (count 2 -> 1); the nested landscape clear removes that too.
+    expect(landscapeClear(g, t, DoFlag.Execute, OWNER_WATER).ok).toBe(true);
+    expect([getTileType(g.map, t), g.company.infrastructure.rail]).toEqual([TileType.Clear, 0]);
   });
 });
