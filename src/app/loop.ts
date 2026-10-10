@@ -25,13 +25,23 @@ export interface LoopClock {
   nextTickAt: number;
 }
 
-/** Ticks to run now. Port of video_driver.cpp:VideoDriver::GameLoop, called until caught up. */
+/** Lag treated as a stall rather than a slow frame (browser frames are ~16-100 ms apart). */
+export const MAX_FRAME_LAG_MS = 100;
+
+/**
+ * Ticks to run this frame. OpenTTD's driver drops any backlog older than ALLOWED_DRIFT
+ * intervals (video_driver.cpp:VideoDriver::GameLoop); a browser only calls once per frame,
+ * so the allowed lag is at least one slow frame. Catch-up is capped per frame and the rest
+ * of the backlog is dropped, so a slow phone never freezes.
+ */
 export function ticksDue(clock: LoopClock, now: number, intervalMs: number): number {
+  const allowedLag = Math.max(ALLOWED_DRIFT * intervalMs, MAX_FRAME_LAG_MS);
+  if (clock.nextTickAt < now - allowedLag) clock.nextTickAt = now;
   let ticks = 0;
   while (now >= clock.nextTickAt && ticks < MAX_TICKS_PER_FRAME) {
     clock.nextTickAt += intervalMs;
-    if (clock.nextTickAt < now - ALLOWED_DRIFT * intervalMs) clock.nextTickAt = now;
     ticks++;
   }
+  if (ticks === MAX_TICKS_PER_FRAME && now >= clock.nextTickAt) clock.nextTickAt = now;
   return ticks;
 }
