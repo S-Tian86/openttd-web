@@ -1,7 +1,7 @@
 import { AUTO, Game, Scale } from 'phaser';
 import { render } from 'preact';
 import { MapScene } from '../render/MapScene';
-import { createGame } from '../sim/game';
+import { createGame } from '../sim/world/generate';
 import { App } from '../ui/App';
 import { loadLocale, saveLocale, translate } from '../ui/i18n/i18n';
 import '../ui/styles.css';
@@ -46,7 +46,7 @@ async function start(): Promise<Game | undefined> {
 
   applyTokens(fallback, baseOf(fallback.id));
 
-  const state = createGame();
+  const state = createGame({ seed: crypto.getRandomValues(new Uint32Array(1))[0]! });
   const session = new GameSession(
     state,
     locale,

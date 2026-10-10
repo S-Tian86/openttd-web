@@ -84,7 +84,7 @@ state and tick counter reset). Then:
 4. GenerateLandscape(mode)   -> 4.2 (heights, FixSlopes, ConvertGround, snow/desert line, CreateRivers)
    if it returned true (always for GWM_NEWGAME):
 5. GenerateClearTile()       -> 4.6
-6. Map::CountLandTiles()     initial_land_count = #tiles that are not MP_WATER   (void counts as land)
+6. Map::CountLandTiles()     initial_land_count = #tiles that are not open water (`IsWaterTile`: water type Clear), so coast and void count as land
                              initial_land_count += initial_land_count / 12;  min(.., Map::size)
 7. GenerateTowns(town_layout)         (towns-industries.md 4.8) abort on failure
 8. GenerateIndustries()               (towns-industries.md 4.13)

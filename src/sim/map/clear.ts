@@ -19,6 +19,17 @@ export function makeClear(map: MapState, t: number, ground: ClearGround, density
   map.m5[t] = (ground << 2) | density;
 }
 
+/** Port of clear_map.h:SetClearGroundDensity. Resets the growth counter. */
+export function setClearGroundDensity(
+  map: MapState,
+  t: number,
+  ground: ClearGround,
+  density: number,
+): void {
+  setTileType(map, t, TileType.Clear);
+  map.m5[t] = (ground << 2) | density;
+}
+
 export const getClearGround = (map: MapState, t: number): ClearGround =>
   ((map.m5[t]! >>> 2) & 0x7) as ClearGround;
 export const getClearDensity = (map: MapState, t: number): number => map.m5[t]! & 0x3;
