@@ -235,6 +235,47 @@ describe('GameSession construction (R20, R25, R31)', () => {
     expect(onExecuted.mock.calls).toEqual([[DRAG, 450]]);
   });
 
+  it('keeps a plan waiting for Confirm when the next finger gesture turns into a pinch (C1)', () => {
+    const onPreview = vi.fn<(p: MapPreview | null) => void>();
+    const onExecuted = vi.fn<(c: Command, cost: number) => void>();
+    const session = builder({ onPreview, onExecuted });
+    session.setTool('rail');
+    session.buildGesture(gesture('move', P(10, 10), P(14, 10), true));
+    session.buildGesture(gesture('end', P(10, 10), P(14, 10), true));
+    const waiting = session.getSnapshot().preview;
+    const ghost = onPreview.mock.lastCall?.[0];
+    // The pinch's first finger arrives alone and starts a build, then the second cancels it.
+    session.buildGesture(gesture('move', P(20, 30), P(20, 30), true));
+    session.buildGesture(gesture('cancel', P(20, 30), P(20, 30), true));
+    expect(session.getSnapshot().preview).toEqual(waiting);
+    expect(onPreview.mock.lastCall?.[0]).toEqual(ghost);
+    session.confirmBuild();
+    expect(onExecuted.mock.calls).toEqual([[DRAG, 450]]);
+  });
+
+  it('replaces a plan waiting for Confirm with the next finger gesture that ends', () => {
+    const onExecuted = vi.fn<(c: Command, cost: number) => void>();
+    const session = builder({ onExecuted });
+    session.setTool('rail');
+    session.buildGesture(gesture('end', P(10, 10), P(14, 10), true));
+    session.buildGesture(gesture('move', P(10, 12), P(14, 12), true));
+    session.buildGesture(gesture('end', P(10, 12), P(14, 12), true));
+    session.buildGesture(gesture('move', P(20, 30), P(20, 30), true));
+    session.buildGesture(gesture('cancel', P(20, 30), P(20, 30), true));
+    session.confirmBuild();
+    expect(onExecuted.mock.calls).toEqual([
+      [
+        {
+          type: 'buildRailroadTrack',
+          endTile: 14 + (12 << 6),
+          startTile: 10 + (12 << 6),
+          track: Track.X,
+        },
+        450,
+      ],
+    ]);
+  });
+
   it('cancels a pending preview without building', () => {
     const session = builder();
     session.setTool('rail');
