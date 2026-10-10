@@ -1,6 +1,12 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { parseTheme, resolveSprite, SPRITE_IDS } from './theme';
+import {
+  GROUND_SPRITE_IDS,
+  OBJECT_SPRITE_IDS,
+  parseTheme,
+  resolveSprite,
+  SPRITE_IDS,
+} from './theme';
 
 const read = (path: string): unknown => JSON.parse(readFileSync(path, 'utf8'));
 
@@ -14,6 +20,13 @@ describe('theme contract', () => {
       expect(existsSync(`public/themes/blocks/${file}`)).toBe(true);
     }
     expect(existsSync(`public/themes/blocks/${blocks.tokens}`)).toBe(true);
+  });
+
+  it('splits sprites into ground and object lists covering every id once', () => {
+    expect([...GROUND_SPRITE_IDS, ...OBJECT_SPRITE_IDS].toSorted()).toEqual(
+      [...SPRITE_IDS].toSorted(),
+    );
+    expect(new Set(SPRITE_IDS).size).toBe(SPRITE_IDS.length);
   });
 
   it('lists the built-in themes in the index', () => {

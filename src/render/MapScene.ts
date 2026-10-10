@@ -1,8 +1,11 @@
-import { Math as PMath, Scene, type Input, type Tilemaps } from 'phaser';
+import { Math as PMath, Scene, type GameObjects, type Input, type Tilemaps } from 'phaser';
 import { takeDirtyTiles, type GameState } from '../sim/game';
 import { tileX, tileXY, tileY } from '../sim/map/map';
+import { townName } from '../sim/town/town-names';
+import { ATLAS_COLUMNS, atlasCell } from './atlas';
 import { pinchZoom, wheelZoom } from './camera';
 import { groundSprite } from './ground';
+import { chunkObjects } from './objects';
 import {
   CHUNK_TILES,
   TILE_PX,
@@ -10,26 +13,37 @@ import {
   tileToChunkCell,
   visibleChunks,
 } from './projection';
-import { resolveSprite, SPRITE_IDS, type Theme } from './theme';
+import {
+  GROUND_SPRITE_IDS,
+  OBJECT_PX_HEIGHT,
+  OBJECT_SPRITE_IDS,
+  resolveSprite,
+  type SpriteId,
+  type Theme,
+} from './theme';
 
 interface Chunk {
   map: Tilemaps.Tilemap;
   layer: Tilemaps.TilemapLayer;
+  objects: GameObjects.Blitter;
 }
 
+const GROUND_INDEX: readonly SpriteId[] = GROUND_SPRITE_IDS;
 const CHUNK_PX = CHUNK_TILES * TILE_PX;
 
 /** Draws the ground layer in 32×32-tile chunks, keeping only the visible ones alive. */
 export class MapScene extends Scene {
   private readonly chunks = new Map<string, Chunk>();
-  private firstFrameDone = false;
+  private labels: GameObjects.Text[] = [];
+  private pending: { state: GameState; focusTile: number | undefined } | null = null;
+  private justSwapped = false;
   private pinchStartZoom = 1;
   private pinchStartDistance = 0;
   private pinching = false;
   private cameraReadout = '';
 
   constructor(
-    private readonly state: GameState,
+    private state: GameState,
     private readonly theme: Theme,
     private readonly fallback: Theme,
     private readonly themeBase: string,
@@ -38,38 +52,135 @@ export class MapScene extends Scene {
     super('map');
   }
 
+  /** Swaps the world at the next update and centres on `focusTile` (or the map centre). */
+  showGame(state: GameState, focusTile?: number): void {
+    this.pending = { state, focusTile };
+  }
+
   preload(): void {
-    for (const id of SPRITE_IDS) {
+    const load = (
+      id: (typeof GROUND_SPRITE_IDS)[number] | (typeof OBJECT_SPRITE_IDS)[number],
+      height: number,
+    ): void => {
       const base = this.theme.sprites[id] === undefined ? this.fallbackBase : this.themeBase;
       this.load.svg(id, base + resolveSprite(this.theme, this.fallback, id), {
         width: TILE_PX,
-        height: TILE_PX,
+        height,
       });
-    }
+    };
+    for (const id of GROUND_SPRITE_IDS) load(id, TILE_PX);
+    for (const id of OBJECT_SPRITE_IDS) load(id, OBJECT_PX_HEIGHT);
   }
 
   create(): void {
-    const atlas = this.textures.createCanvas('ground-atlas', TILE_PX * SPRITE_IDS.length, TILE_PX);
-    if (atlas === null) throw new Error('Cannot create the ground atlas');
-    SPRITE_IDS.forEach((id, i) => {
-      atlas.context.drawImage(
-        this.textures.get(id).getSourceImage() as CanvasImageSource,
-        i * TILE_PX,
-        0,
-        TILE_PX,
-        TILE_PX,
-      );
-    });
-    atlas.refresh();
-
-    const { sizeX, sizeY } = this.state.map;
-    const camera = this.cameras.main;
-    camera.setBounds(0, 0, sizeY * TILE_PX, sizeX * TILE_PX);
-    camera.centerOn((sizeY * TILE_PX) / 2, (sizeX * TILE_PX) / 2);
+    this.createAtlases();
+    this.resetView(undefined);
     this.setupInput();
   }
 
+  private createAtlases(): void {
+    if (!this.textures.exists('ground-atlas')) {
+      const rows = Math.ceil(GROUND_SPRITE_IDS.length / ATLAS_COLUMNS);
+      const atlas = this.textures.createCanvas(
+        'ground-atlas',
+        ATLAS_COLUMNS * TILE_PX,
+        rows * TILE_PX,
+      );
+      if (atlas === null) throw new Error('Cannot create the ground atlas');
+      GROUND_SPRITE_IDS.forEach((id, i) => {
+        const { x, y } = atlasCell(i, TILE_PX, TILE_PX);
+        atlas.context.drawImage(
+          this.textures.get(id).getSourceImage() as CanvasImageSource,
+          x,
+          y,
+          TILE_PX,
+          TILE_PX,
+        );
+      });
+      atlas.refresh();
+    }
+    if (!this.textures.exists('object-atlas')) {
+      const rows = Math.ceil(OBJECT_SPRITE_IDS.length / ATLAS_COLUMNS);
+      const atlas = this.textures.createCanvas(
+        'object-atlas',
+        ATLAS_COLUMNS * TILE_PX,
+        rows * OBJECT_PX_HEIGHT,
+      );
+      if (atlas === null) throw new Error('Cannot create the object atlas');
+      OBJECT_SPRITE_IDS.forEach((id, i) => {
+        const { x, y } = atlasCell(i, TILE_PX, OBJECT_PX_HEIGHT);
+        atlas.context.drawImage(
+          this.textures.get(id).getSourceImage() as CanvasImageSource,
+          x,
+          y,
+          TILE_PX,
+          OBJECT_PX_HEIGHT,
+        );
+        atlas.add(id, 0, x, y, TILE_PX, OBJECT_PX_HEIGHT);
+      });
+      atlas.refresh();
+    }
+  }
+
+  /** Sets camera bounds for the current map, centres on the focus tile and builds the town labels. */
+  private resetView(focusTile: number | undefined): void {
+    const { map, towns } = this.state;
+    const camera = this.cameras.main;
+    camera.setBounds(0, 0, map.sizeY * TILE_PX, map.sizeX * TILE_PX);
+    if (focusTile === undefined) {
+      camera.centerOn((map.sizeY * TILE_PX) / 2, (map.sizeX * TILE_PX) / 2);
+    } else {
+      camera.centerOn(
+        (tileY(map, focusTile) + 0.5) * TILE_PX,
+        (tileX(map, focusTile) + 0.5) * TILE_PX,
+      );
+    }
+    this.labels = towns.map((town) =>
+      this.add
+        .text(
+          (tileY(map, town.xy) + 0.5) * TILE_PX,
+          (tileX(map, town.xy) + 0.5) * TILE_PX,
+          townName(town.nameParts),
+          {
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: '28px',
+            color: '#1f2a33',
+            backgroundColor: '#fffaf2',
+            padding: { x: 8, y: 4 },
+          },
+        )
+        .setOrigin(0.5, 1)
+        .setDepth(10000),
+    );
+  }
+
+  private applyPending(): void {
+    if (this.pending === null) return;
+    const { state, focusTile } = this.pending;
+    this.pending = null;
+    for (const chunk of this.chunks.values()) this.destroyChunk(chunk);
+    this.chunks.clear();
+    for (const label of this.labels) label.destroy();
+    this.labels = [];
+    this.state = state;
+    this.resetView(focusTile);
+    this.justSwapped = true;
+  }
+
+  private destroyChunk(chunk: Chunk): void {
+    chunk.objects.destroy();
+    chunk.map.destroy();
+  }
+
+  private fillObjects(chunk: Chunk, col: number, row: number): void {
+    chunk.objects.clear();
+    for (const { sprite, px, py } of chunkObjects(this.state.map, col, row)) {
+      chunk.objects.create(px - TILE_PX / 2, py - OBJECT_PX_HEIGHT, sprite);
+    }
+  }
+
   override update(): void {
+    this.applyPending();
     const { map } = this.state;
     const wanted = visibleChunks(this.cameras.main.worldView, map.sizeX, map.sizeY);
     const wantedKeys = new Set<string>();
@@ -80,21 +191,28 @@ export class MapScene extends Scene {
     }
     for (const [key, chunk] of this.chunks) {
       if (wantedKeys.has(key)) continue;
-      chunk.map.destroy();
+      this.destroyChunk(chunk);
       this.chunks.delete(key);
     }
 
+    const dirtyChunks = new Set<string>();
     for (const t of takeDirtyTiles(this.state)) {
       const { col, row, cx, cy } = tileToChunkCell(tileX(map, t), tileY(map, t));
-      this.chunks
-        .get(`${col},${row}`)
-        ?.layer.putTileAt(SPRITE_IDS.indexOf(groundSprite(map, t)), cx, cy);
+      const key = `${col},${row}`;
+      const chunk = this.chunks.get(key);
+      if (chunk === undefined) continue;
+      chunk.layer.putTileAt(GROUND_INDEX.indexOf(groundSprite(map, t)), cx, cy);
+      dirtyChunks.add(key);
+    }
+    for (const key of dirtyChunks) {
+      const [col, row] = key.split(',').map(Number) as [number, number];
+      this.fillObjects(this.chunks.get(key)!, col, row);
     }
 
     this.publishCamera();
 
-    if (!this.firstFrameDone) {
-      this.firstFrameDone = true;
+    if (this.justSwapped) {
+      this.justSwapped = false;
       document.documentElement.dataset['gameReady'] = 'true';
     }
   }
@@ -184,9 +302,15 @@ export class MapScene extends Scene {
       for (let cx = 0; cx < CHUNK_TILES; cx++) {
         const tile = chunkCellToTile(col, row, cx, cy);
         const t = tileXY(this.state.map, tile.x, tile.y);
-        layer.putTileAt(SPRITE_IDS.indexOf(groundSprite(this.state.map, t)), cx, cy);
+        layer.putTileAt(GROUND_INDEX.indexOf(groundSprite(this.state.map, t)), cx, cy);
       }
     }
-    return { map, layer };
+    const chunk: Chunk = {
+      map,
+      layer,
+      objects: this.add.blitter(col * CHUNK_PX, row * CHUNK_PX, 'object-atlas').setDepth(1 + row),
+    };
+    this.fillObjects(chunk, col, row);
+    return chunk;
   }
 }
