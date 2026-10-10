@@ -35,7 +35,7 @@ the issue.
   - [x] 1.1.4 Dates and clocks — #28
   - [x] 1.1.5 Company money, commands and the game state — #30
   - [x] 1.1.6 Tick pacing and the game session — #32
-  - [ ] 1.1.7 Theme contract and the "blocks" theme — _(to create)_
+  - [x] 1.1.7 Theme contract and the "blocks" theme — #34
   - [ ] 1.1.8 Chunked map rendering — _(to create)_
   - [ ] 1.1.9 Mouse and touch camera — _(to create)_
   - [ ] 1.1.10 Translations and formatting — _(to create)_
