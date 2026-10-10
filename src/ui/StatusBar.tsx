@@ -33,17 +33,19 @@ export function StatusBar({ session, snapshot, onSettings }: StatusBarProps) {
         >
           {snapshot.paused ? '▶' : '⏸'}
         </button>
-        {SPEEDS.map(({ speed, label, glyph }) => (
-          <button
-            key={speed}
-            type="button"
-            aria-pressed={snapshot.speed === speed}
-            aria-label={t(label)}
-            onClick={() => session.setSpeed(speed)}
-          >
-            {glyph}
-          </button>
-        ))}
+        <div class="speed-group" role="group" aria-label={t('hud.speed')}>
+          {SPEEDS.map(({ speed, label, glyph }) => (
+            <button
+              key={speed}
+              type="button"
+              aria-pressed={snapshot.speed === speed}
+              aria-label={t(label)}
+              onClick={() => session.setSpeed(speed)}
+            >
+              {glyph}
+            </button>
+          ))}
+        </div>
         <button type="button" aria-label={t('hud.settings')} onClick={onSettings}>
           ⚙
         </button>
