@@ -19,7 +19,7 @@ the issue.
 - [x] 0.2 Contribution workflow and project skills — #1
 - [x] 0.3 App scaffold with layered structure — #2
 - [x] 0.4 Lint, formatting and sim/ barrier — #3
-- [ ] 0.5 End-to-end smoke test — #4
+- [x] 0.5 End-to-end smoke test — #4
 - [ ] 0.6 CI, deploy and security baseline — #5
 - [ ] 0.7 OpenTTD reference notes for Stage 1 — #6
 - [ ] 0.8 Close Stage 0 — #7
