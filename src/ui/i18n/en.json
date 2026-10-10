@@ -82,5 +82,6 @@
   "error.flatLandRequired": "Flat land required",
   "error.adjoinsMoreThanOne": "Adjoins more than one existing station/loading area",
   "error.stationTooSpreadOut": "... station too spread out",
-  "error.mustDemolishRailroad": "Must demolish railway station first"
+  "error.mustDemolishRailroad": "Must demolish railway station first",
+  "error.noStation": "... there is no station here"
 }

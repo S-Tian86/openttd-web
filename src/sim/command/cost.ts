@@ -24,6 +24,7 @@ export const ERROR_KEYS = [
   'error.adjoinsMoreThanOne',
   'error.stationTooSpreadOut',
   'error.mustDemolishRailroad',
+  'error.noStation',
 ] as const;
 export type ErrorKey = (typeof ERROR_KEYS)[number];
 
