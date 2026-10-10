@@ -1,11 +1,19 @@
-import { Math as PMath, Scene, type GameObjects, type Input, type Tilemaps } from 'phaser';
+import {
+  Math as PMath,
+  Scene,
+  type GameObjects,
+  type Input,
+  type Tilemaps,
+  type Types,
+} from 'phaser';
 import { takeDirtyTiles, type GameState } from '../sim/game';
 import { tileX, tileXY, tileY } from '../sim/map/map';
-import { townName } from '../sim/town/town-names';
+import type { Town } from '../sim/town/town';
 import { ATLAS_COLUMNS, atlasCell } from './atlas';
 import { clampScrollToMap, pinchZoom, wheelZoom } from './camera';
 import { classifyPress, LONG_PRESS_MS, TAP_SLOP_PX } from './gesture';
 import { groundSprite } from './ground';
+import { isSmallLabel, LABEL_FONT_PX } from './labels';
 import { chunkObjects } from './objects';
 import {
   CHUNK_TILES,
@@ -30,6 +38,43 @@ export interface MapInput {
   onLongPress(tile: number): void;
 }
 
+/** Text the map draws, written by the app in the player's language. */
+export interface MapText {
+  townLabel(town: Town, small: boolean): string;
+}
+
+/** Sign style from the theme tokens: a panel box, or small text with a halo. */
+function labelStyle(small: boolean): Types.GameObjects.Text.TextStyle {
+  const css = getComputedStyle(document.documentElement);
+  const token = (name: string, fallback: string): string =>
+    css.getPropertyValue(name).trim() || fallback;
+  const text = token('--color-text', '#2d4a3e');
+  const panel = token('--color-panel', '#fffaf2');
+  const font = token('--font', 'sans-serif');
+  // OpenTTD's small sign is white with a black shadow over its dark terrain; over the light
+  // themes the same idea reads better inverted: dark text with a light halo.
+  return small
+    ? {
+        fontFamily: font,
+        fontSize: `${LABEL_FONT_PX.small}px`,
+        fontStyle: 'bold',
+        color: text,
+        backgroundColor: 'rgba(0, 0, 0, 0)',
+        padding: { x: 3, y: 2 },
+        stroke: panel,
+        strokeThickness: 4,
+      }
+    : {
+        fontFamily: font,
+        fontSize: `${LABEL_FONT_PX.normal}px`,
+        color: text,
+        backgroundColor: panel,
+        fontStyle: 'normal',
+        padding: { x: 6, y: 3 },
+        strokeThickness: 0,
+      };
+}
+
 interface Chunk {
   map: Tilemaps.Tilemap;
   layer: Tilemaps.TilemapLayer;
@@ -43,6 +88,9 @@ const CHUNK_PX = CHUNK_TILES * TILE_PX;
 export class MapScene extends Scene {
   private readonly chunks = new Map<string, Chunk>();
   private labels: GameObjects.Text[] = [];
+  /** Whether the labels carry the small style; null forces a restyle. */
+  private labelsSmall: boolean | null = null;
+  private labelReadout = '';
   private pending: { state: GameState; focusTile: number | undefined } | null = null;
   private justSwapped = false;
   private pinchStartZoom = 1;
@@ -60,8 +108,14 @@ export class MapScene extends Scene {
     private readonly themeBase: string,
     private readonly fallbackBase: string,
     private readonly callbacks: MapInput,
+    private readonly text: MapText,
   ) {
     super('map');
+  }
+
+  /** Re-reads the theme tokens for the town signs at the next update. */
+  restyleLabels(): void {
+    this.labelsSmall = null;
   }
 
   /** Swaps the world at the next update and centres on `focusTile` (or the map centre). */
@@ -148,21 +202,40 @@ export class MapScene extends Scene {
     }
     this.labels = towns.map((town) =>
       this.add
-        .text(
-          (tileY(map, town.xy) + 0.5) * TILE_PX,
-          (tileX(map, town.xy) + 0.5) * TILE_PX,
-          townName(town.nameParts),
-          {
-            fontFamily: 'system-ui, sans-serif',
-            fontSize: '28px',
-            color: '#1f2a33',
-            backgroundColor: '#fffaf2',
-            padding: { x: 8, y: 4 },
-          },
-        )
+        .text((tileY(map, town.xy) + 0.5) * TILE_PX, (tileX(map, town.xy) + 0.5) * TILE_PX, '')
         .setOrigin(0.5, 1)
         .setDepth(10000),
     );
+    this.labelsSmall = null;
+  }
+
+  /**
+   * Keeps every town sign at a constant screen size, like OpenTTD's viewport signs
+   * (viewport.cpp ViewportDrawStrings), switching to the small sign far out.
+   */
+  private updateLabels(): void {
+    const { zoom } = this.cameras.main;
+    const small = isSmallLabel(zoom);
+    const style = small === this.labelsSmall ? null : labelStyle(small);
+    this.labelsSmall = small;
+    this.state.towns.forEach((town, i) => {
+      const label = this.labels[i];
+      if (label === undefined) return;
+      if (style !== null) label.setStyle(style);
+      const text = this.text.townLabel(town, small);
+      if (label.text !== text) label.setText(text);
+      label.setScale(1 / zoom);
+    });
+    const first = this.labels[0];
+    if (first === undefined) return;
+    const height = String(Math.round(first.displayHeight * zoom));
+    const readout = `${first.text}|${height}`;
+    if (readout === this.labelReadout) return;
+    this.labelReadout = readout;
+    const game = document.getElementById('game');
+    if (game === null) return;
+    game.dataset['townLabel'] = first.text;
+    game.dataset['townLabelHeight'] = height;
   }
 
   private applyPending(): void {
@@ -223,6 +296,7 @@ export class MapScene extends Scene {
       this.fillObjects(this.chunks.get(key)!, col, row);
     }
 
+    this.updateLabels();
     this.publishCamera();
 
     if (this.justSwapped) {

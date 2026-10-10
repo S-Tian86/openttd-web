@@ -60,6 +60,7 @@ the issue.
   - [x] 1.2.12 New-game window and background generation — #75
   - [x] 1.2.13 Query tool, town and industry windows — #77
   - [x] 1.2.14 Close block 1.2 — #84
+  - [x] 1.2.18 Draw town names at a constant screen size — #133
 - [ ] 1.3 Construction — _(to create)_
 - [ ] 1.4 Trains — _(to create)_
 - [ ] 1.5 Cargo and economy — _(to create)_

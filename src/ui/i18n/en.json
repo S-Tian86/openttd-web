@@ -64,5 +64,7 @@
   "industry.coalMine": "Coal Mine",
   "industry.powerStation": "Power Station",
   "industry.name": "{town} {type}",
-  "industry.location": "Location: {x} × {y}"
+  "industry.location": "Location: {x} × {y}",
+  "map.townLabel": "{town} ({population})",
+  "map.townLabelCity": "{town} ({population}) ★"
 }
