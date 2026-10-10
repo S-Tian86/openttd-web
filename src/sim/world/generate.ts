@@ -10,6 +10,7 @@ import { runTileLoop } from '../map/tile-loop';
 import { isWaterTile } from '../map/water';
 import type { MapState } from '../map/map';
 import { generateClearTile } from './clear-gen';
+import { generateIndustries } from '../industry/industry-gen';
 import { generateTowns } from '../town/town-gen';
 import { generateTerrain } from './tgp';
 import { generateTrees } from './trees';
@@ -46,7 +47,7 @@ export function* generateGame(
   state.initialLandCount = countLandTiles(state.map);
   yield { fraction: 0.25 };
   for (const p of generateTowns(state)) yield { fraction: 0.25 + 0.3 * p };
-  // Industries (Task 10) are inserted here, before the trees.
+  for (const p of generateIndustries(state)) yield { fraction: 0.55 + 0.15 * p };
   generateTrees(state);
   yield { fraction: 0.8 };
   const procs = tileLoopProcs(state);
