@@ -2,8 +2,8 @@
 // linter rejects them. The sim import is the control: sim may import sim.
 import { Scene } from 'phaser';
 import { readFileSync } from 'node:fs';
-import { BootScene } from '../../src/render/BootScene';
+import { TILE_PX } from '../../src/render/projection';
 import { economy } from '../../reference/OpenTTD/src/economy';
 import { DAY_TICKS } from '../../src/sim/core/constants';
 
-export const leaks = [Scene, readFileSync, BootScene, economy, DAY_TICKS];
+export const leaks = [Scene, readFileSync, TILE_PX, economy, DAY_TICKS];
