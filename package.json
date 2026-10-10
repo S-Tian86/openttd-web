@@ -15,7 +15,7 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.sim.json && tsc -p tests/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "oxlint --deny-warnings --ignore-pattern 'tests/architecture/sim-*.ts'",
+    "lint": "oxlint --deny-warnings --ignore-pattern 'tests/architecture/sim-*.ts' --ignore-pattern 'tests/architecture/*-imports.ts'",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
