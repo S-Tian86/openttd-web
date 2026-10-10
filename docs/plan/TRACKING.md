@@ -32,7 +32,7 @@ the issue.
   - [~] 1.1.1 Preview deploys and block workflow — #22
   - [x] 1.1.2 Random generator — #24
   - [x] 1.1.3 Map storage and the tile loop — #26
-  - [ ] 1.1.4 Dates and clocks — _(to create)_
+  - [x] 1.1.4 Dates and clocks — #28
   - [ ] 1.1.5 Company money, commands and the game state — _(to create)_
   - [ ] 1.1.6 Tick pacing and the game session — _(to create)_
   - [ ] 1.1.7 Theme contract and the "blocks" theme — _(to create)_
