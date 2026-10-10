@@ -66,6 +66,8 @@ the issue.
   - [x] 1.2.15 Keep real-time game speed on slow frames — #79
   - [x] 1.2.16 Address the block 1.2 final review — #82
   - [x] 1.2.17 Keep a long press when its timer runs after the release — #89
+  - [x] 1.2.18 Draw town names at a constant screen size — #133
+  - [x] 1.2.19 Match the OpenTTD zoom range and reset it on a new game — #135
   - [ ] 1.2.B Backlog: minor findings deferred in block 1.2 — #86
 - [~] 1.3 Construction — branch stage-1/block-1.3 — awaiting playtest
   - [x] 1.3.0 Reference notes and block plan — #87

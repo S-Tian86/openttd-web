@@ -153,5 +153,7 @@
   "tile.railType": "Rail type: {type}",
   "tile.railSpeed": "Rail speed limit: {speed}",
   "railType.rail": "Railway",
-  "unit.kmh": "{speed} km/h"
+  "unit.kmh": "{speed} km/h",
+  "map.townLabel": "{town} ({population})",
+  "map.townLabelCity": "{town} ({population}) ★"
 }
