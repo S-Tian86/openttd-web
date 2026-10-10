@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { execute } from '../command/command';
 import { DoFlag } from '../command/cost';
-import { createEmptyGame, tick, type GameState } from '../game';
+import { createEmptyGame, hashGameState, tick, type GameState } from '../game';
 import { landscapeClear } from '../map/clear-tile';
 import { makeHouseTile } from '../map/house-map';
 import { COMPANY_FIRST, getTileType, tileXY, TileType } from '../map/map';
@@ -41,6 +41,17 @@ describe('demolishing houses (port of town_cmd.cpp:ClearTile_Town)', () => {
       expect.objectContaining({ cost: 421 }),
       expect.objectContaining({ cost: 1171 }),
     ]);
+  });
+
+  it('changes nothing when a house clear is only tested', () => {
+    const g = townWithHouses();
+    const before = hashGameState(g);
+    expect(execute(g, { type: 'landscapeClear', tile: at(g, 25, 21) }, 'test')).toEqual({
+      ok: true,
+      cost: 1171,
+    });
+    expect(hashGameState(g)).toBe(before);
+    expect(getTileType(g.map, at(g, 25, 21))).toBe(TileType.House);
   });
 
   it('refuses houses to builders (Auto)', () => {

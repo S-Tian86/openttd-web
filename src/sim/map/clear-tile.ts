@@ -15,20 +15,20 @@ import { getTreeCount } from './tree-map';
 import { getWaterTileType, WaterTileType } from './water';
 
 /** Port of clear_cmd.cpp:clear_price_table. */
-const CLEAR_PRICE: Partial<Record<ClearGround, PriceName>> = {
+const CLEAR_PRICE: Record<ClearGround, PriceName> = {
   [ClearGround.Grass]: 'clearGrass',
   [ClearGround.Rough]: 'clearRough',
   [ClearGround.Rocks]: 'clearRocks',
   [ClearGround.Fields]: 'clearFields',
+  [ClearGround.Desert]: 'clearRough',
 };
 
 /** Port of clear_cmd.cpp:ClearTile_Clear. */
 function clearTileClear(state: GameState, t: number, flags: number): CommandCost {
   const { map } = state;
   const ground = getClearGround(map, t);
-  const name = CLEAR_PRICE[ground];
   const bare = ground === ClearGround.Grass && getClearDensity(map, t) === 0;
-  const price = bare || name === undefined ? 0 : state.prices[name];
+  const price = bare ? 0 : state.prices[CLEAR_PRICE[ground]];
   if ((flags & DoFlag.Execute) !== 0) doClearSquare(map, t, false);
   return succeed(price);
 }
