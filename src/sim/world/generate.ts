@@ -11,6 +11,7 @@ import { isWaterTile } from '../map/water';
 import type { MapState } from '../map/map';
 import { generateClearTile } from './clear-gen';
 import { generateTerrain } from './tgp';
+import { generateTrees } from './trees';
 
 export interface GenerationProgress {
   /** 0..1, rising. */
@@ -43,7 +44,9 @@ export function* generateGame(
   generateClearTile(state.map, state.random);
   state.initialLandCount = countLandTiles(state.map);
   yield { fraction: 0.25 };
-  // Towns (Task 9), industries (Task 10) and trees (Task 5) are inserted here, in that order.
+  // Towns (Task 9) and industries (Task 10) are inserted here, before the trees.
+  generateTrees(state);
+  yield { fraction: 0.8 };
   const procs = tileLoopProcs(state);
   for (let pass = 0; pass < SETTLE_PASSES; pass++) {
     runTileLoop(state.map, state.tickCounter, procs);
