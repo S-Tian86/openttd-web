@@ -22,7 +22,25 @@ test('the calendar runs and can be paused', async ({ page }) => {
 
 test('switches to Spanish', async ({ page }) => {
   await page.getByRole('button', { name: 'Settings' }).click();
-  await page.getByLabel('Language').selectOption('es');
+  await page.getByRole('button', { name: 'Language English' }).click();
+  await page.getByRole('option', { name: 'Español' }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'es');
   await expect(page.getByRole('dialog', { name: 'Ajustes' })).toBeVisible();
+});
+
+test('the theme dropdown opens inside the screen and a tap outside closes it', async ({ page }) => {
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: /^Theme / }).click();
+  const list = page.getByRole('listbox');
+  const box = await list.boundingBox();
+  const view = page.viewportSize();
+  if (box === null || view === null) throw new Error('no list');
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(view.width);
+  expect(box.y + box.height).toBeLessThanOrEqual(view.height);
+  await page.mouse.click(5, view.height / 2);
+  await expect(list).toHaveCount(0);
+  // The settings window stays open, like OpenTTD's windows.
+  await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible();
 });

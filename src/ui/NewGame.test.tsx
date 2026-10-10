@@ -45,13 +45,18 @@ describe('parseSeed (Review Focus 3)', () => {
   });
 });
 
+function choose(label: string, option: string): void {
+  fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${label} `) }));
+  fireEvent.click(screen.getByRole('option', { name: option }));
+}
+
 describe('NewGame window', () => {
   it('starts from the current options and generates with the chosen ones', () => {
     const session = fakeSession();
     render(<NewGame session={session} snapshot={snapshot} onDone={() => undefined} />);
-    fireEvent.change(screen.getByLabelText('Map size X'), { target: { value: '6' } });
-    fireEvent.change(screen.getByLabelText('Map size Y'), { target: { value: '7' } });
-    fireEvent.change(screen.getByLabelText('Number of towns'), { target: { value: '1' } });
+    choose('Map size X', '64');
+    choose('Map size Y', '128');
+    choose('Number of towns', 'Low');
     fireEvent.input(screen.getByLabelText('Seed'), { target: { value: '12345' } });
     fireEvent.click(screen.getByRole('button', { name: 'Generate' }));
     expect(session.newGame).toHaveBeenCalledWith({

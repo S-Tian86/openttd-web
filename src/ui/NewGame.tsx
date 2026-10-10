@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { Dropdown } from './Dropdown';
 import { translate, type MessageKey } from './i18n/i18n';
 import type { UiSession, UiSnapshot } from './session';
 
@@ -13,11 +14,6 @@ export function parseSeed(text: string): number | null {
   if (!/^\d+$/.test(text)) return null;
   const seed = Number(text);
   return seed <= MAX_SEED ? seed : null;
-}
-
-/** A level from a select, only if it is one of `allowed` (defaultTownCount is undefined outside 0..3). */
-function parseLevel<T extends number>(text: string, allowed: readonly T[]): T | null {
-  return allowed.find((level) => String(level) === text) ?? null;
 }
 
 interface NewGameProps {
@@ -53,22 +49,15 @@ export function NewGame({ session, snapshot, onDone }: NewGameProps) {
     set: (level: T) => void,
     optionLabel: (level: T) => string,
   ) => (
-    <label>
-      <span>{t(label)}</span>
-      <select
-        value={String(value)}
-        onChange={(event) => {
-          const level = parseLevel(event.currentTarget.value, levels);
-          if (level !== null) set(level);
-        }}
-      >
-        {levels.map((level) => (
-          <option key={level} value={String(level)}>
-            {optionLabel(level)}
-          </option>
-        ))}
-      </select>
-    </label>
+    <Dropdown<number>
+      label={t(label)}
+      value={value}
+      options={levels.map((level) => ({ value: level, label: optionLabel(level) }))}
+      onChange={(next) => {
+        const level = levels.find((candidate) => candidate === next);
+        if (level !== undefined) set(level);
+      }}
+    />
   );
 
   const generate = (): void => {
