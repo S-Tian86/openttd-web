@@ -1,4 +1,6 @@
 import { expect, test } from '@playwright/test';
+import { hashGameState } from '../../src/sim/game';
+import { createGame } from '../../src/sim/world/generate';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('./?seed=1&size=64x64');
@@ -7,14 +9,14 @@ test.beforeEach(async ({ page }) => {
 
 test('generates a new 64×128 world from the new-game window', async ({ page }) => {
   const html = page.locator('html');
-  const first = await html.getAttribute('data-world-hash');
   await page.getByRole('button', { name: 'New game' }).click();
   const dialog = page.getByRole('dialog', { name: 'New game' });
   await dialog.getByLabel('Map size X').selectOption('6');
   await dialog.getByLabel('Map size Y').selectOption('7');
   await dialog.getByLabel('Seed').fill('12345');
   await dialog.getByRole('button', { name: 'Generate' }).click();
-  await expect(html).not.toHaveAttribute('data-world-hash', first ?? '');
+  const expected = hashGameState(createGame({ mapLogX: 6, mapLogY: 7, seed: 12345 }));
+  await expect(html).toHaveAttribute('data-world-hash', expected);
   await expect(dialog).toBeHidden();
 });
 

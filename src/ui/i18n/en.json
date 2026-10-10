@@ -42,6 +42,7 @@
   "tool.query": "Query tile",
   "tile.title": "Land area information",
   "tile.kind.void": "Map edge",
+  "tile.kind.bare": "Bare land",
   "tile.kind.grass": "Grass",
   "tile.kind.rough": "Rough land",
   "tile.kind.rocks": "Rocks",

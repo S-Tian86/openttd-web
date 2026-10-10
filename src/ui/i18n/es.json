@@ -42,6 +42,7 @@
   "tool.query": "Consultar casilla",
   "tile.title": "Información del terreno",
   "tile.kind.void": "Borde del mapa",
+  "tile.kind.bare": "Terreno desnudo",
   "tile.kind.grass": "Hierba",
   "tile.kind.rough": "Terreno accidentado",
   "tile.kind.rocks": "Rocas",
