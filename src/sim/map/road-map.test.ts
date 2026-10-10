@@ -1,16 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyGame } from '../game';
+import { Axis, TrackBits } from '../track/track';
 import { DiagDir } from './geometry';
 import { OWNER_TOWN, TileType, getTileType, tileXY } from './map';
 import {
   complementRoadBits,
   diagDirToRoadBits,
+  getCrossingRailBits,
+  getCrossingRoadBits,
   getRoadBits,
   getRoadOwner,
   getRoadside,
   getTownIndex,
   getTownRoadBits,
   isStraightRoad,
+  makeRoadCrossing,
   makeRoadNormal,
   mirrorRoadBits,
   RoadBits,
@@ -61,5 +65,26 @@ describe('town road tiles (port of road_map.h:MakeRoadNormal)', () => {
       RoadBits.X,
       RoadBits.None,
     ]);
+  });
+
+  it('stores a crossing like MakeRoadCrossing (roads.md §3.3)', () => {
+    const { map } = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    const t = tileXY(map, 10, 10);
+    makeRoadCrossing(map, t, OWNER_TOWN, 0, Axis.Y, 0, 3);
+    expect([
+      map.m1[t],
+      map.m2[t],
+      map.m3[t],
+      map.m4[t],
+      map.m5[t],
+      map.m6[t],
+      map.m7[t],
+      map.m8[t],
+    ]).toEqual([0, 3, 0xf0, 0, 0x41, 0, 0x0f, 0xfc0]);
+    expect([
+      getCrossingRoadBits(map, t),
+      getCrossingRailBits(map, t),
+      getRoadOwner(map, t),
+    ]).toEqual([RoadBits.Y, TrackBits.X, OWNER_TOWN]);
   });
 });

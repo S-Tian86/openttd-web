@@ -24,6 +24,19 @@ import {
   type MapState,
 } from '../map/map';
 import {
+  getCrossingRailBits,
+  getCrossingRoadBits,
+  getRoadBits,
+  getRoadOwner,
+  getTownIndex,
+  isLevelCrossingTile,
+  isNormalRoadTile,
+  LEVELCROSSING_TRACKBIT_FACTOR,
+  makeRoadCrossing,
+  makeRoadNormal,
+  RoadBits,
+} from '../map/road-map';
+import {
   getRailGroundType,
   getTrackBits,
   isPlainRail,
@@ -35,6 +48,7 @@ import {
 } from '../map/rail-map';
 import { Slope, getTileSlopeZ } from '../map/slope';
 import {
+  Axis,
   countBits,
   isDiagonalTrack,
   Track,
@@ -47,6 +61,9 @@ import {
 
 /** Port of rail.h:RailBuildCost for RAILTYPE_RAIL (cost_multiplier 8, >> 3). */
 export const railBuildCost = (p: Prices): number => Math.floor((p.buildRail * 8) / 8);
+
+/** Port of road.h:RoadBuildCost for ROADTYPE_ROAD (cost_multiplier 8, >> 3). */
+export const roadBuildCost = (p: Prices): number => (p.buildRoad * 8) >> 3;
 
 /** Port of rail.h:RailClearCost for RAILTYPE_RAIL: max(-53, -56) = -53. */
 export const railClearCost = (p: Prices): number =>
@@ -101,7 +118,7 @@ export function checkRailSlope(
   return succeed(0);
 }
 
-/** Port of rail_cmd.cpp:CmdBuildSingleRail (MP_RAILWAY and default branches). */
+/** Port of rail_cmd.cpp:CmdBuildSingleRail (MP_RAILWAY, MP_ROAD and default branches). */
 export function cmdBuildSingleRail(
   state: GameState,
   flags: number,
@@ -128,7 +145,39 @@ export function cmdBuildSingleRail(
         railInfrastructurePieces(bits | bit) - railInfrastructurePieces(bits);
     }
   } else {
-    // (Task 4 inserts the MP_ROAD level-crossing branch here.)
+    if (getTileType(map, t) === TileType.Road) {
+      // Port of case MP_ROAD: flat by R11, crossing_with_competitor, no vehicles, no road works
+      // and no one-way roads in Stage 1.
+      if (isNormalRoadTile(map, t)) {
+        const road = getRoadBits(map, t);
+        if (
+          (track === Track.X && (road & RoadBits.X) === 0) ||
+          (track === Track.Y && (road & RoadBits.Y) === 0)
+        ) {
+          const newPieces = road !== RoadBits.None ? 2 - countBits(road) : 0;
+          const crossing = succeed(newPieces * roadBuildCost(state.prices));
+          if (exec) {
+            makeRoadCrossing(
+              map,
+              t,
+              getRoadOwner(map, t),
+              COMPANY_FIRST,
+              track === Track.X ? Axis.Y : Axis.X,
+              RAILTYPE_RAIL,
+              getTownIndex(map, t),
+            );
+            // UpdateLevelCrossing: no trains yet, so the crossing is never barred.
+            state.company.infrastructure.rail += LEVELCROSSING_TRACKBIT_FACTOR;
+            state.dirtyTiles.add(t);
+          }
+          return addCost(crossing, succeed(railBuildCost(state.prices)));
+        }
+      }
+      if (isLevelCrossingTile(map, t) && getCrossingRailBits(map, t) === bit) {
+        return fail('error.alreadyBuilt');
+      }
+      // anything else falls through to the default branch, which refuses to clear the road
+    }
     cost = addCost(cost, checkRailSlope(map, t, bit, 0));
     if (!cost.ok) return cost;
     cost = addCost(cost, landscapeClear(state, t, flags, COMPANY_FIRST));
@@ -142,7 +191,7 @@ export function cmdBuildSingleRail(
   return addCost(cost, succeed(railBuildCost(state.prices)));
 }
 
-/** Port of rail_cmd.cpp:CmdRemoveSingleRail (MP_RAILWAY branch). `actor` is _current_company. */
+/** Port of rail_cmd.cpp:CmdRemoveSingleRail (MP_RAILWAY and MP_ROAD crossing branches). `actor` is _current_company. */
 export function cmdRemoveSingleRail(
   state: GameState,
   flags: number,
@@ -152,12 +201,25 @@ export function cmdRemoveSingleRail(
 ): CommandCost {
   const { map } = state;
   if (!isValidTile(map, t) || track < 0 || track > 5) return CMD_ERROR;
+  const bit = trackToTrackBits(track);
+  if (getTileType(map, t) === TileType.Road) {
+    if (!isLevelCrossingTile(map, t) || getCrossingRailBits(map, t) !== bit) {
+      return fail('error.noRailroadTrack');
+    }
+    if (actor !== OWNER_WATER && getTileOwner(map, t) !== actor) return CMD_ERROR; // CheckTileOwnership
+    if ((flags & DoFlag.Execute) !== 0) {
+      state.company.infrastructure.rail -= LEVELCROSSING_TRACKBIT_FACTOR;
+      // roads are town-owned in Stage 1, so the tile returns to its town
+      makeRoadNormal(map, t, getCrossingRoadBits(map, t), getTownIndex(map, t));
+      state.dirtyTiles.add(t);
+    }
+    return succeed(railClearCost(state.prices));
+  }
   if (getTileType(map, t) !== TileType.Railway || !isPlainRail(map, t)) {
     return fail('error.noRailroadTrack');
   }
   if (actor !== OWNER_WATER && getTileOwner(map, t) !== actor) return CMD_ERROR; // CheckTileOwnership
   // EnsureNoTrainOnTrack: no trains until block 1.4
-  const bit = trackToTrackBits(track);
   const bits = getTrackBits(map, t);
   if ((bits & bit) === 0) return fail('error.noRailroadTrack');
   if ((flags & DoFlag.Execute) !== 0) {

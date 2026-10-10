@@ -1,5 +1,5 @@
 import { ClearGround, getClearDensity, getClearGround } from '../sim/map/clear';
-import { getRoadBits } from '../sim/map/road-map';
+import { getCrossingRoadBits, getRoadBits, isLevelCrossingTile } from '../sim/map/road-map';
 import { getTileSlope } from '../sim/map/slope';
 import { getTileType, TileType, type MapState } from '../sim/map/map';
 import { getTreeDensity, getTreeGround, TreeGround } from '../sim/map/tree-map';
@@ -43,7 +43,7 @@ export function groundSprite(map: MapState, t: number): SpriteId {
           return 'terrain.unknown';
       }
     case TileType.Road: {
-      const bits = getRoadBits(map, t);
+      const bits = isLevelCrossingTile(map, t) ? getCrossingRoadBits(map, t) : getRoadBits(map, t);
       return bits >= 1 && bits <= 15 ? (`road.${bits}` as SpriteId) : 'terrain.unknown';
     }
     case TileType.House:

@@ -1,3 +1,4 @@
+import { axisToTrack, trackToTrackBits, type Axis, type Track } from '../track/track';
 import type { DiagDir } from './geometry';
 import { getTileType, OWNER_TOWN, resetTileKeepingHeight, setTileType, TileType } from './map';
 import type { MapState } from './map';
@@ -73,7 +74,9 @@ export function setRoadBits(map: MapState, t: number, bits: number): void {
   map.m5[t] = (map.m5[t]! & 0xf0) | bits;
 }
 
-export const getRoadOwner = (map: MapState, t: number): number => map.m1[t]! & 0x1f;
+/** Port of road_map.h:GetRoadOwner for the road type (a crossing keeps the rail owner in m1). */
+export const getRoadOwner = (map: MapState, t: number): number =>
+  (isNormalRoadTile(map, t) ? map.m1[t]! : map.m7[t]!) & 0x1f;
 
 /** m2 holds the town index of road and house tiles. */
 export const getTownIndex = (map: MapState, t: number): number => map.m2[t]!;
@@ -85,6 +88,58 @@ export function setRoadside(map: MapState, t: number, rs: Roadside): void {
   map.m6[t] = (map.m6[t]! & ~0x38) | (rs << 3);
 }
 
-/** Port of road_map.h:GetTownRoadBits (crossings arrive in block 1.3). */
-export const getTownRoadBits = (map: MapState, t: number): number =>
-  isNormalRoadTile(map, t) ? getRoadBits(map, t) : RoadBits.None;
+/** Port of road_map.h:LEVELCROSSING_TRACKBIT_FACTOR. */
+export const LEVELCROSSING_TRACKBIT_FACTOR = 2;
+
+/**
+ * Port of road_map.h:MakeRoadCrossing for a town-owned road without tram: m1 holds the rail
+ * owner, m7 the road owner.
+ */
+export function makeRoadCrossing(
+  map: MapState,
+  t: number,
+  roadOwner: number,
+  railOwner: number,
+  roadAxis: Axis,
+  railType: number,
+  townIndex: number,
+): void {
+  resetTileKeepingHeight(map, t);
+  setTileType(map, t, TileType.Road);
+  map.m1[t] = railOwner;
+  map.m2[t] = townIndex;
+  map.m3[t] = OWNER_TOWN << 4; // tram owner
+  map.m4[t] = ROADTYPE_ROAD;
+  map.m5[t] = (RoadTileType.Crossing << 6) | roadAxis;
+  map.m7[t] = roadOwner;
+  map.m8[t] = (INVALID_ROADTYPE << 6) | railType;
+}
+
+/** Port of road_map.h:IsLevelCrossingTile. */
+export const isLevelCrossingTile = (map: MapState, t: number): boolean =>
+  getTileType(map, t) === TileType.Road && getRoadTileType(map, t) === RoadTileType.Crossing;
+
+/** Port of road_map.h:GetCrossingRoadAxis. */
+export const getCrossingRoadAxis = (map: MapState, t: number): Axis => (map.m5[t]! & 1) as Axis;
+
+/** Port of road_map.h:GetCrossingRoadBits. */
+export const getCrossingRoadBits = (map: MapState, t: number): number =>
+  getCrossingRoadAxis(map, t) === 0 ? RoadBits.X : RoadBits.Y;
+
+/** Port of road_map.h:GetCrossingRailTrack: the axis the road does not use. */
+export const getCrossingRailTrack = (map: MapState, t: number): Track =>
+  axisToTrack((1 - getCrossingRoadAxis(map, t)) as Axis);
+
+/** Port of road_map.h:GetCrossingRailBits. */
+export const getCrossingRailBits = (map: MapState, t: number): number =>
+  trackToTrackBits(getCrossingRailTrack(map, t));
+
+/** Port of road_map.h:HasTownOwnedRoad. */
+export const hasTownOwnedRoad = (map: MapState, t: number): boolean =>
+  getRoadOwner(map, t) === OWNER_TOWN;
+
+/** Port of road_map.h:GetTownRoadBits: a crossing is its straight road. */
+export const getTownRoadBits = (map: MapState, t: number): number => {
+  if (isLevelCrossingTile(map, t)) return getCrossingRoadBits(map, t);
+  return isNormalRoadTile(map, t) ? getRoadBits(map, t) : RoadBits.None;
+};

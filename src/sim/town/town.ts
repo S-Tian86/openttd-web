@@ -1,7 +1,7 @@
 import type { GameState } from '../game';
 import { distanceManhattan, distanceSquare } from '../map/geometry';
-import { getTileType, OWNER_TOWN, TileType, type MapState } from '../map/map';
-import { getRoadOwner, getTownIndex, isNormalRoadTile } from '../map/road-map';
+import { getTileType, TileType, type MapState } from '../map/map';
+import { getRoadTileType, getTownIndex, hasTownOwnedRoad, RoadTileType } from '../map/road-map';
 
 /** Port of house.h:HouseZone (town zones only). */
 export const HouseZone = {
@@ -103,7 +103,9 @@ export function closestTownFromTile(
   const type = getTileType(map, t);
   if (
     type === TileType.House ||
-    (type === TileType.Road && isNormalRoadTile(map, t) && getRoadOwner(map, t) === OWNER_TOWN)
+    (type === TileType.Road &&
+      getRoadTileType(map, t) !== RoadTileType.Depot &&
+      hasTownOwnedRoad(map, t))
   ) {
     return state.towns[getTownIndex(map, t)];
   }
