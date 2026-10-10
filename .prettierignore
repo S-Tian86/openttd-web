@@ -1,6 +1,6 @@
 dist/
 coverage/
-reference/
+/reference/
 playwright-report/
 test-results/
 .superpowers/
