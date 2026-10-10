@@ -17,6 +17,38 @@
   },
   "overrides": [
     {
+      "files": ["src/ui/**", "tests/architecture/ui-imports.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/app", "**/app/**", "**/render", "**/render/**", "phaser", "phaser/*"],
+                "message": "src/ui must not import app/, render/ or Phaser (master plan §2.2)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/render/**", "tests/architecture/render-imports.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/app", "**/app/**", "**/ui", "**/ui/**"],
+                "message": "src/render must not import app/ or ui/ (master plan §2.2)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["src/sim/**", "tests/architecture/sim-*.ts"],
       "rules": {
         "no-restricted-imports": [

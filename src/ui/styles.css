@@ -13,4 +13,205 @@ body {
 #game {
   width: 100%;
   height: 100%;
+  touch-action: none;
+}
+
+#ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  font-family: var(--font);
+  color: var(--color-text);
+}
+
+#ui > * {
+  pointer-events: auto;
+}
+
+#ui button {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-panel);
+  border: 2px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+#ui button[aria-pressed='true'] {
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+.status-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space);
+  padding: var(--space);
+  background: var(--color-panel);
+  border-bottom: 2px solid var(--color-panel-border);
+  font-weight: 600;
+  touch-action: none;
+}
+
+.status-controls,
+.speed-group {
+  display: flex;
+  gap: calc(var(--space) / 2);
+}
+
+.panel {
+  position: absolute;
+  background: var(--color-panel);
+  border: 2px solid var(--color-panel-border);
+  color: var(--color-text);
+  box-sizing: border-box;
+  touch-action: pan-y;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space);
+  padding: var(--space);
+  border-bottom: 2px solid var(--color-panel-border);
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.panel-body {
+  padding: var(--space);
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space);
+}
+
+.dropdown {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space) / 2);
+}
+
+#ui .dropdown-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space);
+  text-align: start;
+}
+
+/* Catches the click outside the list that closes it (dropdown.cpp OnFocusLost). */
+.dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+}
+
+.dropdown-list {
+  position: absolute;
+  z-index: 3;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 50vh;
+  overflow: auto;
+  margin: calc(var(--space) / 2) 0 0;
+  padding: calc(var(--space) / 2);
+  list-style: none;
+  background: var(--color-panel);
+  border: 2px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  box-sizing: border-box;
+  outline: none;
+}
+
+.dropdown-list [role='option'] {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  padding: 0 var(--space);
+  border-radius: calc(var(--radius) / 2);
+  cursor: pointer;
+}
+
+.dropdown-list [role='option'][aria-selected='true'] {
+  font-weight: 600;
+}
+
+.dropdown-list [role='option'].active,
+.dropdown-list [role='option']:hover {
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+.ui-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space);
+  background: var(--color-panel);
+  font-weight: 600;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .panel {
+    top: calc(var(--touch-target) + 4 * var(--space));
+    right: calc(2 * var(--space));
+    width: 320px;
+    border-radius: var(--radius);
+  }
+}
+
+@media (max-width: 767px) {
+  .status-bar {
+    top: auto;
+    bottom: 0;
+    border-bottom: 0;
+    border-top: 2px solid var(--color-panel-border);
+    padding-bottom: calc(var(--space) + env(safe-area-inset-bottom));
+  }
+
+  .panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 60%;
+    overflow: auto;
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 1;
+  }
+
+  /* No room below the button on a bottom sheet: the list opens as a centred sheet. */
+  .dropdown-backdrop {
+    background: var(--color-backdrop);
+  }
+
+  .dropdown-list {
+    position: fixed;
+    top: 50%;
+    left: calc(2 * var(--space));
+    right: calc(2 * var(--space));
+    transform: translateY(-50%);
+    margin: 0;
+    max-height: 70vh;
+  }
 }

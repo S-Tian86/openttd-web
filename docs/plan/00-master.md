@@ -131,7 +131,13 @@ instead of one object per tile, so large maps stay fast and cheap to serialise.
 - **English and Spanish ship from day one.** More languages come from the community or
   machine translation, through pull requests. OpenTTD itself ships 60+ translations under
   GPL-2.0; reusing its strings where our UI matches is evaluated in Stage 1.
-- No native `alert`/`confirm`; dialogs are our own components.
+- **No native browser controls or popups.** The game looks the same on every device and
+  follows the theme, so the client never uses `<select>`, `<datalist>`, picker inputs (date,
+  time, colour, range, file) or `alert`/`confirm`/`prompt`: dropdowns, dialogs and pickers are
+  our own components drawn with the theme tokens. Text fields stay native for the on-screen
+  keyboard, styled with the tokens. An architecture test enforces it. _AMENDED in #127
+  (PR #128): the rule covered only `alert`/`confirm`; the playtest found the native select
+  opening the system picker on phones._
 
 ### 2.8 Fidelity policy
 

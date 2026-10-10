@@ -39,7 +39,7 @@ describe('sim/ boundary', () => {
     expect(status).not.toBe(0);
     expect(output).toContain("'phaser' import is restricted");
     expect(output).toContain("'node:fs' import is restricted");
-    expect(output).toContain("'../../src/render/BootScene' import is restricted");
+    expect(output).toContain("'../../src/render/projection' import is restricted");
     expect(output).toContain("'../../reference/OpenTTD/src/economy' import is restricted");
     expect(output).not.toContain("'../../src/sim/core/constants' import is restricted");
   });
@@ -64,5 +64,30 @@ describe('sim/ boundary', () => {
   it('does not apply the sim rules outside src/sim/', () => {
     const output = lintTemporaryFile(`src/render/boundary-probe-${process.pid}.ts`, LEAK);
     expect(output).not.toContain('is restricted');
+  });
+});
+
+describe('ui/ and render/ boundaries', () => {
+  it('linter rejects app, render and Phaser imports from ui/', () => {
+    const { status, output } = run('oxlint', [
+      '--deny-warnings',
+      'tests/architecture/ui-imports.ts',
+    ]);
+    expect(status).not.toBe(0);
+    expect(output).toContain("'phaser' import is restricted");
+    expect(output).toContain("'../../src/app/session' import is restricted");
+    expect(output).toContain("'../../src/render/projection' import is restricted");
+    expect(output).not.toContain("'../../src/ui/i18n/i18n' import is restricted");
+  });
+
+  it('linter rejects app and ui imports from render/', () => {
+    const { status, output } = run('oxlint', [
+      '--deny-warnings',
+      'tests/architecture/render-imports.ts',
+    ]);
+    expect(status).not.toBe(0);
+    expect(output).toContain("'../../src/app/session' import is restricted");
+    expect(output).toContain("'../../src/ui/session' import is restricted");
+    expect(output).not.toContain("'../../src/sim/game' import is restricted");
   });
 });

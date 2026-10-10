@@ -43,6 +43,21 @@ git checkout -b <type>/<short-description>   # feat fix chore docs refactor test
 
 During a stage, `BASE` is the current block branch and every PR targets it
 (`gh pr create --base "$BASE"`). See CONTRIBUTING "Block branches".
+Shell variables such as `BASE` do not persist between commands: set `BASE` again in each step.
+
+### Creating a new block branch
+
+The `stage-*/**` ruleset (id 24829567) blocks creating such branches by push, so disable it
+for the push and always re-enable it afterwards, even if the push fails:
+
+```bash
+BASE=stage-N/block-N.(M-1)   # the previous block branch (main for the first block)
+gh api -X PUT repos/S-Tian86/openttd-web/rulesets/24829567 -f enforcement=disabled
+( git checkout "$BASE" && git pull --ff-only \
+  && git checkout -b stage-N/block-N.M && git push -u origin stage-N/block-N.M ); status=$?
+gh api -X PUT repos/S-Tian86/openttd-web/rulesets/24829567 -f enforcement=active
+exit $status   # omit when pasting interactively
+```
 
 Mark the line `[~]` in `TRACKING.md`.
 
@@ -68,7 +83,8 @@ gh pr create --base "$BASE" --title "<what it does>" --body-file -   # template,
 Over ~400 lines of code (excluding tests and lock files) → chained PRs:
 
 ```bash
-git diff --numstat main...HEAD -- . ':!*.test.ts' ':!*.spec.ts' ':!package-lock.json' | awk '{s+=$1} END {print s}'
+BASE=main                          # or the current block branch
+git diff --numstat "$BASE"...HEAD -- . ':!*.test.ts' ':!*.spec.ts' ':!package-lock.json' | awk '{s+=$1} END {print s}'
 ```
 
 ## 5. Merge (closes the issue)

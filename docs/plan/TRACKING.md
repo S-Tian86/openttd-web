@@ -28,20 +28,22 @@ the issue.
 ## Stage 1 — First train · milestone `Stage 1 — First train`
 
 - [x] 1.0 Stage 1 design spec — #20
-- [~] 1.1 Core and shell — branch stage-1/block-1.1
-  - [~] 1.1.1 Preview deploys and block workflow — #22
-  - [ ] 1.1.2 Random generator — _(to create)_
-  - [ ] 1.1.3 Map storage and the tile loop — _(to create)_
-  - [ ] 1.1.4 Dates and clocks — _(to create)_
-  - [ ] 1.1.5 Company money, commands and the game state — _(to create)_
-  - [ ] 1.1.6 Tick pacing and the game session — _(to create)_
-  - [ ] 1.1.7 Theme contract and the "blocks" theme — _(to create)_
-  - [ ] 1.1.8 Chunked map rendering — _(to create)_
-  - [ ] 1.1.9 Mouse and touch camera — _(to create)_
-  - [ ] 1.1.10 Translations and formatting — _(to create)_
-  - [ ] 1.1.11 HUD shell and app wiring — _(to create)_
-  - [ ] 1.1.12 Evaluate reusing OpenTTD translations — _(to create)_
-  - [ ] 1.1.13 Close block 1.1 — _(to create)_
+- [~] 1.1 Core and shell — branch stage-1/block-1.1 — awaiting playtest
+  - [x] 1.1.1 Preview deploys and block workflow — #22
+  - [x] 1.1.2 Random generator — #24
+  - [x] 1.1.3 Map storage and the tile loop — #26
+  - [x] 1.1.4 Dates and clocks — #28
+  - [x] 1.1.5 Company money, commands and the game state — #30
+  - [x] 1.1.6 Tick pacing and the game session — #32
+  - [x] 1.1.7 Theme contract and the "blocks" theme — #34
+  - [x] 1.1.8 Chunked map rendering — #36
+  - [x] 1.1.9 Mouse and touch camera — #38
+  - [x] 1.1.10 Translations and formatting — #40
+  - [x] 1.1.11 HUD shell and app wiring — #42
+  - [x] 1.1.12 Evaluate reusing OpenTTD translations — #44
+  - [x] 1.1.13 Close block 1.1 — #48
+  - [x] 1.1.15 Let the map edges scroll out from under the HUD — #125
+  - [x] 1.1.16 Replace native selects with a themed dropdown — #127
 - [ ] 1.2 World — _(to create)_
 - [ ] 1.3 Construction — _(to create)_
 - [ ] 1.4 Trains — _(to create)_

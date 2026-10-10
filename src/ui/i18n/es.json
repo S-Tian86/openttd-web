@@ -1,0 +1,20 @@
+{
+  "hud.pause": "Pausa",
+  "hud.resume": "Reanudar",
+  "hud.speed": "Velocidad del juego",
+  "hud.speed.normal": "Velocidad normal",
+  "hud.speed.x2": "Velocidad doble",
+  "hud.speed.x4": "Velocidad cuádruple",
+  "hud.speed.fast": "Avance rápido",
+  "hud.money": "Dinero",
+  "hud.date": "Fecha",
+  "hud.settings": "Ajustes",
+  "settings.title": "Ajustes",
+  "settings.language": "Idioma",
+  "settings.theme": "Tema",
+  "panel.close": "Cerrar",
+  "language.en": "English",
+  "language.es": "Español",
+  "error.themeLoad": "No se pudo cargar el tema del juego. Recarga la página.",
+  "error.notAllowedWhilePaused": "No permitido en pausa"
+}

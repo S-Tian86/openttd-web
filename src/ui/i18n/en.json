@@ -1,0 +1,20 @@
+{
+  "hud.pause": "Pause",
+  "hud.resume": "Resume",
+  "hud.speed": "Game speed",
+  "hud.speed.normal": "Normal speed",
+  "hud.speed.x2": "Double speed",
+  "hud.speed.x4": "Four times speed",
+  "hud.speed.fast": "Fast forward",
+  "hud.money": "Money",
+  "hud.date": "Date",
+  "hud.settings": "Settings",
+  "settings.title": "Settings",
+  "settings.language": "Language",
+  "settings.theme": "Theme",
+  "panel.close": "Close",
+  "language.en": "English",
+  "language.es": "Español",
+  "error.themeLoad": "Could not load the game theme. Please reload the page.",
+  "error.notAllowedWhilePaused": "Not allowed while paused"
+}
