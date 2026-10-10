@@ -35,25 +35,25 @@
 
 ## File map
 
-| Path | Responsibility | Task |
-|---|---|---|
-| `.gitignore`, `LICENSE`, `README.md` | Repo basics | 1 |
-| `docs/plan/00-master.md`, `docs/plan/TRACKING.md`, `docs/plan/stage-0-foundations.md` | Plan and tracking | 1 |
-| `CONTRIBUTING.md`, `CLAUDE.md` | Workflow and agent instructions | 2 |
-| `.claude/skills/gh-flow/SKILL.md`, `.claude/skills/close-session/SKILL.md` | Executable workflow | 2 |
-| `.github/PULL_REQUEST_TEMPLATE.md`, `.github/ISSUE_TEMPLATE/task.md` | Templates | 2 |
-| `docs/quality-log.md` | Append-only quality log | 2 |
-| `package.json`, `.nvmrc`, `tsconfig.json`, `tsconfig.sim.json`, `vite.config.ts`, `vitest.config.ts`, `index.html` | Toolchain | 3 |
-| `.oxlintrc.json`, `.prettierrc.json`, `.prettierignore`, `.husky/pre-commit` | Lint, format, hooks | 4 |
-| `tests/architecture/{boundary.test.ts, sim-imports.ts, sim-globals.ts, tsconfig.json}` | Proves the `sim/` barrier with deliberately broken fixtures | 4 |
-| `src/app/main.ts` | Bootstrap: creates the Phaser game | 3 |
-| `src/render/BootScene.ts` | Placeholder scene, marks the page ready | 3 |
-| `src/ui/styles.css` | Base page styles | 3 |
-| `src/sim/core/constants.ts` (+ test) | First ported constants | 3 |
-| `playwright.config.ts`, `tests/e2e/boot.spec.ts` | End-to-end smoke | 5 |
-| `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`, `.github/dependabot.yml`, `SECURITY.md` | CI/CD and security | 6 |
-| `docs/reference/openttd/*.md`, `docs/game/README.md`, `docs/game/differences.md` | Reference notes for Stage 1 | 7 |
-| `docs/NEXT-SESSION.md` | Handoff | 8 |
+| Path                                                                                                               | Responsibility                                              | Task |
+| ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- | ---- |
+| `.gitignore`, `LICENSE`, `README.md`                                                                               | Repo basics                                                 | 1    |
+| `docs/plan/00-master.md`, `docs/plan/TRACKING.md`, `docs/plan/stage-0-foundations.md`                              | Plan and tracking                                           | 1    |
+| `CONTRIBUTING.md`, `CLAUDE.md`                                                                                     | Workflow and agent instructions                             | 2    |
+| `.claude/skills/gh-flow/SKILL.md`, `.claude/skills/close-session/SKILL.md`                                         | Executable workflow                                         | 2    |
+| `.github/PULL_REQUEST_TEMPLATE.md`, `.github/ISSUE_TEMPLATE/task.md`                                               | Templates                                                   | 2    |
+| `docs/quality-log.md`                                                                                              | Append-only quality log                                     | 2    |
+| `package.json`, `.nvmrc`, `tsconfig.json`, `tsconfig.sim.json`, `vite.config.ts`, `vitest.config.ts`, `index.html` | Toolchain                                                   | 3    |
+| `.oxlintrc.json`, `.prettierrc.json`, `.prettierignore`, `.husky/pre-commit`                                       | Lint, format, hooks                                         | 4    |
+| `tests/architecture/{boundary.test.ts, sim-imports.ts, sim-globals.ts, tsconfig.json}`                             | Proves the `sim/` barrier with deliberately broken fixtures | 4    |
+| `src/app/main.ts`                                                                                                  | Bootstrap: creates the Phaser game                          | 3    |
+| `src/render/BootScene.ts`                                                                                          | Placeholder scene, marks the page ready                     | 3    |
+| `src/ui/styles.css`                                                                                                | Base page styles                                            | 3    |
+| `src/sim/core/constants.ts` (+ test)                                                                               | First ported constants                                      | 3    |
+| `playwright.config.ts`, `tests/e2e/boot.spec.ts`                                                                   | End-to-end smoke                                            | 5    |
+| `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`, `.github/dependabot.yml`, `SECURITY.md`                | CI/CD and security                                          | 6    |
+| `docs/reference/openttd/*.md`, `docs/game/README.md`, `docs/game/differences.md`                                   | Reference notes for Stage 1                                 | 7    |
+| `docs/NEXT-SESSION.md`                                                                                             | Handoff                                                     | 8    |
 
 ---
 
@@ -62,10 +62,12 @@
 The only task committed directly to `main`: the repository does not exist yet.
 
 **Files:**
+
 - Create: `.gitignore`, `LICENSE`, `README.md`, `docs/plan/TRACKING.md`
 - Already exist: `docs/plan/00-master.md`, `docs/plan/stage-0-foundations.md`
 
 **Interfaces:**
+
 - Produces: public repo `S-Tian86/openttd-web`, milestone `Stage 0 — Foundations`, labels `infra` and `docs`, issues for Tasks 2–8, each recorded in `TRACKING.md`.
 
 - [ ] **Step 1: Init git with the local identity**
@@ -113,7 +115,7 @@ head -3 LICENSE   # expected: "GNU GENERAL PUBLIC LICENSE" / "Version 2, June 19
 # openttd-web
 
 A faithful web implementation of [OpenTTD](https://www.openttd.org) — the open-source
-transport simulation based on *Transport Tycoon Deluxe* — reimagined with a colourful
+transport simulation based on _Transport Tycoon Deluxe_ — reimagined with a colourful
 top-down look and playable in the browser.
 
 > **Status:** Stage 0 (foundations). Nothing playable yet. See the
@@ -137,12 +139,12 @@ npm ci
 npm run dev        # http://localhost:5173
 ```
 
-| Command | What it does |
-|---|---|
-| `npm test` | Unit, fidelity and architecture tests (Vitest) |
-| `npm run test:e2e` | End-to-end tests on the production build (Playwright) |
-| `npm run lint` / `npm run typecheck` | Static checks |
-| `npm run build` | Production build in `dist/` |
+| Command                              | What it does                                          |
+| ------------------------------------ | ----------------------------------------------------- |
+| `npm test`                           | Unit, fidelity and architecture tests (Vitest)        |
+| `npm run test:e2e`                   | End-to-end tests on the production build (Playwright) |
+| `npm run lint` / `npm run typecheck` | Static checks                                         |
+| `npm run build`                      | Production build in `dist/`                           |
 
 ## Documentation
 
@@ -154,7 +156,7 @@ npm run dev        # http://localhost:5173
 ## Credits and license
 
 OpenTTD is developed by the [OpenTTD team](https://github.com/OpenTTD/OpenTTD) and is based
-on *Transport Tycoon Deluxe* by Chris Sawyer. This project is not affiliated with or
+on _Transport Tycoon Deluxe_ by Chris Sawyer. This project is not affiliated with or
 endorsed by either. No OpenTTD graphics, sounds or music are used.
 
 Licensed under the [GNU General Public License v2.0 or later](LICENSE), like OpenTTD.
@@ -191,15 +193,15 @@ One `gh issue create` per task 2–8, with milestone `Stage 0 — Foundations`, 
 - Plan: `docs/plan/stage-0-foundations.md` — Task N
 ```
 
-| Task | Title | Label |
-|---|---|---|
-| 2 | Document the contribution workflow and add project skills | docs |
-| 3 | Scaffold the Vite + TypeScript + Phaser app with layered structure | infra |
-| 4 | Enforce lint, formatting and the sim/ architecture barrier | infra |
-| 5 | Add end-to-end smoke test on the production build | infra |
-| 6 | Set up CI, GitHub Pages deploy and security baseline | infra |
-| 7 | Write OpenTTD reference notes for Stage 1 subsystems | docs |
-| 8 | Close Stage 0 | docs |
+| Task | Title                                                              | Label |
+| ---- | ------------------------------------------------------------------ | ----- |
+| 2    | Document the contribution workflow and add project skills          | docs  |
+| 3    | Scaffold the Vite + TypeScript + Phaser app with layered structure | infra |
+| 4    | Enforce lint, formatting and the sim/ architecture barrier         | infra |
+| 5    | Add end-to-end smoke test on the production build                  | infra |
+| 6    | Set up CI, GitHub Pages deploy and security baseline               | infra |
+| 7    | Write OpenTTD reference notes for Stage 1 subsystems               | docs  |
+| 8    | Close Stage 0                                                      | docs  |
 
 - [ ] **Step 7: Write `docs/plan/TRACKING.md` with the real issue numbers**
 
@@ -256,10 +258,12 @@ Expected: `gh repo view S-Tian86/openttd-web --web` shows README, LICENSE (GPL-2
 ### Task 2: Contribution workflow and project skills
 
 **Files:**
+
 - Create: `CONTRIBUTING.md`, `CLAUDE.md`, `.claude/skills/gh-flow/SKILL.md`, `.claude/skills/close-session/SKILL.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/ISSUE_TEMPLATE/task.md`, `docs/quality-log.md`
 - Modify: `docs/plan/TRACKING.md` (line 0.2)
 
 **Interfaces:**
+
 - Produces: the flow every later task follows (branch names, commit format, PR body, merge command).
 
 - [ ] **Step 1: Branch**
@@ -290,11 +294,11 @@ The `gh-flow` skill (`.claude/skills/gh-flow/`) executes this document step by s
 
 ## Labels
 
-| Label | Use |
-|---|---|
-| `infra` | Tooling, CI/CD, repository configuration |
-| `docs` | Documentation only |
-| `bug`, `enhancement` | GitHub defaults |
+| Label                | Use                                      |
+| -------------------- | ---------------------------------------- |
+| `infra`              | Tooling, CI/CD, repository configuration |
+| `docs`               | Documentation only                       |
+| `bug`, `enhancement` | GitHub defaults                          |
 
 Area labels (`sim`, `render`, `ui`, `fidelity`, …) are created when the first issue needs them
 and documented here.
@@ -347,7 +351,7 @@ git clone --depth 1 --branch 15.3 https://github.com/OpenTTD/OpenTTD.git referen
 
 - [ ] **Step 3: Write `CLAUDE.md`**
 
-````markdown
+```markdown
 # OpenTTD Web — Agent instructions
 
 Faithful web implementation of OpenTTD (15.3) in TypeScript, with a new top-down 3/4 look.
@@ -366,10 +370,10 @@ issues, PRs, skills — is in English.
 
 Bound to paths, not to recognising intent. Load the skill **before** the first edit or command.
 
-| If you are about to touch… | Load first |
-|---|---|
+| If you are about to touch…                      | Load first      |
+| ----------------------------------------------- | --------------- |
 | `docs/NEXT-SESSION.md` or `docs/quality-log.md` | `close-session` |
-| any `git push`, `gh pr create` or `gh pr merge` | `gh-flow` |
+| any `git push`, `gh pr create` or `gh pr merge` | `gh-flow`       |
 
 ## Rules
 
@@ -382,7 +386,7 @@ Bound to paths, not to recognising intent. Load the skill **before** the first e
 - Integer arithmetic in game rules, as in OpenTTD.
 - Test first (Vitest). Visual checks with Playwright on headless Chromium.
 - Keep it simple: no abstraction or infrastructure the current stage does not need.
-````
+```
 
 - [ ] **Step 4: Write `.claude/skills/gh-flow/SKILL.md`**
 
@@ -399,10 +403,10 @@ GitHub is in English.
 
 ## 0. Path triggers
 
-| If you are about to touch… | Load first |
-|---|---|
-| `docs/NEXT-SESSION.md` or `docs/quality-log.md` | `close-session` |
-| any `git push`, `gh pr create`, `gh pr merge` | `gh-flow` (you are here) |
+| If you are about to touch…                      | Load first               |
+| ----------------------------------------------- | ------------------------ |
+| `docs/NEXT-SESSION.md` or `docs/quality-log.md` | `close-session`          |
+| any `git push`, `gh pr create`, `gh pr merge`   | `gh-flow` (you are here) |
 
 ## 1. Issue (just-in-time)
 
@@ -627,9 +631,11 @@ Mark 0.2 `[x]` in `TRACKING.md` (amend into the commit), then push, PR with `Clo
 ### Task 3: App scaffold with layered structure
 
 **Files:**
+
 - Create: `package.json`, `.nvmrc`, `tsconfig.json`, `tsconfig.sim.json`, `vite.config.ts`, `vitest.config.ts`, `index.html`, `src/app/main.ts`, `src/render/BootScene.ts`, `src/ui/styles.css`, `src/sim/core/constants.ts`, `src/sim/core/constants.test.ts`
 
 **Interfaces:**
+
 - Produces: `npm run dev|build|preview|test|typecheck`; `src/sim/core/constants.ts` exporting `DAY_TICKS`, `MILLISECONDS_PER_TICK`, `TILE_SIZE`; `BootScene` sets `document.documentElement.dataset.gameReady = 'true'` in `create()` (Task 5 waits on it); `#game` is the canvas parent.
 
 - [ ] **Step 1: Branch** — `git checkout -b feat/app-scaffold` from fresh `main`; line 0.3 → `[~]`.
@@ -708,10 +714,10 @@ npm install -D typescript@^7.0.2 vite@^8.3.4 vitest@^5.0.3 @types/node@^24
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "lib": ["ES2023"],
-    "types": []
+    "types": [],
   },
   "include": ["src/sim"],
-  "exclude": ["**/*.test.ts"]
+  "exclude": ["**/*.test.ts"],
 }
 ```
 
@@ -884,7 +890,11 @@ export class BootScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
     this.add
-      .text(width / 2, height / 2, 'openttd-web', { fontFamily: 'sans-serif', fontSize: '32px', color: '#2d4a3e' })
+      .text(width / 2, height / 2, 'openttd-web', {
+        fontFamily: 'sans-serif',
+        fontSize: '32px',
+        color: '#2d4a3e',
+      })
       .setOrigin(0.5);
     // Signals to end-to-end tests that the first frame is ready.
     document.documentElement.dataset.gameReady = 'true';
@@ -945,10 +955,12 @@ Same pattern as `covo`: oxlint rules scoped to `src/sim/**`, plus deliberately b
 files that the architecture test feeds to `tsc` and `oxlint`, expecting both to fail.
 
 **Files:**
+
 - Create: `.oxlintrc.json`, `.prettierrc.json`, `.prettierignore`, `.husky/pre-commit`, `tests/architecture/boundary.test.ts`, `tests/architecture/sim-imports.ts`, `tests/architecture/sim-globals.ts`, `tests/architecture/tsconfig.json`
 - Modify: `package.json` (scripts, `lint-staged`)
 
 **Interfaces:**
+
 - Consumes: `npm test` (Vitest picks up `tests/**/*.test.ts`); `src/render/BootScene.ts` and `src/sim/core/constants.ts` from Task 3 (imported by the fixture).
 - Produces: `npm run lint`, `npm run format`, `npm run format:check`; rules `no-restricted-imports`, `no-restricted-globals`, `no-restricted-properties` active on `src/sim/**`.
 
@@ -1016,7 +1028,10 @@ describe('sim/ boundary', () => {
   });
 
   it('linter rejects Phaser, Node, outer-layer and reference imports', () => {
-    const { status, output } = run('oxlint', ['--deny-warnings', 'tests/architecture/sim-imports.ts']);
+    const { status, output } = run('oxlint', [
+      '--deny-warnings',
+      'tests/architecture/sim-imports.ts',
+    ]);
     expect(status).not.toBe(0);
     expect(output).toContain("'phaser' import is restricted");
     expect(output).toContain("'node:fs' import is restricted");
@@ -1026,7 +1041,10 @@ describe('sim/ boundary', () => {
   });
 
   it('linter rejects browser globals, the clock and Math.random', () => {
-    const { status, output } = run('oxlint', ['--deny-warnings', 'tests/architecture/sim-globals.ts']);
+    const { status, output } = run('oxlint', [
+      '--deny-warnings',
+      'tests/architecture/sim-globals.ts',
+    ]);
     expect(status).not.toBe(0);
     expect(output).toContain("Unexpected use of 'window'");
     expect(output).toContain("Unexpected use of 'Date'");
@@ -1048,7 +1066,13 @@ Expected: the typecheck test passes (the sim tsconfig from Task 3 already has no
     "correctness": "error",
     "suspicious": "error"
   },
-  "ignorePatterns": ["dist/**", "coverage/**", "reference/**", "playwright-report/**", "test-results/**"],
+  "ignorePatterns": [
+    "dist/**",
+    "coverage/**",
+    "reference/**",
+    "playwright-report/**",
+    "test-results/**"
+  ],
   "rules": {
     "import/no-unassigned-import": ["error", { "allow": ["**/*.css"] }]
   },
@@ -1060,13 +1084,22 @@ Expected: the typecheck test passes (the sim tsconfig from Task 3 already has no
           "error",
           {
             "patterns": [
-              { "group": ["phaser", "phaser/*"], "message": "src/sim must not depend on Phaser (master plan §2.2)." },
-              { "group": ["node:*"], "message": "src/sim must not use Node APIs (master plan §2.2)." },
+              {
+                "group": ["phaser", "phaser/*"],
+                "message": "src/sim must not depend on Phaser (master plan §2.2)."
+              },
+              {
+                "group": ["node:*"],
+                "message": "src/sim must not use Node APIs (master plan §2.2)."
+              },
               {
                 "group": ["**/render", "**/render/**", "**/ui", "**/ui/**", "**/app", "**/app/**"],
                 "message": "src/sim must not import outer layers (master plan §2.2)."
               },
-              { "group": ["**/reference/**"], "message": "reference/ is a local OpenTTD clone, not part of the build." }
+              {
+                "group": ["**/reference/**"],
+                "message": "reference/ is a local OpenTTD clone, not part of the build."
+              }
             ]
           }
         ],
@@ -1090,7 +1123,11 @@ Expected: the typecheck test passes (the sim tsconfig from Task 3 already has no
         ],
         "no-restricted-properties": [
           "error",
-          { "object": "Math", "property": "random", "message": "Use the seeded RNG in the game state (master plan §2.3)." }
+          {
+            "object": "Math",
+            "property": "random",
+            "message": "Use the seeded RNG in the game state (master plan §2.3)."
+          }
         ]
       }
     }
@@ -1168,10 +1205,12 @@ Line 0.4 → `[x]`, push, PR, merge.
 ### Task 5: End-to-end smoke test on the production build
 
 **Files:**
+
 - Create: `playwright.config.ts`, `tests/e2e/boot.spec.ts`
 - Modify: `package.json` (script `test:e2e`), `vitest.config.ts` only if Vitest picks up `tests/e2e` (it must not: e2e files end in `.spec.ts`)
 
 **Interfaces:**
+
 - Consumes: `data-game-ready` on `<html>` (Task 3), CSP meta (Task 3).
 - Produces: `npm run test:e2e`, screenshot `test-results/boot.png`.
 
@@ -1275,9 +1314,11 @@ Line 0.5 → `[x]`, push, PR, merge.
 ### Task 6: CI, GitHub Pages deploy and security baseline
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`, `.github/dependabot.yml`, `SECURITY.md`
 
 **Interfaces:**
+
 - Consumes: every npm script from Tasks 3–5.
 - Produces: required status check **`check`** on `main`; site at `https://s-tian86.github.io/openttd-web/`.
 
@@ -1464,9 +1505,11 @@ Expected: `https://s-tian86.github.io/openttd-web/` shows the boot scene. Check 
 Research task: read the OpenTTD 15.3 source and write what Stage 1 needs to port. The output feeds the Stage 1 plan; nothing is implemented.
 
 **Files:**
+
 - Create: `docs/reference/openttd/README.md`, `time.md`, `map.md`, `track.md`, `trains.md`, `orders.md`, `stations-cargo.md`, `economy.md`, `towns-industries.md`, `docs/game/README.md`, `docs/game/differences.md`
 
 **Interfaces:**
+
 - Produces: one note per subsystem with the fixed template below; Stage 1's plan cites these notes.
 
 - [ ] **Step 1: Branch** — `docs/openttd-reference-notes`; line 0.6 → `[x]`, line 0.7 → `[~]`.
@@ -1490,30 +1533,30 @@ Every note follows this template:
 6. **Stage 1 needs** — what must be ported now.
 7. **Skipped** — what is left out and why (NewGRF callbacks, later stages).
 
-| Note | Subsystem |
-|---|---|
-| [time.md](time.md) | Ticks, days, calendar and economy dates |
-| [map.md](map.md) | Map size, tile types, tile storage |
-| [track.md](track.md) | Track bits, building and removing rail |
-| [trains.md](trains.md) | Train consist, movement, acceleration, depots |
-| [orders.md](orders.md) | Orders and their flags |
-| [stations-cargo.md](stations-cargo.md) | Stations, catchment, cargo packets, loading, ratings |
-| [economy.md](economy.md) | Prices, payment, loan, interest, company finances |
+| Note                                       | Subsystem                                              |
+| ------------------------------------------ | ------------------------------------------------------ |
+| [time.md](time.md)                         | Ticks, days, calendar and economy dates                |
+| [map.md](map.md)                           | Map size, tile types, tile storage                     |
+| [track.md](track.md)                       | Track bits, building and removing rail                 |
+| [trains.md](trains.md)                     | Train consist, movement, acceleration, depots          |
+| [orders.md](orders.md)                     | Orders and their flags                                 |
+| [stations-cargo.md](stations-cargo.md)     | Stations, catchment, cargo packets, loading, ratings   |
+| [economy.md](economy.md)                   | Prices, payment, loan, interest, company finances      |
 | [towns-industries.md](towns-industries.md) | Passenger generation, coal mine production, acceptance |
 ```
 
 - [ ] **Step 3: Write one note per subsystem, reading exactly these sources**
 
-| Note | Read in `reference/OpenTTD/src` |
-|---|---|
-| `time.md` | `timer/timer_game_tick.h`, `timer/timer_game_calendar.{h,cpp}`, `timer/timer_game_economy.{h,cpp}`, `date_type.h`, `gfx_type.h` (`MILLISECONDS_PER_TICK`) |
-| `map.md` | `map_type.h`, `map_func.h`, `map.cpp`, `tile_type.h`, `tile_map.h`, `landscape.cpp` (tile loop), `clear_map.h`, `tree_map.h`, `water_map.h` |
-| `track.md` | `track_type.h`, `track_func.h`, `rail_map.h`, `rail_cmd.cpp` (`CmdBuildSingleRail`, `CmdRemoveSingleRail`, `CmdBuildRailroadTrack`, `CmdBuildTrainDepot`), `table/track_data.h`, `table/railtypes.h` |
-| `trains.md` | `train.h`, `train_cmd.cpp` (`TrainController`, `UpdateSpeed`, `CmdBuildRailVehicle`), `ground_vehicle.hpp`, `ground_vehicle.cpp`, `vehicle_base.h`, `table/engines.h` (engines available in the default climate at game start) |
-| `orders.md` | `order_type.h`, `order_base.h`, `order_cmd.cpp` (`CmdInsertOrder`, `CmdModifyOrder`), `vehicle.cpp` (order processing) |
-| `stations-cargo.md` | `station_base.h`, `station_cmd.cpp` (`CmdBuildRailStation`, catchment, `UpdateStationRating`), `cargopacket.{h,cpp}`, `economy.cpp` (`LoadUnloadStation`), `table/cargo_const.h` |
-| `economy.md` | `economy.cpp` (`GetTransportedGoodsIncome`, `DeliverGoods`, `CompaniesGenStatistics`), `table/pricebase.h`, `misc_cmd.cpp` (`CmdIncreaseLoan`, `CmdDecreaseLoan`), `company_cmd.cpp`, `table/settings/difficulty_settings.ini` |
-| `towns-industries.md` | `town_cmd.cpp` (`TileLoop_Town` passenger generation), `town_land.h`, `industry_cmd.cpp` (production callbacks, `ProduceIndustryGoods`), `table/build_industry.h` (coal mine, power station), acceptance in `station_cmd.cpp` |
+| Note                  | Read in `reference/OpenTTD/src`                                                                                                                                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `time.md`             | `timer/timer_game_tick.h`, `timer/timer_game_calendar.{h,cpp}`, `timer/timer_game_economy.{h,cpp}`, `date_type.h`, `gfx_type.h` (`MILLISECONDS_PER_TICK`)                                                                      |
+| `map.md`              | `map_type.h`, `map_func.h`, `map.cpp`, `tile_type.h`, `tile_map.h`, `landscape.cpp` (tile loop), `clear_map.h`, `tree_map.h`, `water_map.h`                                                                                    |
+| `track.md`            | `track_type.h`, `track_func.h`, `rail_map.h`, `rail_cmd.cpp` (`CmdBuildSingleRail`, `CmdRemoveSingleRail`, `CmdBuildRailroadTrack`, `CmdBuildTrainDepot`), `table/track_data.h`, `table/railtypes.h`                           |
+| `trains.md`           | `train.h`, `train_cmd.cpp` (`TrainController`, `UpdateSpeed`, `CmdBuildRailVehicle`), `ground_vehicle.hpp`, `ground_vehicle.cpp`, `vehicle_base.h`, `table/engines.h` (engines available in the default climate at game start) |
+| `orders.md`           | `order_type.h`, `order_base.h`, `order_cmd.cpp` (`CmdInsertOrder`, `CmdModifyOrder`), `vehicle.cpp` (order processing)                                                                                                         |
+| `stations-cargo.md`   | `station_base.h`, `station_cmd.cpp` (`CmdBuildRailStation`, catchment, `UpdateStationRating`), `cargopacket.{h,cpp}`, `economy.cpp` (`LoadUnloadStation`), `table/cargo_const.h`                                               |
+| `economy.md`          | `economy.cpp` (`GetTransportedGoodsIncome`, `DeliverGoods`, `CompaniesGenStatistics`), `table/pricebase.h`, `misc_cmd.cpp` (`CmdIncreaseLoan`, `CmdDecreaseLoan`), `company_cmd.cpp`, `table/settings/difficulty_settings.ini` |
+| `towns-industries.md` | `town_cmd.cpp` (`TileLoop_Town` passenger generation), `town_land.h`, `industry_cmd.cpp` (production callbacks, `ProduceIndustryGoods`), `table/build_industry.h` (coal mine, power station), acceptance in `station_cmd.cpp`  |
 
 Each note follows the README template. Formulas are transcribed with their constants and the
 `file:function` they come from. When the source is ambiguous, write the question in the note
@@ -1540,14 +1583,14 @@ It grows with every stage.
 Everything listed here differs from OpenTTD 15.3 on purpose. Anything not listed must behave
 like OpenTTD; a mismatch is a bug.
 
-| Area | OpenTTD | openttd-web | Why |
-|---|---|---|---|
-| View | Isometric | Top-down 3/4 | New look; game logic keeps OpenTTD's grid |
-| Graphics, sound, music | Original sets | Original art, no audio yet | Own art style; no third-party assets |
-| NewGRF | Supported | Not supported | Out of scope (master plan §2.8) |
-| AI and Game Scripts | NoAI / GameScript | Not supported | Out of scope (master plan §2.8) |
-| Scenario editor | Yes | No | Out of scope (master plan §2.8) |
-| Network play | Yes | Not yet | Needs a backend (master plan §2.9) |
+| Area                   | OpenTTD           | openttd-web                | Why                                       |
+| ---------------------- | ----------------- | -------------------------- | ----------------------------------------- |
+| View                   | Isometric         | Top-down 3/4               | New look; game logic keeps OpenTTD's grid |
+| Graphics, sound, music | Original sets     | Original art, no audio yet | Own art style; no third-party assets      |
+| NewGRF                 | Supported         | Not supported              | Out of scope (master plan §2.8)           |
+| AI and Game Scripts    | NoAI / GameScript | Not supported              | Out of scope (master plan §2.8)           |
+| Scenario editor        | Yes               | No                         | Out of scope (master plan §2.8)           |
+| Network play           | Yes               | Not yet                    | Needs a backend (master plan §2.9)        |
 ```
 
 - [ ] **Step 5: Self-check each note**
@@ -1574,6 +1617,7 @@ Line 0.7 → `[x]` (in this PR), push, PR, `gh pr checks --watch`, merge.
 ### Task 8: Close Stage 0
 
 **Files:**
+
 - Create: `docs/NEXT-SESSION.md`
 - Modify: `docs/quality-log.md`, `docs/plan/TRACKING.md`, `README.md` (status line)
 

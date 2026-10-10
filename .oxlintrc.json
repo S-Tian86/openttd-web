@@ -1,0 +1,74 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "ignorePatterns": [
+    "dist/**",
+    "coverage/**",
+    "reference/**",
+    "playwright-report/**",
+    "test-results/**"
+  ],
+  "rules": {
+    "import/no-unassigned-import": ["error", { "allow": ["**/*.css"] }]
+  },
+  "overrides": [
+    {
+      "files": ["src/sim/**", "tests/architecture/sim-*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["phaser", "phaser/*"],
+                "message": "src/sim must not depend on Phaser (master plan §2.2)."
+              },
+              {
+                "group": ["node:*"],
+                "message": "src/sim must not use Node APIs (master plan §2.2)."
+              },
+              {
+                "group": ["**/render", "**/render/**", "**/ui", "**/ui/**", "**/app", "**/app/**"],
+                "message": "src/sim must not import outer layers (master plan §2.2)."
+              },
+              {
+                "group": ["**/reference/**"],
+                "message": "reference/ is a local OpenTTD clone, not part of the build."
+              }
+            ]
+          }
+        ],
+        "no-restricted-globals": [
+          "error",
+          "window",
+          "document",
+          "navigator",
+          "location",
+          "localStorage",
+          "sessionStorage",
+          "indexedDB",
+          "fetch",
+          "performance",
+          "Date",
+          "setTimeout",
+          "setInterval",
+          "requestAnimationFrame",
+          "alert",
+          "confirm"
+        ],
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "Math",
+            "property": "random",
+            "message": "Use the seeded RNG in the game state (master plan §2.3)."
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -15,7 +15,7 @@
 ## 1. Context and goal
 
 A **faithful web implementation of [OpenTTD](https://github.com/OpenTTD/OpenTTD)**
-(itself an open-source remake of *Transport Tycoon Deluxe*), playable in the browser.
+(itself an open-source remake of _Transport Tycoon Deluxe_), playable in the browser.
 
 - **Faithful gameplay, new look.** Rules, formulas and behaviour follow OpenTTD's source
   code. The graphics are reinterpreted: a top-down 3/4 view in a cute, colourful style
@@ -189,16 +189,16 @@ The look is pluggable, so anyone can make their own style.
 
 ## 3. Quality
 
-| Check | Tool | Where |
-|---|---|---|
-| Types | `tsc` (strict) | pre-commit, CI |
-| Lint and format | oxlint, Prettier | pre-commit, CI |
-| Unit tests of the simulation | Vitest, **test first (TDD)** | CI |
-| Fidelity tests | Vitest, values from OpenTTD formulas | CI |
-| Golden replay tests | seed + command log ⇒ expected state hash | CI |
-| Architecture tests | Vitest, imports crossing barriers must fail | CI |
+| Check                        | Tool                                         | Where                        |
+| ---------------------------- | -------------------------------------------- | ---------------------------- |
+| Types                        | `tsc` (strict)                               | pre-commit, CI               |
+| Lint and format              | oxlint, Prettier                             | pre-commit, CI               |
+| Unit tests of the simulation | Vitest, **test first (TDD)**                 | CI                           |
+| Fidelity tests               | Vitest, values from OpenTTD formulas         | CI                           |
+| Golden replay tests          | seed + command log ⇒ expected state hash     | CI                           |
+| Architecture tests           | Vitest, imports crossing barriers must fail  | CI                           |
 | End-to-end and visual checks | Playwright on headless Chromium, screenshots | CI and before closing a task |
-| Dependencies | `npm audit`, Dependabot | CI, weekly |
+| Dependencies                 | `npm audit`, Dependabot                      | CI, weekly                   |
 
 `main` is protected: a PR cannot be merged with a red CI.
 
@@ -211,7 +211,7 @@ skills in `.claude/skills/` execute it.
 
 - **Milestones = stages. Issues = tasks**, opened just-in-time for the current block only.
   `TRACKING.md` lists every task with a one-line entry (code, name, status, issue).
-- **One branch per issue** → conventional commits focused on *why* (`Refs #N`) → PR with
+- **One branch per issue** → conventional commits focused on _why_ (`Refs #N`) → PR with
   `Closes #N` → CI green → merge.
 - Everything on GitHub is in English.
 - **Each stage ends with a playtest**: the build is deployed, the author plays it following
@@ -223,19 +223,19 @@ skills in `.claude/skills/` execute it.
 
 ## 5. Documentation map
 
-| Document | Purpose |
-|---|---|
-| `README.md` | What it is, how to run it, how to play, credits |
-| `CONTRIBUTING.md` | Workflow: issues, branches, commits, PRs, labels, milestones |
-| `CLAUDE.md` | Instructions for the coding agent |
-| `SECURITY.md` | Vulnerability reporting |
-| `docs/plan/00-master.md` | This file: architecture, decisions, roadmap |
-| `docs/plan/TRACKING.md` | Bridge between roadmap and GitHub issues |
-| `docs/plan/stage-N-*.md` | Detailed plan of each stage, written when it starts |
+| Document                  | Purpose                                                                    |
+| ------------------------- | -------------------------------------------------------------------------- |
+| `README.md`               | What it is, how to run it, how to play, credits                            |
+| `CONTRIBUTING.md`         | Workflow: issues, branches, commits, PRs, labels, milestones               |
+| `CLAUDE.md`               | Instructions for the coding agent                                          |
+| `SECURITY.md`             | Vulnerability reporting                                                    |
+| `docs/plan/00-master.md`  | This file: architecture, decisions, roadmap                                |
+| `docs/plan/TRACKING.md`   | Bridge between roadmap and GitHub issues                                   |
+| `docs/plan/stage-N-*.md`  | Detailed plan of each stage, written when it starts                        |
 | `docs/reference/openttd/` | Notes on each OpenTTD subsystem as read from its source, before porting it |
-| `docs/game/` | Player-facing: how each mechanic works, playtest guides, `differences.md` |
-| `docs/quality-log.md` | Append-only log: rework, what manual testing caught, missing inputs |
-| `docs/NEXT-SESSION.md` | Handoff prompt for a fresh session with no context |
+| `docs/game/`              | Player-facing: how each mechanic works, playtest guides, `differences.md`  |
+| `docs/quality-log.md`     | Append-only log: rework, what manual testing caught, missing inputs        |
+| `docs/NEXT-SESSION.md`    | Handoff prompt for a fresh session with no context                         |
 
 ---
 
@@ -301,9 +301,9 @@ community themes from files, more languages.
 
 ## 7. Open decisions
 
-| Decision | When |
-|---|---|
-| Art direction (style, palette) | Stage 1, with mockups |
-| Public name | Stage 1 |
-| Height rendering in top-down view | Stage 2 |
-| Opponent behaviour (port of an existing AI or our own) | Stage 4 |
+| Decision                                               | When                  |
+| ------------------------------------------------------ | --------------------- |
+| Art direction (style, palette)                         | Stage 1, with mockups |
+| Public name                                            | Stage 1               |
+| Height rendering in top-down view                      | Stage 2               |
+| Opponent behaviour (port of an existing AI or our own) | Stage 4               |
