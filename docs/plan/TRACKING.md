@@ -16,7 +16,7 @@ the issue.
 ## Stage 0 — Foundations · milestone `Stage 0 — Foundations`
 
 - [x] 0.1 Repository bootstrap — _(direct to main)_
-- [ ] 0.2 Contribution workflow and project skills — #1
+- [x] 0.2 Contribution workflow and project skills — #1
 - [ ] 0.3 App scaffold with layered structure — #2
 - [ ] 0.4 Lint, formatting and sim/ barrier — #3
 - [ ] 0.5 End-to-end smoke test — #4
