@@ -11,8 +11,10 @@ test('generates a new 64×128 world from the new-game window', async ({ page }) 
   const html = page.locator('html');
   await page.getByRole('button', { name: 'New game' }).click();
   const dialog = page.getByRole('dialog', { name: 'New game' });
-  await dialog.getByLabel('Map size X').selectOption('6');
-  await dialog.getByLabel('Map size Y').selectOption('7');
+  await dialog.getByRole('button', { name: /^Map size X / }).click();
+  await dialog.getByRole('option', { name: '64', exact: true }).click();
+  await dialog.getByRole('button', { name: /^Map size Y / }).click();
+  await dialog.getByRole('option', { name: '128', exact: true }).click();
   await dialog.getByLabel('Seed').fill('12345');
   await dialog.getByRole('button', { name: 'Generate' }).click();
   const expected = hashGameState(createGame({ mapLogX: 6, mapLogY: 7, seed: 12345 }));
@@ -23,8 +25,10 @@ test('generates a new 64×128 world from the new-game window', async ({ page }) 
 test('shows the generating state for a large map', async ({ page }) => {
   await page.getByRole('button', { name: 'New game' }).click();
   const dialog = page.getByRole('dialog', { name: 'New game' });
-  await dialog.getByLabel('Map size X').selectOption('10');
-  await dialog.getByLabel('Map size Y').selectOption('10');
+  await dialog.getByRole('button', { name: /^Map size X / }).click();
+  await dialog.getByRole('option', { name: '1024', exact: true }).click();
+  await dialog.getByRole('button', { name: /^Map size Y / }).click();
+  await dialog.getByRole('option', { name: '1024', exact: true }).click();
   await dialog.getByRole('button', { name: 'Generate' }).click();
   await expect(page.getByRole('status')).toContainText('Generating world');
 });

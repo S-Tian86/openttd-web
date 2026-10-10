@@ -28,8 +28,7 @@ body {
   pointer-events: auto;
 }
 
-#ui button,
-#ui select {
+#ui button {
   min-width: var(--touch-target);
   min-height: var(--touch-target);
   font: inherit;
@@ -116,8 +115,14 @@ body {
   gap: var(--space);
 }
 
-.settings label,
 .new-game label {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space) / 2);
+}
+
+.dropdown {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: calc(var(--space) / 2);
@@ -250,6 +255,58 @@ body {
   font-weight: 600;
 }
 
+#ui .dropdown-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space);
+  text-align: start;
+}
+
+/* Catches the click outside the list that closes it (dropdown.cpp OnFocusLost). */
+.dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+}
+
+.dropdown-list {
+  position: absolute;
+  z-index: 3;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 50vh;
+  overflow: auto;
+  margin: calc(var(--space) / 2) 0 0;
+  padding: calc(var(--space) / 2);
+  list-style: none;
+  background: var(--color-panel);
+  border: 2px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  box-sizing: border-box;
+  outline: none;
+}
+
+.dropdown-list [role='option'] {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  padding: 0 var(--space);
+  border-radius: calc(var(--radius) / 2);
+  cursor: pointer;
+}
+
+.dropdown-list [role='option'][aria-selected='true'] {
+  font-weight: 600;
+}
+
+.dropdown-list [role='option'].active,
+.dropdown-list [role='option']:hover {
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
 .ui-error {
   position: absolute;
   inset: 0;
@@ -318,6 +375,21 @@ body {
     border-radius: var(--radius) var(--radius) 0 0;
     padding-bottom: env(safe-area-inset-bottom);
     z-index: 1;
+  }
+
+  /* No room below the button on a bottom sheet: the list opens as a centred sheet. */
+  .dropdown-backdrop {
+    background: var(--color-backdrop);
+  }
+
+  .dropdown-list {
+    position: fixed;
+    top: 50%;
+    left: calc(2 * var(--space));
+    right: calc(2 * var(--space));
+    transform: translateY(-50%);
+    margin: 0;
+    max-height: 70vh;
   }
 }
 
