@@ -1,7 +1,7 @@
 import { Math as PMath, Scene, type Input, type Tilemaps } from 'phaser';
 import { takeDirtyTiles, type GameState } from '../sim/game';
 import { tileX, tileXY, tileY } from '../sim/map/map';
-import { pinchZoom, wheelZoom } from './camera';
+import { clampScrollToMap, pinchZoom, wheelZoom } from './camera';
 import { groundSprite } from './ground';
 import {
   CHUNK_TILES,
@@ -64,13 +64,15 @@ export class MapScene extends Scene {
 
     const { sizeX, sizeY } = this.state.map;
     const camera = this.cameras.main;
-    camera.setBounds(0, 0, sizeY * TILE_PX, sizeX * TILE_PX);
     camera.centerOn((sizeY * TILE_PX) / 2, (sizeX * TILE_PX) / 2);
     this.setupInput();
   }
 
   override update(): void {
     const { map } = this.state;
+    const camera = this.cameras.main;
+    camera.scrollX = clampScrollToMap(camera.scrollX, camera.width, map.sizeY, TILE_PX);
+    camera.scrollY = clampScrollToMap(camera.scrollY, camera.height, map.sizeX, TILE_PX);
     const wanted = visibleChunks(this.cameras.main.worldView, map.sizeX, map.sizeY);
     const wantedKeys = new Set<string>();
     for (const { col, row } of wanted) {

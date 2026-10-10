@@ -42,6 +42,7 @@ the issue.
   - [x] 1.1.11 HUD shell and app wiring — #42
   - [x] 1.1.12 Evaluate reusing OpenTTD translations — #44
   - [x] 1.1.13 Close block 1.1 — #48
+  - [x] 1.1.15 Let the map edges scroll out from under the HUD — #125
 - [ ] 1.2 World — _(to create)_
 - [ ] 1.3 Construction — _(to create)_
 - [ ] 1.4 Trains — _(to create)_
