@@ -275,9 +275,13 @@ export class MapScene extends Scene {
         { x: pointer.x, y: pointer.y, at: performance.now() },
         press.moved,
       );
-      if (kind !== 'tap') return;
+      if (kind === 'drag') return;
       const tile = this.tileUnder(pointer);
-      if (tile !== undefined) this.callbacks.onTap(tile);
+      if (tile === undefined) return;
+      // A busy page can run the release before the hold timer (browsers favour input over
+      // timers); the press is then still unconsumed here, and it is a long press all the same.
+      if (kind === 'long') this.callbacks.onLongPress(tile);
+      else this.callbacks.onTap(tile);
     });
 
     this.input.on('pointermove', (pointer: Input.Pointer) => {
