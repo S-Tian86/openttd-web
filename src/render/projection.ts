@@ -12,6 +12,21 @@ export const worldToTile = (px: number, py: number): { x: number; y: number } =>
   y: Math.floor(px / TILE_PX),
 });
 
+/** OpenTTD world units per tile (tile_type.h:TILE_SIZE). */
+export const TILE_UNITS = 16;
+
+/** A point in OpenTTD world units: `x` along the tile X axis, so it lies in tile (x >> 4, y >> 4). */
+export interface OttdPoint {
+  x: number;
+  y: number;
+}
+
+/** World pixels to OpenTTD world units: a 64-px tile is 16 units, and screen x is tile y. */
+export const worldToOttd = (px: number, py: number): OttdPoint => ({
+  x: Math.floor((py * TILE_UNITS) / TILE_PX),
+  y: Math.floor((px * TILE_UNITS) / TILE_PX),
+});
+
 export const chunkOfTile = (x: number, y: number): { col: number; row: number } => ({
   col: Math.floor(y / CHUNK_TILES),
   row: Math.floor(x / CHUNK_TILES),
