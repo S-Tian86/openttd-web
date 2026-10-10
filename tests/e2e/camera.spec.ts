@@ -7,6 +7,9 @@ test.beforeEach(async ({ page }) => {
 
 test('hands touch gestures to the game', async ({ page }) => {
   await expect(page.locator('#game')).toHaveCSS('touch-action', 'none');
+  await expect(page.locator('.status-bar')).toHaveCSS('touch-action', 'none');
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await expect(page.getByRole('dialog')).toHaveCSS('touch-action', 'pan-y');
 });
 
 test('drag pans and wheel zooms (desktop)', async ({ page, isMobile }) => {
