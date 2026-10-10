@@ -78,6 +78,24 @@
     "industry.gfx.7": "sprites/industry-gfx-7.svg",
     "industry.gfx.8": "sprites/industry-gfx-8.svg",
     "industry.gfx.9": "sprites/industry-gfx-9.svg",
-    "industry.gfx.10": "sprites/industry-gfx-10.svg"
+    "industry.gfx.10": "sprites/industry-gfx-10.svg",
+    "rail.track.x": "sprites/rail-track-x.svg",
+    "rail.track.y": "sprites/rail-track-y.svg",
+    "rail.track.upper": "sprites/rail-track-upper.svg",
+    "rail.track.lower": "sprites/rail-track-lower.svg",
+    "rail.track.left": "sprites/rail-track-left.svg",
+    "rail.track.right": "sprites/rail-track-right.svg",
+    "station.platform.x": "sprites/station-platform-x.svg",
+    "station.platform.y": "sprites/station-platform-y.svg",
+    "crossing.x": "sprites/crossing-x.svg",
+    "crossing.y": "sprites/crossing-y.svg",
+    "depot.rail.ne": "sprites/depot-rail-ne.svg",
+    "depot.rail.se": "sprites/depot-rail-se.svg",
+    "depot.rail.sw": "sprites/depot-rail-sw.svg",
+    "depot.rail.nw": "sprites/depot-rail-nw.svg",
+    "station.building.x": "sprites/station-building-x.svg",
+    "station.building.y": "sprites/station-building-y.svg",
+    "station.roof.x": "sprites/station-roof-x.svg",
+    "station.roof.y": "sprites/station-roof-y.svg"
   }
 }

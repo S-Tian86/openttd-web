@@ -1,9 +1,12 @@
 import { ClearGround, getClearDensity, getClearGround } from '../sim/map/clear';
-import { getCrossingRoadBits, getRoadBits, isLevelCrossingTile } from '../sim/map/road-map';
+import { getRailGroundType, RailGroundType } from '../sim/map/rail-map';
+import { getCrossingRoadAxis, getRoadBits, isLevelCrossingTile } from '../sim/map/road-map';
 import { getTileSlope } from '../sim/map/slope';
+import { getRailStationAxis, isRailStationTile } from '../sim/map/station-map';
 import { getTileType, TileType, type MapState } from '../sim/map/map';
 import { getTreeDensity, getTreeGround, TreeGround } from '../sim/map/tree-map';
 import { getWaterTileType, WaterTileType } from '../sim/map/water';
+import { Axis } from '../sim/track/track';
 import { GROUND_SPRITE_IDS, type SpriteId } from './theme';
 
 const GROUND_ID_SET: ReadonlySet<string> = new Set(GROUND_SPRITE_IDS);
@@ -42,8 +45,19 @@ export function groundSprite(map: MapState, t: number): SpriteId {
         default:
           return 'terrain.unknown';
       }
+    case TileType.Railway:
+      // Fences are not drawn (R32): every grass ground is plain grass.
+      return getRailGroundType(map, t) === RailGroundType.Barren
+        ? 'terrain.grass.0'
+        : 'terrain.grass.3';
+    case TileType.Station:
+      if (!isRailStationTile(map, t)) return 'terrain.unknown';
+      return getRailStationAxis(map, t) === Axis.X ? 'station.platform.x' : 'station.platform.y';
     case TileType.Road: {
-      const bits = isLevelCrossingTile(map, t) ? getCrossingRoadBits(map, t) : getRoadBits(map, t);
+      if (isLevelCrossingTile(map, t)) {
+        return getCrossingRoadAxis(map, t) === Axis.X ? 'crossing.x' : 'crossing.y';
+      }
+      const bits = getRoadBits(map, t);
       return bits >= 1 && bits <= 15 ? (`road.${bits}` as SpriteId) : 'terrain.unknown';
     }
     case TileType.House:

@@ -1,7 +1,10 @@
 import { getHouseBuildingStage, getHouseType, isHouseCompleted } from '../sim/map/house-map';
 import { getIndustryGfx } from '../sim/map/industry-map';
 import { getTileType, tileXY, TileType, type MapState } from '../sim/map/map';
+import { getRailDepotDirection, getTrackBits, isPlainRail } from '../sim/map/rail-map';
+import { getRailStationAxis, getStationGfx, isRailStationTile } from '../sim/map/station-map';
 import { getTreeCount, getTreeGrowth } from '../sim/map/tree-map';
+import { Axis } from '../sim/track/track';
 import { CHUNK_TILES, TILE_PX } from './projection';
 import type { SpriteId } from './theme';
 
@@ -65,6 +68,42 @@ const HOUSE_SPRITES = new Map<number, SpriteId>([
   [0x27, 'house.cinema'],
 ]);
 
+/** The flat sprite of one track piece, by `Track`. */
+export const RAIL_TRACK_SPRITES: readonly SpriteId[] = [
+  'rail.track.x',
+  'rail.track.y',
+  'rail.track.upper',
+  'rail.track.lower',
+  'rail.track.left',
+  'rail.track.right',
+];
+
+/** Rail depot sprites, by exit `DiagDir`. */
+const DEPOT_SPRITES: readonly SpriteId[] = [
+  'depot.rail.ne',
+  'depot.rail.se',
+  'depot.rail.sw',
+  'depot.rail.nw',
+];
+
+/**
+ * What stands on a rail station tile, by the section of its gfx (the axis masked off, as in
+ * station_cmd.cpp:RailStationTileLayout::Iterator): 0 a bare platform, 2 a small building,
+ * 4 and 6 the two halves of a roofed platform pair.
+ */
+function stationSprite(map: MapState, t: number): SpriteId | undefined {
+  const x = getRailStationAxis(map, t) === Axis.X;
+  switch (getStationGfx(map, t) & ~1) {
+    case 2:
+      return x ? 'station.building.x' : 'station.building.y';
+    case 4:
+    case 6:
+      return x ? 'station.roof.x' : 'station.roof.y';
+    default:
+      return undefined;
+  }
+}
+
 export const houseSprite = (houseId: number): SpriteId =>
   HOUSE_SPRITES.get(houseId) ?? 'object.unknown';
 
@@ -84,6 +123,21 @@ export function objectSprites(map: MapState, t: number): ObjectSprite[] {
     }
     case TileType.Industry:
       return [{ sprite: `industry.gfx.${getIndustryGfx(map, t)}` as SpriteId, dx: 0, dy: 0 }];
+    case TileType.Railway: {
+      if (!isPlainRail(map, t)) {
+        return [{ sprite: DEPOT_SPRITES[getRailDepotDirection(map, t)]!, dx: 0, dy: 0 }];
+      }
+      const bits = getTrackBits(map, t);
+      return RAIL_TRACK_SPRITES.filter((_, track) => (bits & (1 << track)) !== 0).map((sprite) => ({
+        sprite,
+        dx: 0,
+        dy: 0,
+      }));
+    }
+    case TileType.Station: {
+      const sprite = isRailStationTile(map, t) ? stationSprite(map, t) : undefined;
+      return sprite === undefined ? [] : [{ sprite, dx: 0, dy: 0 }];
+    }
     default:
       return [];
   }

@@ -38,6 +38,10 @@ export const GROUND_SPRITE_IDS = [
   'road.15',
   'ground.house',
   'ground.industry',
+  'station.platform.x',
+  'station.platform.y',
+  'crossing.x',
+  'crossing.y',
 ] as const;
 
 /** Sprites drawn as tall 64x128 objects on the blitter layer; the tile footprint is the bottom 64 px. */
@@ -78,6 +82,20 @@ export const OBJECT_SPRITE_IDS = [
   'industry.gfx.9',
   'industry.gfx.10',
   'object.unknown',
+  'rail.track.x',
+  'rail.track.y',
+  'rail.track.upper',
+  'rail.track.lower',
+  'rail.track.left',
+  'rail.track.right',
+  'depot.rail.ne',
+  'depot.rail.se',
+  'depot.rail.sw',
+  'depot.rail.nw',
+  'station.building.x',
+  'station.building.y',
+  'station.roof.x',
+  'station.roof.y',
 ] as const;
 
 /** Height in pixels of an object sprite. */

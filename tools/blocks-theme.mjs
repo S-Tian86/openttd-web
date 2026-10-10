@@ -1,4 +1,4 @@
-// tools/blocks-theme.mjs — placeholder sprites for the "blocks" theme (block 1.2). Run: node tools/blocks-theme.mjs
+// tools/blocks-theme.mjs — placeholder sprites for the "blocks" theme (blocks 1.2 and 1.3). Run: node tools/blocks-theme.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const DIR = 'public/themes/blocks';
@@ -115,6 +115,59 @@ for (let gfx = 0; gfx <= 10; gfx++) {
     `<rect x="${tall ? 22 : 8}" y="${top}" width="${tall ? 20 : 48}" height="${120 - top}" fill="${colour}" stroke="#2d4a3e"/>${sparks}`,
   );
 }
+
+const TRACK_SEG = {
+  x: [32, 0, 32, 64],
+  y: [0, 32, 64, 32],
+  upper: [32, 0, 0, 32],
+  lower: [64, 32, 32, 64],
+  left: [0, 32, 32, 64],
+  right: [32, 0, 64, 32],
+};
+const rails = ([x1, y1, x2, y2], dy = 0) =>
+  `<line x1="${x1}" y1="${y1 + dy}" x2="${x2}" y2="${y2 + dy}" stroke="#9c6644" stroke-width="16" stroke-linecap="square"/>` +
+  `<line x1="${x1}" y1="${y1 + dy}" x2="${x2}" y2="${y2 + dy}" stroke="#4a4f57" stroke-width="10" stroke-linecap="square"/>` +
+  `<line x1="${x1}" y1="${y1 + dy}" x2="${x2}" y2="${y2 + dy}" stroke="#9c6644" stroke-width="4" stroke-linecap="square"/>`;
+for (const [name, seg] of Object.entries(TRACK_SEG))
+  sprites[`rail.track.${name}`] = object(rails(seg, 64));
+sprites['station.platform.x'] = tile(
+  '#cfc8b8',
+  `<rect x="4" y="0" width="16" height="64" fill="#e8e2d4"/><rect x="44" y="0" width="16" height="64" fill="#e8e2d4"/>${rails(TRACK_SEG.x)}`,
+);
+sprites['station.platform.y'] = tile(
+  '#cfc8b8',
+  `<rect x="0" y="4" width="64" height="16" fill="#e8e2d4"/><rect x="0" y="44" width="64" height="16" fill="#e8e2d4"/>${rails(TRACK_SEG.y)}`,
+);
+sprites['crossing.x'] = tile(
+  '#8fd18a',
+  `<rect x="22" y="0" width="20" height="64" fill="#8a8d91"/>${rails(TRACK_SEG.y)}<rect x="22" y="22" width="20" height="20" fill="#f4efe6" opacity="0.6"/>`,
+);
+sprites['crossing.y'] = tile(
+  '#8fd18a',
+  `<rect x="0" y="22" width="64" height="20" fill="#8a8d91"/>${rails(TRACK_SEG.x)}<rect x="22" y="22" width="20" height="20" fill="#f4efe6" opacity="0.6"/>`,
+);
+const DOOR = {
+  ne: [22, 74, 20, 10],
+  se: [50, 86, 10, 20],
+  sw: [22, 112, 20, 10],
+  nw: [4, 86, 10, 20],
+};
+for (const [dir, [x, y, w, h]] of Object.entries(DOOR))
+  sprites[`depot.rail.${dir}`] = object(
+    `<rect x="8" y="70" width="48" height="48" fill="#d9a066" stroke="#2d4a3e" stroke-width="2"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#2d2d2d"/>`,
+  );
+sprites['station.building.x'] = object(
+  `<rect x="2" y="84" width="16" height="40" fill="#f4efe6" stroke="#2d4a3e"/><rect x="0" y="78" width="20" height="8" fill="#e76f51"/>`,
+);
+sprites['station.building.y'] = object(
+  `<rect x="12" y="66" width="40" height="16" fill="#f4efe6" stroke="#2d4a3e"/><rect x="8" y="60" width="48" height="8" fill="#e76f51"/>`,
+);
+sprites['station.roof.x'] = object(
+  '<rect x="2" y="64" width="16" height="64" fill="#457b9d" opacity="0.7"/><rect x="46" y="64" width="16" height="64" fill="#457b9d" opacity="0.7"/>',
+);
+sprites['station.roof.y'] = object(
+  '<rect x="0" y="66" width="64" height="16" fill="#457b9d" opacity="0.7"/><rect x="0" y="110" width="64" height="16" fill="#457b9d" opacity="0.7"/>',
+);
 
 const themePath = `${DIR}/theme.json`;
 const theme = JSON.parse(readFileSync(themePath, 'utf8'));
