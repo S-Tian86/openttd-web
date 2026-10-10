@@ -47,3 +47,12 @@ export function buildPointerAction(p: {
   if (p.pointers >= 2) return 'pinch';
   return p.touch || p.button === 0 ? 'build' : 'pan';
 }
+
+/**
+ * Whether a release ends the build press that `start` began: a mouse has one pointer for all
+ * its buttons, so only the button that started the press ends it; a finger ends its own press.
+ */
+export const buildPressEnds = (
+  start: { touch: boolean; button: number },
+  up: { button: number },
+): boolean => start.touch || up.button === start.button;

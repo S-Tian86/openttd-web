@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPointerAction, classifyPress } from './gesture';
+import { buildPointerAction, buildPressEnds, classifyPress } from './gesture';
 
 const down = { x: 100, y: 100, at: 1000 };
 
@@ -25,5 +25,16 @@ describe('pointers while a build tool is on (R30, Review Focus 1)', () => {
       buildPointerAction({ button: 0, touch: true, pointers: 1 }),
       buildPointerAction({ button: 0, touch: true, pointers: 2 }),
     ]).toEqual(['build', 'pan', 'pan', 'build', 'pinch']);
+  });
+});
+
+describe('the end of a build press (R30)', () => {
+  it('ends only on the button that started it; a finger always ends its own press', () => {
+    expect([
+      buildPressEnds({ touch: false, button: 0 }, { button: 0 }),
+      buildPressEnds({ touch: false, button: 0 }, { button: 2 }),
+      buildPressEnds({ touch: false, button: 0 }, { button: 1 }),
+      buildPressEnds({ touch: true, button: 0 }, { button: 0 }),
+    ]).toEqual([true, false, false, true]);
   });
 });

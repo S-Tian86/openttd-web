@@ -6,6 +6,7 @@ import { ATLAS_COLUMNS, atlasCell } from './atlas';
 import { pinchZoom, wheelZoom } from './camera';
 import {
   buildPointerAction,
+  buildPressEnds,
   classifyPress,
   LONG_PRESS_MS,
   TAP_SLOP_PX,
@@ -67,11 +68,14 @@ export class MapScene extends Scene {
   /** The press of a build tool in progress. */
   private build: {
     pointerId: number;
+    button: number;
     press: OttdPoint;
     current: OttdPoint;
     touch: boolean;
   } | null = null;
-  private ghost!: GameObjects.Graphics;
+  /** Created in create(); the latest preview is kept so one shown earlier is drawn then. */
+  private ghost: GameObjects.Graphics | undefined;
+  private preview: MapPreview | null = null;
 
   constructor(
     private state: GameState,
@@ -92,18 +96,27 @@ export class MapScene extends Scene {
   /** Turns build gestures on or off; turning them off cancels a gesture in progress. */
   setBuildMode(on: boolean): void {
     this.buildMode = on;
-    if (!on) this.cancelBuild();
+    // A press already held must not turn into a long press under a build tool (R30).
+    if (on) this.press = null;
+    else this.cancelBuild();
   }
 
-  /** Draws the construction ghost (R31), or clears it for null. */
+  /** Draws the construction ghost (R31), or clears it for null. Safe before the scene starts. */
   showPreview(preview: MapPreview | null): void {
-    this.ghost.clear();
-    if (preview === null) return;
-    const { colour, lines, rects } = previewShapes(this.state.map, preview);
-    this.ghost.lineStyle(12, colour, 0.8);
-    for (const { x1, y1, x2, y2 } of lines) this.ghost.lineBetween(x1, y1, x2, y2);
-    this.ghost.fillStyle(colour, 0.35);
-    for (const { x, y, w, h } of rects) this.ghost.fillRect(x, y, w, h);
+    this.preview = preview;
+    this.drawPreview();
+  }
+
+  private drawPreview(): void {
+    const ghost = this.ghost;
+    if (ghost === undefined) return;
+    ghost.clear();
+    if (this.preview === null) return;
+    const { colour, lines, rects } = previewShapes(this.state.map, this.preview);
+    ghost.lineStyle(12, colour, 0.8);
+    for (const { x1, y1, x2, y2 } of lines) ghost.lineBetween(x1, y1, x2, y2);
+    ghost.fillStyle(colour, 0.35);
+    for (const { x, y, w, h } of rects) ghost.fillRect(x, y, w, h);
   }
 
   preload(): void {
@@ -124,6 +137,7 @@ export class MapScene extends Scene {
   create(): void {
     this.createAtlases();
     this.ghost = this.add.graphics().setDepth(9000); // under the town labels
+    this.drawPreview();
     this.resetView(undefined);
     this.setupInput();
   }
@@ -212,7 +226,8 @@ export class MapScene extends Scene {
     this.chunks.clear();
     for (const label of this.labels) label.destroy();
     this.labels = [];
-    this.ghost.clear();
+    this.preview = null;
+    this.ghost?.clear();
     this.state = state;
     this.resetView(focusTile);
     this.justSwapped = true;
@@ -313,6 +328,7 @@ export class MapScene extends Scene {
     const buildPointerUp = (pointer: Input.Pointer): boolean => {
       const build = this.build;
       if (build === null || pointer.id !== build.pointerId) return false;
+      if (!buildPressEnds(build, pointer)) return true; // another mouse button: not the build's
       this.build = null;
       this.sendBuild('end', build.press, this.ottdUnder(pointer), build.touch, pointer);
       return true;
@@ -389,6 +405,8 @@ export class MapScene extends Scene {
 
   /** A press while a build tool is on: build, pan or pinch (R30); never a long-press timer. */
   private buildPointerDown(pointer: Input.Pointer, startPinch: () => void): void {
+    // Another button of the mouse that is building: the build drag goes on (one pointer id).
+    if (this.build?.pointerId === pointer.id) return;
     const { pointer1, pointer2 } = this.input;
     const action = buildPointerAction({
       button: pointer.button,
@@ -397,7 +415,13 @@ export class MapScene extends Scene {
     });
     if (action === 'build') {
       const press = this.ottdUnder(pointer);
-      this.build = { pointerId: pointer.id, press, current: press, touch: pointer.wasTouch };
+      this.build = {
+        pointerId: pointer.id,
+        button: pointer.button,
+        press,
+        current: press,
+        touch: pointer.wasTouch,
+      };
       this.sendBuild('move', press, press, pointer.wasTouch, pointer);
     } else if (action === 'pinch') {
       this.cancelBuild();
