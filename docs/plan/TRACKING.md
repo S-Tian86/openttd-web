@@ -30,7 +30,7 @@ the issue.
 - [x] 1.0 Stage 1 design spec — #20
 - [~] 1.1 Core and shell — branch stage-1/block-1.1
   - [~] 1.1.1 Preview deploys and block workflow — #22
-  - [ ] 1.1.2 Random generator — _(to create)_
+  - [x] 1.1.2 Random generator — #24
   - [ ] 1.1.3 Map storage and the tile loop — _(to create)_
   - [ ] 1.1.4 Dates and clocks — _(to create)_
   - [ ] 1.1.5 Company money, commands and the game state — _(to create)_
