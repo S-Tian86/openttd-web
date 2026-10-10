@@ -1,0 +1,10 @@
+{
+  // src/sim: pure TypeScript that runs anywhere. tests/architecture/boundary.test.ts proves it.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": []
+  },
+  "include": ["src/sim"],
+  "exclude": ["**/*.test.ts"]
+}
