@@ -42,7 +42,8 @@ the issue.
   - [x] 1.1.11 HUD shell and app wiring — #42
   - [x] 1.1.12 Evaluate reusing OpenTTD translations — #44
   - [x] 1.1.13 Close block 1.1 — #48
-- [ ] 1.2 World — _(to create)_
+- [~] 1.2 World — branch stage-1/block-1.2
+  - [x] 1.2.0 Reference notes and block plan — #51
 - [ ] 1.3 Construction — _(to create)_
 - [ ] 1.4 Trains — _(to create)_
 - [ ] 1.5 Cargo and economy — _(to create)_
