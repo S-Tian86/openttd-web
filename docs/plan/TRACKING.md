@@ -58,7 +58,7 @@ the issue.
   - [x] 1.2.12 New-game window and background generation — #75
   - [x] 1.2.13 Query tool, town and industry windows — #77
   - [x] 1.2.14 Close block 1.2 — #84
-- [ ] 1.3 Construction — branch stage-1/block-1.3
+- [~] 1.3 Construction — branch stage-1/block-1.3 — awaiting playtest
   - [x] 1.3.0 Reference notes and block plan — #87
   - [x] 1.3.1 Prices, company money and the command pipeline — #93
   - [x] 1.3.2 The bulldozer — natural ground, water, houses and town roads — #95
@@ -72,7 +72,7 @@ the issue.
   - [x] 1.3.10 Construction tools, cost bar, Confirm and error messages — #111
   - [x] 1.3.11 Finances window with the loan — #113
   - [x] 1.3.12 Query tool for rail, depots, stations and crossings — #115
-  - [ ] 1.3.13 Close block 1.3
+  - [x] 1.3.13 Close block 1.3 — #120
 - [ ] 1.4 Trains — _(to create)_
 - [ ] 1.5 Cargo and economy — _(to create)_
 - [ ] 1.6 Art and release — _(to create)_
