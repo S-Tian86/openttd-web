@@ -1,4 +1,4 @@
-import { useRef } from 'preact/hooks';
+import { useEffect, useRef } from 'preact/hooks';
 import { LOAN_INTERVAL } from '../sim/economy/company';
 import { formatMoney, translate } from './i18n/i18n';
 import type { Locale } from './session';
@@ -25,11 +25,14 @@ export function FinancesWindow({ locale, money, loan, maxLoan, onLoan }: Finance
     if (timer.current !== null) window.clearTimeout(timer.current);
     timer.current = null;
   };
+  useEffect(() => stopTimer, []); // closing the window mid-press must not borrow or repay
   const button = (action: LoanAction, label: 'finances.borrow' | 'finances.repay') => (
     <button
       type="button"
+      class="loan-button"
       onPointerDown={() => {
         stopTimer();
+        longPressed.current = false; // each press decides its own long press
         timer.current = window.setTimeout(() => {
           timer.current = null;
           longPressed.current = true;

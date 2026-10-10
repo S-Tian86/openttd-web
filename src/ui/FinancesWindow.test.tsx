@@ -38,4 +38,35 @@ describe('finances window (company_gui.cpp)', () => {
     fireEvent.click(repay);
     expect(onLoan.mock.calls).toEqual([['repay', true]]);
   });
+
+  it('lets the next press decide for itself when a long press ended without a click', () => {
+    vi.useFakeTimers();
+    const onLoan = vi.fn<(action: 'borrow' | 'repay', all: boolean) => void>();
+    render(
+      <FinancesWindow locale="en" money={100000} loan={100000} maxLoan={300000} onLoan={onLoan} />,
+    );
+    const repay = screen.getByRole('button', { name: 'Repay £10,000' });
+    fireEvent.pointerDown(repay);
+    vi.advanceTimersByTime(LOAN_LONG_PRESS_MS);
+    fireEvent.pointerLeave(repay); // released off the button: no click follows
+    fireEvent.pointerDown(repay);
+    fireEvent.pointerUp(repay);
+    fireEvent.click(repay);
+    expect(onLoan.mock.calls).toEqual([
+      ['repay', true],
+      ['repay', false],
+    ]);
+  });
+
+  it('does not fire a pending long press once the window is closed', () => {
+    vi.useFakeTimers();
+    const onLoan = vi.fn<(action: 'borrow' | 'repay', all: boolean) => void>();
+    const { unmount } = render(
+      <FinancesWindow locale="en" money={100000} loan={100000} maxLoan={300000} onLoan={onLoan} />,
+    );
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Repay £10,000' }));
+    unmount();
+    vi.advanceTimersByTime(LOAN_LONG_PRESS_MS);
+    expect(onLoan).not.toHaveBeenCalled();
+  });
 });
