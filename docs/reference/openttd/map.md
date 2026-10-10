@@ -263,7 +263,7 @@ and before vehicle ticks (see time.md §4.3). House tiles generate passengers he
 - Tile types used: CLEAR, RAILWAY, HOUSE, TREES, STATION, WATER, VOID, INDUSTRY. Void border
   on the last row/column and (freeform edges) the first row/column.
 - `RunTileLoop` with the LFSR order and tile-0 rule; tile loop procs for clear (grass
-  growth), trees (growth/spread/death), water (no effect while all land is at z >= 1), void,
+  growth), trees (growth/spread/death), water (Stage 1 coast tiles have z = 0, so flooding and drying up do run; see world-generation.md §4.4), void,
   house (passengers), industry, station, rail (ground/fences).
 - Generation: flat land at height 1, sea at height 0, `MakeClear(GRASS,3)`, rough/rocks,
   trees per §4.6.
