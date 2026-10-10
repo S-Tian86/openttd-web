@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { chunkOfTile, tileToWorld, visibleChunks, worldToTile } from './projection';
+import {
+  CHUNK_TILES,
+  TILE_PX,
+  chunkCellToTile,
+  chunkOfTile,
+  tileToChunkCell,
+  tileToWorld,
+  visibleChunks,
+  worldToTile,
+} from './projection';
 
 describe('top-down projection', () => {
   // OpenTTD's +x runs south-west and +y south-east; rotating the iso view by 45° puts
@@ -28,5 +37,33 @@ describe('top-down projection', () => {
       { col: 0, row: 1 },
       { col: 1, row: 1 },
     ]);
+  });
+
+  it('maps chunk cells to tiles and back', () => {
+    expect(chunkCellToTile(2, 1, 5, 7)).toEqual({ x: 39, y: 69 });
+    expect(tileToChunkCell(39, 69)).toEqual({ col: 2, row: 1, cx: 5, cy: 7 });
+    for (const [x, y] of [
+      [0, 0],
+      [63, 255],
+      [33, 100],
+      [31, 32],
+      [17, 200],
+    ] as const) {
+      const { col, row, cx, cy } = tileToChunkCell(x, y);
+      expect(chunkCellToTile(col, row, cx, cy)).toEqual({ x, y });
+    }
+  });
+
+  it('places a chunk cell at the tile world position', () => {
+    for (const [x, y] of [
+      [3, 5],
+      [40, 70],
+      [63, 255],
+    ] as const) {
+      const { col, row, cx, cy } = tileToChunkCell(x, y);
+      const px = (col * CHUNK_TILES + cx) * TILE_PX;
+      const py = (row * CHUNK_TILES + cy) * TILE_PX;
+      expect({ px, py }).toEqual(tileToWorld(x, y));
+    }
   });
 });

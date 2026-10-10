@@ -1,8 +1,14 @@
 import { Scene, type Tilemaps } from 'phaser';
 import { takeDirtyTiles, type GameState } from '../sim/game';
-import { tileXY } from '../sim/map/map';
+import { tileX, tileXY, tileY } from '../sim/map/map';
 import { groundSprite } from './ground';
-import { CHUNK_TILES, TILE_PX, visibleChunks } from './projection';
+import {
+  CHUNK_TILES,
+  TILE_PX,
+  chunkCellToTile,
+  tileToChunkCell,
+  visibleChunks,
+} from './projection';
 import { resolveSprite, SPRITE_IDS, type Theme } from './theme';
 
 interface Chunk {
@@ -73,16 +79,10 @@ export class MapScene extends Scene {
     }
 
     for (const t of takeDirtyTiles(this.state)) {
-      const x = t & (map.sizeX - 1);
-      const y = t >>> map.logX;
-      const chunk = this.chunks.get(
-        `${Math.floor(y / CHUNK_TILES)},${Math.floor(x / CHUNK_TILES)}`,
-      );
-      chunk?.layer.putTileAt(
-        SPRITE_IDS.indexOf(groundSprite(map, t)),
-        y % CHUNK_TILES,
-        x % CHUNK_TILES,
-      );
+      const { col, row, cx, cy } = tileToChunkCell(tileX(map, t), tileY(map, t));
+      this.chunks
+        .get(`${col},${row}`)
+        ?.layer.putTileAt(SPRITE_IDS.indexOf(groundSprite(map, t)), cx, cy);
     }
 
     if (!this.firstFrameDone) {
@@ -104,7 +104,8 @@ export class MapScene extends Scene {
     if (layer === null) throw new Error('Cannot create a map chunk');
     for (let cy = 0; cy < CHUNK_TILES; cy++) {
       for (let cx = 0; cx < CHUNK_TILES; cx++) {
-        const t = tileXY(this.state.map, col * CHUNK_TILES + cx, row * CHUNK_TILES + cy);
+        const tile = chunkCellToTile(col, row, cx, cy);
+        const t = tileXY(this.state.map, tile.x, tile.y);
         layer.putTileAt(SPRITE_IDS.indexOf(groundSprite(this.state.map, t)), cx, cy);
       }
     }

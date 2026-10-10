@@ -17,6 +17,26 @@ export const chunkOfTile = (x: number, y: number): { col: number; row: number } 
   row: Math.floor(x / CHUNK_TILES),
 });
 
+export const chunkCellToTile = (
+  col: number,
+  row: number,
+  cx: number,
+  cy: number,
+): { x: number; y: number } => ({
+  x: row * CHUNK_TILES + cy,
+  y: col * CHUNK_TILES + cx,
+});
+
+export const tileToChunkCell = (
+  x: number,
+  y: number,
+): { col: number; row: number; cx: number; cy: number } => ({
+  col: Math.floor(y / CHUNK_TILES),
+  row: Math.floor(x / CHUNK_TILES),
+  cx: y % CHUNK_TILES,
+  cy: x % CHUNK_TILES,
+});
+
 export function visibleChunks(
   view: { x: number; y: number; width: number; height: number },
   mapSizeX: number,
