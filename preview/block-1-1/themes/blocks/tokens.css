@@ -1,0 +1,12 @@
+:root {
+  --color-background: #bfe6c8;
+  --color-panel: #fffaf2;
+  --color-panel-border: #2d4a3e;
+  --color-text: #2d4a3e;
+  --color-accent: #ff8fab;
+  --color-accent-text: #ffffff;
+  --radius: 14px;
+  --space: 8px;
+  --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --touch-target: 44px;
+}
