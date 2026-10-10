@@ -38,20 +38,28 @@ test('the map edges can be dragged to the middle of the screen', async ({ page, 
   for (let i = 0; i < 10; i++) await page.mouse.wheel(0, 300);
   await expect(game).toHaveAttribute('data-camera-zoom', '0.25');
 
-  // Drags until the camera stops, then returns the world x under the middle of the screen.
-  const dragToEnd = async (dx: number): Promise<number> => {
+  // Drags across the screen until the camera stops, then returns the world x under its middle.
+  const dragToEnd = async (direction: 1 | -1): Promise<number> => {
+    const from = view.width / 2 - direction * view.width * 0.4;
     let last = '';
     for (;;) {
-      await page.mouse.move(view.width / 2, view.height / 2);
+      await page.mouse.move(from, view.height / 2);
       await page.mouse.down();
-      await page.mouse.move(view.width / 2 + dx, view.height / 2, { steps: 4 });
+      await page.mouse.move(from + direction * view.width * 0.8, view.height / 2, { steps: 2 });
       await page.mouse.up();
+      // Let two frames publish the clamped camera before reading it.
+      await page.evaluate(
+        () =>
+          new Promise((done) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => done(null))),
+          ),
+      );
       const x = (await game.getAttribute('data-camera-x')) ?? '';
       if (x === last) return Number(x) + view.width / 2;
       last = x;
     }
   };
   // Dragging right scrolls towards the west edge, dragging left towards the east edge.
-  expect(await dragToEnd(400)).toBeCloseTo(0, 1);
-  expect(await dragToEnd(-400)).toBeCloseTo(lastCorner, 1);
+  expect(await dragToEnd(1)).toBeCloseTo(0, 1);
+  expect(await dragToEnd(-1)).toBeCloseTo(lastCorner, 1);
 });
