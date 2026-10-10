@@ -120,6 +120,30 @@ test('a long press queries without the tool', async ({ page, isMobile }) => {
   await expect(page.getByRole('dialog', { name: 'Land area information' })).toBeVisible();
 });
 
+test('a long press still queries when the page is too busy to run its timer', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'Playwright has no touch long-press');
+  await openWorld(page, grassTile);
+  const { x, y } = await tileCentre(page, grassTile);
+  await page.mouse.move(x, y);
+  // Block the main thread from 300 ms to 1200 ms after the press, across both the 500 ms
+  // hold timer and the release: the browser then handles the release before the timer.
+  await page.evaluate(() => {
+    window.setTimeout(() => {
+      const end = performance.now() + 900;
+      while (performance.now() < end) {
+        // busy
+      }
+    }, 300);
+  });
+  await page.mouse.down();
+  await page.waitForTimeout(700);
+  await page.mouse.up();
+  await expect(page.getByRole('dialog', { name: 'Land area information' })).toBeVisible();
+});
+
 test('a two-finger pinch with the query tool does not query', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'touch pinch');
   await openWorld(page, grassTile);
