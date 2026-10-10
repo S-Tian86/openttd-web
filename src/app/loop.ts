@@ -25,8 +25,12 @@ export interface LoopClock {
   nextTickAt: number;
 }
 
-/** Lag treated as a stall rather than a slow frame (browser frames are ~16-100 ms apart). */
-export const MAX_FRAME_LAG_MS = 100;
+/**
+ * Lag treated as a stall (a hidden tab or a long pause), not a slow frame. Slow frames must
+ * not reach this threshold: they are bounded by MAX_TICKS_PER_FRAME instead, so a 150-250 ms
+ * frame on a slow device or in CI still runs the game at real-time speed.
+ */
+export const MAX_FRAME_LAG_MS = 1000;
 
 /**
  * Ticks to run this frame. OpenTTD's driver drops any backlog older than ALLOWED_DRIFT
