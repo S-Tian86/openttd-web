@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ERROR_KEYS } from '../../sim/command/cost';
 import en from './en.json';
 import es from './es.json';
 import { detectLocale, formatDate, formatMoney, loadLocale, saveLocale, translate } from './i18n';
@@ -6,6 +7,10 @@ import { detectLocale, formatDate, formatMoney, loadLocale, saveLocale, translat
 describe('translations', () => {
   it('ships Spanish with exactly the English keys', () => {
     expect(Object.keys(es).toSorted()).toEqual(Object.keys(en).toSorted());
+  });
+
+  it('translates every simulation error key', () => {
+    for (const key of ERROR_KEYS) expect(Object.keys(en)).toContain(key);
   });
 
   it('translates', () => {

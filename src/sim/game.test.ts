@@ -20,7 +20,7 @@ describe('createEmptyGame', () => {
     const game = createEmptyGame();
     expect(game.calendar).toEqual({ date: 712223, dateFract: 0, year: 1950, month: 0 });
     expect(game.economy).toEqual(game.calendar);
-    expect(game.company).toEqual({ money: 100000, currentLoan: 100000 });
+    expect([game.company.money, game.company.currentLoan]).toEqual([100000, 100000]);
   });
 });
 
@@ -29,6 +29,15 @@ describe('tick (port of openttd.cpp:StateGameLoop)', () => {
     const game = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
     for (let i = 0; i < 74; i++) tick(game);
     expect([game.tickCounter, game.calendar.date, game.economy.date]).toEqual([74, 712224, 712224]);
+  });
+
+  it('regains clearing allowance every tick, also while paused (StateGameLoop)', () => {
+    const game = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    game.company.clearLimit = 0;
+    tick(game);
+    game.paused = true;
+    tick(game);
+    expect(game.company.clearLimit).toBe(128 << 16);
   });
 
   it('does nothing while paused', () => {
