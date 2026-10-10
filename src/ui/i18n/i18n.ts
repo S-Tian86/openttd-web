@@ -58,3 +58,7 @@ export function formatDate(locale: Locale, year: number, month: number, day: num
     timeZone: 'UTC',
   }).format(Date.UTC(year, month, day));
 }
+
+export function formatNumber(locale: Locale, n: number): string {
+  return new Intl.NumberFormat(locale === 'en' ? 'en-GB' : 'es').format(n);
+}

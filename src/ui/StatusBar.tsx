@@ -47,6 +47,14 @@ export function StatusBar({ session, snapshot, onNewGame, onSettings }: StatusBa
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          aria-pressed={snapshot.tool === 'query'}
+          aria-label={t('tool.query')}
+          onClick={() => session.setTool(snapshot.tool === 'query' ? null : 'query')}
+        >
+          ?
+        </button>
         <button type="button" aria-label={t('hud.newGame')} onClick={onNewGame}>
           ＋
         </button>

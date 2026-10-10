@@ -50,12 +50,17 @@ async function start(): Promise<Game | undefined> {
 
   const params = parseStartParams(window.location.search);
   const placeholder = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+  // The scene is built first and the session needs it, so the callbacks reach the session late.
   const scene = new MapScene(
     placeholder,
     fallback,
     fallback,
     baseOf(fallback.id),
     baseOf(fallback.id),
+    {
+      onTap: (tile) => session.tapTile(tile, false),
+      onLongPress: (tile) => session.tapTile(tile, true),
+    },
   );
   let focus = params.focus;
   const session = new GameSession(placeholder, {
