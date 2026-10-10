@@ -12,7 +12,7 @@ import type { MapState } from '../map/map';
 import { generateClearTile } from './clear-gen';
 import { generateIndustries } from '../industry/industry-gen';
 import { generateTowns } from '../town/town-gen';
-import { generateTerrain } from './tgp';
+import { generateTerrainSteps } from './tgp';
 import { generateTrees } from './trees';
 
 export interface GenerationProgress {
@@ -39,15 +39,19 @@ export function* generateGame(
 ): Generator<GenerationProgress, GameState, void> {
   const state = newGameState({ ...DEFAULT_GAME_OPTIONS, ...options });
   // Step 2 (StartupEconomy's draw) is not replicated: it has no effect on the map (ruling R1).
-  generateTerrain(state.map, state.random, state.options.seed >>> 0);
+  for (const p of generateTerrainSteps(state.map, state.random, state.options.seed >>> 0)) {
+    yield { fraction: 0.2 * p };
+  }
   yield { fraction: 0.2 };
   convertGroundTilesIntoWaterTiles(state.map);
+  yield { fraction: 0.22 };
   // CreateRivers is skipped: no spring exists on a two-level map (world-generation.md §4.8, ruling R1).
   generateClearTile(state.map, state.random);
   state.initialLandCount = countLandTiles(state.map);
   yield { fraction: 0.25 };
   for (const p of generateTowns(state)) yield { fraction: 0.25 + 0.3 * p };
   for (const p of generateIndustries(state)) yield { fraction: 0.55 + 0.15 * p };
+  yield { fraction: 0.71 };
   generateTrees(state);
   yield { fraction: 0.8 };
   const procs = tileLoopProcs(state);
