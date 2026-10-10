@@ -4,6 +4,7 @@ import { ClearGround, makeClear, tileLoopClear } from './map/clear';
 import { createMap, isInnerTile, makeVoid, TileType, type MapState } from './map/map';
 import { tileLoopVoid, tileLoopWater } from './map/flood';
 import type { Town } from './town/town';
+import { tileLoopTown } from './town/houses';
 import { tileLoopRoad } from './town/town-roads';
 import { onTickTrees, tileLoopTrees } from './world/trees';
 import { runTileLoop, type TileLoopProcs } from './map/tile-loop';
@@ -88,6 +89,7 @@ export function tileLoopProcs(state: GameState): TileLoopProcs {
   return {
     [TileType.Clear]: (t) => tileLoopClear(state.map, t, markDirty),
     [TileType.Water]: (t) => tileLoopWater(state.map, t, markDirty),
+    [TileType.House]: (t) => tileLoopTown(state, t, markDirty),
     [TileType.Road]: (t) => tileLoopRoad(state, t, markDirty),
     [TileType.Trees]: (t) => tileLoopTrees(state, t, markDirty),
     [TileType.Void]: (t) => tileLoopVoid(state.map, t, markDirty),
