@@ -62,12 +62,14 @@ async function start(): Promise<Game | undefined> {
     },
   );
 
+  const scene = new MapScene(state, fallback, fallback, baseOf(fallback.id), baseOf(fallback.id));
+  scene.showGame(state);
   const game = new Game({
     type: AUTO,
     parent: 'game',
     backgroundColor: '#1f2a33',
     scale: { mode: Scale.RESIZE, width: '100%', height: '100%' },
-    scene: [new MapScene(state, fallback, fallback, baseOf(fallback.id), baseOf(fallback.id))],
+    scene: [scene],
   });
 
   render(<App session={session} />, ui);
