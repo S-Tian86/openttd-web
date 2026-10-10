@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { clampScrollToMap, clampZoom, MAX_ZOOM, MIN_ZOOM, pinchZoom, wheelZoom } from './camera';
 
 describe('camera math', () => {
-  it('clamps zoom', () => {
-    expect([clampZoom(0.1), clampZoom(1), clampZoom(9)]).toEqual([MIN_ZOOM, 1, MAX_ZOOM]);
+  it('clamps zoom to the OpenTTD range, 4× in to 8× out of the normal zoom (zoom_type.h)', () => {
+    expect([MIN_ZOOM, MAX_ZOOM]).toEqual([1 / 8, 4]);
+    expect([clampZoom(0.01), clampZoom(1), clampZoom(9)]).toEqual([MIN_ZOOM, 1, MAX_ZOOM]);
   });
 
   it('zooms by 1.2 per 100 px of wheel, scrolling up zooms in', () => {

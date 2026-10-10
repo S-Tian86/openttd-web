@@ -1,5 +1,9 @@
-export const MIN_ZOOM = 0.25;
-export const MAX_ZOOM = 2;
+/**
+ * OpenTTD's viewport zooms from In4x to Out8x around the normal level (zoom_type.h; the
+ * gui.zoom_min/zoom_max settings default to the whole range); zoom 1 is the normal level.
+ */
+export const MIN_ZOOM = 1 / 8;
+export const MAX_ZOOM = 4;
 
 export const clampZoom = (z: number): number => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
 

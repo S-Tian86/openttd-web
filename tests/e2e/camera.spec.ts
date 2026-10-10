@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { MIN_ZOOM } from '../../src/render/camera';
 import { TILE_PX } from '../../src/render/projection';
 import { DEFAULT_GAME_OPTIONS } from '../../src/sim/game';
 
@@ -36,7 +37,7 @@ test('the map edges can be dragged to the middle of the screen', async ({ page, 
   if (view === null) throw new Error('no viewport');
   await page.mouse.move(view.width / 2, view.height / 2);
   for (let i = 0; i < 10; i++) await page.mouse.wheel(0, 300);
-  await expect(game).toHaveAttribute('data-camera-zoom', '0.25');
+  await expect(game).toHaveAttribute('data-camera-zoom', MIN_ZOOM.toFixed(2));
 
   // Drags across the screen until the camera stops, then returns the world x under its middle.
   const dragToEnd = async (direction: 1 | -1): Promise<number> => {
