@@ -68,5 +68,11 @@
   "error.notEnoughCash": "Not enough cash - requires {money}",
   "error.maximumPermittedLoan": "... maximum permitted loan size is {money}",
   "error.loanAlreadyRepaid": "... no loan to repay",
-  "error.currencyRequired": "... {money} required"
+  "error.currencyRequired": "... {money} required",
+  "error.buildingMustBeDemolished": "Building must be demolished first",
+  "error.cantBuildOnWater": "... can't build on water",
+  "error.mustRemoveRoadFirst": "Must remove road first",
+  "error.objectInTheWay": "{industry} in the way",
+  "error.clearingLimitReached": "... tile clearing limit reached",
+  "error.localAuthorityRefuses": "{town} local authority refuses to allow this"
 }
