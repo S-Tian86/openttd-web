@@ -25,6 +25,12 @@ the issue.
 - [x] 0.7b Pin sim glob and sub-path guards (review) — #15
 - [x] 0.8 Close Stage 0 — #7
 
-## Stage 1 — First train
+## Stage 1 — First train · milestone `Stage 1 — First train`
 
-Planned in `stage-1-*.md` when Stage 0 closes.
+- [~] 1.0 Stage 1 design spec — #20
+- [ ] 1.1 Core and shell — _(to create)_
+- [ ] 1.2 World — _(to create)_
+- [ ] 1.3 Construction — _(to create)_
+- [ ] 1.4 Trains — _(to create)_
+- [ ] 1.5 Cargo and economy — _(to create)_
+- [ ] 1.6 Art and release — _(to create)_
