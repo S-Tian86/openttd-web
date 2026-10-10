@@ -3,7 +3,7 @@ import { render } from 'preact';
 import { MapScene } from '../render/MapScene';
 import { createGame } from '../sim/game';
 import { App } from '../ui/App';
-import { loadLocale, saveLocale } from '../ui/i18n/i18n';
+import { loadLocale, saveLocale, translate } from '../ui/i18n/i18n';
 import '../ui/styles.css';
 import { GameSession } from './session';
 import { applyTokens, FALLBACK_THEME_ID, loadThemes } from './theme-loader';
@@ -29,20 +29,21 @@ async function start(): Promise<Game | undefined> {
   const ui = document.getElementById('ui');
   if (ui === null) return undefined;
 
+  const storage = getStorage();
+  const locale = loadLocale(storage, navigator.languages);
+  document.documentElement.lang = locale;
+
   let loaded;
   try {
     loaded = await loadThemes();
   } catch (error) {
     console.error(error);
-    showFatalError(ui, 'Could not load the game theme. Please reload the page.');
+    showFatalError(ui, translate(locale, 'error.themeLoad'));
     return undefined;
   }
   const { themes, fallback, bases } = loaded;
   const baseOf = (id: string): string => bases[id] ?? '';
 
-  const storage = getStorage();
-  const locale = loadLocale(storage, navigator.languages);
-  document.documentElement.lang = locale;
   applyTokens(fallback, baseOf(fallback.id));
 
   const state = createGame();
