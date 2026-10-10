@@ -17,7 +17,7 @@ the issue.
 
 - [x] 0.1 Repository bootstrap — _(direct to main)_
 - [x] 0.2 Contribution workflow and project skills — #1
-- [ ] 0.3 App scaffold with layered structure — #2
+- [x] 0.3 App scaffold with layered structure — #2
 - [ ] 0.4 Lint, formatting and sim/ barrier — #3
 - [ ] 0.5 End-to-end smoke test — #4
 - [ ] 0.6 CI, deploy and security baseline — #5
