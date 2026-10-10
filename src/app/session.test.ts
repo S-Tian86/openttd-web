@@ -87,6 +87,24 @@ describe('GameSession world generation', () => {
     ]);
   });
 
+  it('leaves the generating state when the generator throws a plain error', () => {
+    const before = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    const bug = new Error('bug');
+    // oxlint-disable-next-line require-yield -- throws before its first step on purpose
+    const crashing = function* (): Generator<GenerationProgress, GameState, void> {
+      throw bug;
+    };
+    const session = new GameSession(before, deps({ generate: crashing }));
+    const listener = vi.fn<() => void>();
+    session.subscribe(listener);
+    session.newGame(OPTIONS);
+    listener.mockClear();
+    expect(() => session.frame(0)).toThrow(bug);
+    expect(session.state).toBe(before);
+    expect(session.getSnapshot().generating).toBeNull();
+    expect(listener).toHaveBeenCalled();
+  });
+
   it('does not run game ticks while generating', () => {
     const state = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
     const session = new GameSession(state, deps({ generate: endless, clock: advancingClock() }));

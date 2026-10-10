@@ -155,8 +155,12 @@ export class GameSession implements UiSession {
       this.generatingFraction = result.fraction;
     } catch (error) {
       this.generation = null;
-      // A failed world keeps the current one (ruling R12); anything else is a bug.
-      if (!(error instanceof WorldGenerationError)) throw error;
+      // A failed world keeps the current one (ruling R12); anything else is a bug. The UI must
+      // not stay on "Generating…", so it is refreshed before the error goes on to the caller.
+      if (!(error instanceof WorldGenerationError)) {
+        this.refresh();
+        throw error;
+      }
       this.generationError = error.key;
       this.refresh();
       return;

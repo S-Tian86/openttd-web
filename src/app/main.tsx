@@ -114,8 +114,13 @@ async function start(): Promise<Game | undefined> {
   );
 
   const loop = (now: number): void => {
-    session.frame(now);
+    // Scheduled first: one failing frame must not stop the game for good.
     requestAnimationFrame(loop);
+    try {
+      session.frame(now);
+    } catch (error) {
+      console.error(error);
+    }
   };
   requestAnimationFrame(() => loop(performance.now()));
   return game;
