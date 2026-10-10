@@ -1,0 +1,1 @@
+:root{--color-background:#bfe6c8}html,body{background:var(--color-background);height:100%;margin:0;overflow:hidden}#game{touch-action:none;width:100%;height:100%}
