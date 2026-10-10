@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { BuildBar } from './BuildBar';
 import { ErrorMessage } from './ErrorMessage';
+import { FinancesWindow } from './FinancesWindow';
 import { translate } from './i18n/i18n';
 import { IndustryWindow, industryName } from './IndustryWindow';
 import { NewGame } from './NewGame';
@@ -13,7 +14,7 @@ import { Toolbar } from './Toolbar';
 import { TownWindow } from './TownWindow';
 import { useSnapshot } from './useSnapshot';
 
-type PanelId = 'settings' | 'newGame';
+type PanelId = 'settings' | 'newGame' | 'finances';
 
 /** Identity of the open window, so a refresh of the same window does not count as a new one. */
 function windowKey(window: UiWindow | null): string | null {
@@ -52,7 +53,7 @@ export function App({ session }: { session: UiSession }) {
           onNewGame={() => toggle('newGame')}
           onSettings={() => toggle('settings')}
         />
-        <Toolbar session={session} snapshot={snapshot} />
+        <Toolbar session={session} snapshot={snapshot} onFinances={() => toggle('finances')} />
         <BuildBar session={session} snapshot={snapshot} />
       </div>
       <ErrorMessage session={session} snapshot={snapshot} />
@@ -72,6 +73,21 @@ export function App({ session }: { session: UiSession }) {
           onClose={() => setOpen(null)}
         >
           <NewGame session={session} snapshot={snapshot} onDone={() => setOpen(null)} />
+        </Panel>
+      ) : null}
+      {open === 'finances' ? (
+        <Panel
+          title={t('finances.title')}
+          closeLabel={t('panel.close')}
+          onClose={() => setOpen(null)}
+        >
+          <FinancesWindow
+            locale={snapshot.locale}
+            money={snapshot.money}
+            loan={snapshot.loan}
+            maxLoan={snapshot.maxLoan}
+            onLoan={(action, all) => session.changeLoan(action, all)}
+          />
         </Panel>
       ) : null}
       {queryWindow === null || open !== null ? null : (

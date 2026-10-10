@@ -28,7 +28,15 @@ const DIRS: readonly { dir: DiagDir; label: MessageKey; glyph: string }[] = [
  * Tools stay on after building (gui.persistent_buildingtools); pressing the active one again
  * turns it off.
  */
-export function Toolbar({ session, snapshot }: { session: UiSession; snapshot: UiSnapshot }) {
+export function Toolbar({
+  session,
+  snapshot,
+  onFinances,
+}: {
+  session: UiSession;
+  snapshot: UiSnapshot;
+  onFinances: () => void;
+}) {
   const t = (key: MessageKey): string => translate(snapshot.locale, key);
   const { tool, removeMode } = snapshot;
   return (
@@ -85,6 +93,14 @@ export function Toolbar({ session, snapshot }: { session: UiSession; snapshot: U
           ))}
         </div>
       ) : null}
+      <button
+        type="button"
+        class="toolbar-option"
+        aria-label={t('hud.finances')}
+        onClick={onFinances}
+      >
+        £
+      </button>
     </nav>
   );
 }

@@ -10,6 +10,8 @@ export const BASE_SNAPSHOT: UiSnapshot = {
   month: 0,
   day: 1,
   money: 100000,
+  loan: 100000,
+  maxLoan: 300000,
   paused: false,
   speed: 'normal',
   locale: 'en',
@@ -47,5 +49,6 @@ export function fakeSession(snapshot: Partial<UiSnapshot> = {}): UiSession {
     confirmBuild: vi.fn<() => void>(),
     cancelBuild: vi.fn<() => void>(),
     dismissError: vi.fn<() => void>(),
+    changeLoan: vi.fn<(action: 'borrow' | 'repay', all: boolean) => void>(),
   };
 }

@@ -57,6 +57,8 @@ export interface UiSnapshot {
   month: number;
   day: number;
   money: number;
+  loan: number;
+  maxLoan: number;
   paused: boolean;
   speed: GameSpeed;
   locale: Locale;
@@ -95,4 +97,6 @@ export interface UiSession {
   confirmBuild(): void;
   cancelBuild(): void;
   dismissError(): void;
+  /** Borrows or repays one loan step, or as much as possible when `all` (company_gui.cpp). */
+  changeLoan(action: 'borrow' | 'repay', all: boolean): void;
 }
