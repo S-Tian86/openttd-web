@@ -5,6 +5,7 @@ import { createEmptyGame, DEFAULT_GAME_OPTIONS, hashGameState } from '../sim/gam
 import { tileXY } from '../sim/map/map';
 import { App } from '../ui/App';
 import { loadLocale, saveLocale, translate } from '../ui/i18n/i18n';
+import { isBuildTool } from '../ui/session';
 import '../ui/styles.css';
 import { GameSession } from './session';
 import { parseStartParams } from './start-params';
@@ -60,7 +61,7 @@ async function start(): Promise<Game | undefined> {
     {
       onTap: (tile) => session.tapTile(tile, false),
       onLongPress: (tile) => session.tapTile(tile, true),
-      onBuildGesture: () => undefined, // build tools arrive with task 1.3.10
+      onBuildGesture: (g) => session.buildGesture(g),
     },
   );
   let focus = params.focus;
@@ -86,6 +87,19 @@ async function start(): Promise<Game | undefined> {
       else scene.showGame(state, tile);
       document.documentElement.dataset['worldHash'] = hashGameState(state);
     },
+    onPreview: (preview) => {
+      scene.showPreview(preview);
+      // e2e signal: the colour of the ghost on the map, if any.
+      const html = document.documentElement;
+      if (preview === null) delete html.dataset['preview'];
+      else html.dataset['preview'] = preview.ok ? 'ok' : 'bad';
+    },
+    onExecuted: (command, cost) => {
+      // e2e signal: the exact command a gesture posted, and what it cost.
+      const html = document.documentElement;
+      html.dataset['lastCommand'] = JSON.stringify(command);
+      html.dataset['lastCost'] = String(cost);
+    },
   });
   const game = new Game({
     type: AUTO,
@@ -96,6 +110,14 @@ async function start(): Promise<Game | undefined> {
   });
 
   render(<App session={session} />, ui);
+
+  let buildMode = false;
+  session.subscribe(() => {
+    const on = isBuildTool(session.getSnapshot().tool);
+    if (on === buildMode) return; // only on a change: every tick's refresh comes here too
+    buildMode = on;
+    scene.setBuildMode(on);
+  });
 
   // Readiness signal for a failed start (no world will ever be shown): e2e and users can tell why.
   session.subscribe(() => {

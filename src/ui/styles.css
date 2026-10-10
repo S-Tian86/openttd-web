@@ -45,11 +45,25 @@ body {
   color: var(--color-accent-text);
 }
 
-.status-bar {
+/* The status bar, the construction toolbar and the cost bar, stacked from the screen edge. */
+#ui > .hud {
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space);
+  pointer-events: none;
+}
+
+.hud > * {
+  pointer-events: auto;
+}
+
+.status-bar {
+  align-self: stretch;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -168,6 +182,72 @@ body {
   font-weight: 600;
 }
 
+.toolbar,
+.toolbar-group,
+.build-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--space) / 2);
+}
+
+.toolbar {
+  padding: calc(var(--space) / 2);
+  background: var(--color-panel);
+  border: 2px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  touch-action: none;
+}
+
+.toolbar-option,
+.toolbar-group {
+  margin-left: var(--space);
+}
+
+.build-bar {
+  align-self: center;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space);
+  max-width: min(90vw, 480px);
+  padding: calc(var(--space) / 2) var(--space);
+  background: var(--color-panel);
+  border: 2px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  font-weight: 600;
+  touch-action: none;
+}
+
+.build-bar.ok {
+  color: var(--color-ok);
+}
+
+.build-bar.bad {
+  color: var(--color-bad);
+}
+
+.error-message {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(90vw, 420px);
+  padding: var(--space) calc(2 * var(--space));
+  background: var(--color-panel);
+  border: 2px solid var(--color-bad);
+  border-radius: var(--radius);
+  text-align: center;
+  cursor: pointer;
+}
+
+.error-message p {
+  margin: 0;
+}
+
+.error-header {
+  font-weight: 600;
+}
+
 .ui-error {
   position: absolute;
   inset: 0;
@@ -181,6 +261,14 @@ body {
 }
 
 @media (min-width: 768px) {
+  .toolbar {
+    margin-left: calc(2 * var(--space));
+  }
+
+  .error-message {
+    top: calc(3 * var(--touch-target) + 8 * var(--space));
+  }
+
   .panel {
     top: calc(var(--touch-target) + 4 * var(--space));
     right: calc(2 * var(--space));
@@ -190,9 +278,21 @@ body {
 }
 
 @media (max-width: 767px) {
-  .status-bar {
+  #ui > .hud {
     top: auto;
     bottom: 0;
+    flex-direction: column-reverse;
+  }
+
+  .toolbar {
+    margin-left: var(--space);
+  }
+
+  .error-message {
+    top: var(--space);
+  }
+
+  .status-bar {
     border-bottom: 0;
     border-top: 2px solid var(--color-panel-border);
     padding-bottom: calc(var(--space) + env(safe-area-inset-bottom));

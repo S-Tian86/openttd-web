@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
+import { BuildBar } from './BuildBar';
+import { ErrorMessage } from './ErrorMessage';
 import { translate } from './i18n/i18n';
 import { IndustryWindow, industryName } from './IndustryWindow';
 import { NewGame } from './NewGame';
@@ -7,6 +9,7 @@ import type { UiSession, UiWindow } from './session';
 import { Settings } from './Settings';
 import { StatusBar } from './StatusBar';
 import { TileInfo } from './TileInfo';
+import { Toolbar } from './Toolbar';
 import { TownWindow } from './TownWindow';
 import { useSnapshot } from './useSnapshot';
 
@@ -42,12 +45,17 @@ export function App({ session }: { session: UiSession }) {
   };
   return (
     <>
-      <StatusBar
-        session={session}
-        snapshot={snapshot}
-        onNewGame={() => toggle('newGame')}
-        onSettings={() => toggle('settings')}
-      />
+      <div class="hud">
+        <StatusBar
+          session={session}
+          snapshot={snapshot}
+          onNewGame={() => toggle('newGame')}
+          onSettings={() => toggle('settings')}
+        />
+        <Toolbar session={session} snapshot={snapshot} />
+        <BuildBar session={session} snapshot={snapshot} />
+      </div>
+      <ErrorMessage session={session} snapshot={snapshot} />
       {open === 'settings' ? (
         <Panel
           title={t('settings.title')}

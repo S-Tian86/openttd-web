@@ -69,7 +69,7 @@ the issue.
   - [x] 1.3.7 Removing stations and deleting unused ones — #105
   - [x] 1.3.8 Autorail drags and gesture → command planning — #107
   - [x] 1.3.9 Drawing construction and build gestures on the map — #109
-  - [ ] 1.3.10 Construction tools, cost bar, Confirm and error messages
+  - [x] 1.3.10 Construction tools, cost bar, Confirm and error messages — #111
   - [ ] 1.3.11 Finances window with the loan
   - [ ] 1.3.12 Query tool for rail, depots, stations and crossings
   - [ ] 1.3.13 Close block 1.3
