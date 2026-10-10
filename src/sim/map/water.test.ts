@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createEmptyGame } from '../game';
+import { execute } from '../command/command';
+import { createEmptyGame, type GameState } from '../game';
 import { ClearGround, getClearDensity, getClearGround } from './clear';
 import {
   convertGroundTilesIntoWaterTiles,
@@ -34,11 +35,13 @@ import {
 const NOOP = (): void => undefined;
 
 /** Flat 64×64 world with a 5×5 block of height-0 vertices at (20..24, 20..24). */
-const lakeMap = (): MapState => {
-  const { map } = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+const lakeGame = (): GameState => {
+  const g = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+  const { map } = g;
   for (let y = 20; y <= 24; y++) for (let x = 20; x <= 24; x++) map.height[tileXY(map, x, y)] = 0;
-  return map;
+  return g;
 };
+const lakeMap = (): MapState => lakeGame().map;
 
 const count = (map: MapState, test: (t: number) => boolean): number => {
   let n = 0;
@@ -126,12 +129,13 @@ describe('TileLoop_Water (port of water_cmd.cpp)', () => {
   });
 
   it('dries up a shore whose flood-from neighbour is no longer water', () => {
-    const map = lakeMap();
+    const g = lakeGame();
+    const { map } = g;
     convertGroundTilesIntoWaterTiles(map);
     const shore = tileXY(map, 19, 21); // slope N|E: floods only from SW, the sea tile (20,21)
     doClearSquare(map, tileXY(map, 20, 21), true);
     const dirty: number[] = [];
-    tileLoopWater(map, shore, (t) => dirty.push(t));
+    tileLoopWater(g, shore, (t) => dirty.push(t));
     expect([
       getTileType(map, shore),
       getClearGround(map, shore),
@@ -141,26 +145,29 @@ describe('TileLoop_Water (port of water_cmd.cpp)', () => {
   });
 
   it('floods a flat height-0 land tile next to active water', () => {
-    const map = lakeMap();
+    const g = lakeGame();
+    const { map } = g;
     convertGroundTilesIntoWaterTiles(map);
     const land = tileXY(map, 20, 21);
     doClearSquare(map, land, true);
-    tileLoopWater(map, tileXY(map, 20, 22), NOOP); // the sea tile SE of it
+    tileLoopWater(g, tileXY(map, 20, 22), NOOP); // the sea tile SE of it
     expect(isWaterTile(map, land)).toBe(true);
   });
 
   it('marks water surrounded by water as non-flooding, and a change next to it wakes it up', () => {
-    const map = lakeMap();
+    const g = lakeGame();
+    const { map } = g;
     convertGroundTilesIntoWaterTiles(map);
     const inner = tileXY(map, 21, 21);
-    tileLoopWater(map, inner, NOOP);
+    tileLoopWater(g, inner, NOOP);
     expect(isNonFloodingWaterTile(map, inner)).toBe(true);
     doClearSquare(map, tileXY(map, 22, 22), true);
     expect(isNonFloodingWaterTile(map, inner)).toBe(false);
   });
 
   it('floods from the void border (TileLoop_Void)', () => {
-    const { map } = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    const g = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    const { map } = g;
     for (const [x, y] of [
       [1, 5],
       [2, 5],
@@ -168,18 +175,37 @@ describe('TileLoop_Water (port of water_cmd.cpp)', () => {
       [2, 6],
     ] as const)
       map.height[tileXY(map, x, y)] = 0;
-    tileLoopVoid(map, tileXY(map, 0, 5), NOOP);
+    tileLoopVoid(g, tileXY(map, 0, 5), NOOP);
     expect(isWaterTile(map, tileXY(map, 1, 5))).toBe(true);
   });
 
   it('turns shore trees back to grass trees when they dry up', () => {
-    const map = lakeMap();
+    const g = lakeGame();
+    const { map } = g;
     convertGroundTilesIntoWaterTiles(map);
     const t = tileXY(map, 19, 21);
     makeTree(map, t, 0, 0, TreeGrowth.Grown, TreeGround.Shore, 3);
     doClearSquare(map, tileXY(map, 20, 21), true);
-    tileLoopWater(map, t, NOOP);
+    tileLoopWater(g, t, NOOP);
     expect(getTreeGround(map, t)).toBe(TreeGround.Grass);
+  });
+});
+
+describe('flooding clears the target first (R21)', () => {
+  it('floods a cleared flat sea tile again (R21, DoFloodTile)', () => {
+    const g = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    for (let x = 10; x <= 13; x++)
+      for (let y = 10; y <= 13; y++) g.map.height[tileXY(g.map, x, y)] = 0;
+    for (let x = 10; x <= 12; x++)
+      for (let y = 10; y <= 12; y++) makeSea(g.map, tileXY(g.map, x, y));
+    const centre = tileXY(g.map, 11, 11);
+    expect(execute(g, { type: 'landscapeClear', tile: centre }, 'exec')).toEqual({
+      ok: true,
+      cost: 7500,
+    });
+    expect(getTileType(g.map, centre)).toBe(TileType.Clear);
+    tileLoopWater(g, tileXY(g.map, 11, 10), NOOP);
+    expect(isWaterTile(g.map, centre)).toBe(true);
   });
 });
 

@@ -1,13 +1,17 @@
 import { checkCompanyHasMoney, ExpensesType, subtractMoneyFromCompany } from '../economy/company';
 import { cmdDecreaseLoan, cmdIncreaseLoan, type LoanAmount } from '../economy/loan';
 import type { GameState } from '../game';
+import { clearArea, landscapeClear } from '../map/clear-tile';
+import { COMPANY_FIRST } from '../map/map';
 import { isValidTile } from '../map/geometry';
 import { DoFlag, succeed, type CommandCost, type CommandError } from './cost';
 
 export type Command =
   | { type: 'pause'; paused: boolean }
   | { type: 'increaseLoan'; amount: LoanAmount }
-  | { type: 'decreaseLoan'; amount: LoanAmount };
+  | { type: 'decreaseLoan'; amount: LoanAmount }
+  | { type: 'landscapeClear'; tile: number }
+  | { type: 'clearArea'; endTile: number; startTile: number; diagonal: boolean };
 export type CommandMode = 'test' | 'exec';
 export type CommandResult = { ok: true; cost: number } | { ok: false; error: CommandError | null };
 
@@ -20,6 +24,8 @@ const COMMAND_TYPE: Record<Command['type'], CommandType> = {
   pause: 'serverSetting',
   increaseLoan: 'moneyManagement',
   decreaseLoan: 'moneyManagement',
+  landscapeClear: 'landscapeConstruction',
+  clearArea: 'landscapeConstruction',
 };
 
 /** Port of command.cpp:IsCommandAllowedWhilePaused: pause level per command type. */
@@ -34,10 +40,12 @@ const COMMAND_FLAGS: Record<Command['type'], number> = {
   pause: 0,
   increaseLoan: 0,
   decreaseLoan: 0,
+  landscapeClear: 0,
+  clearArea: 0,
 };
 
 /** Commands flagged CommandFlag::NoTest: the test run is skipped. */
-const NO_TEST: ReadonlySet<Command['type']> = new Set();
+const NO_TEST: ReadonlySet<Command['type']> = new Set(['clearArea']);
 
 export const pauseLevel = (type: Command['type']): number => PAUSE_LOOKUP[COMMAND_TYPE[type]];
 
@@ -48,6 +56,10 @@ export function commandTile(command: Command): number | null {
     case 'increaseLoan':
     case 'decreaseLoan':
       return null;
+    case 'landscapeClear':
+      return command.tile;
+    case 'clearArea':
+      return command.endTile;
     default: {
       const unreachable: never = command;
       return unreachable;
@@ -65,6 +77,17 @@ function run(state: GameState, command: Command, flags: number): CommandCost {
       return cmdIncreaseLoan(state, flags, command.amount);
     case 'decreaseLoan':
       return cmdDecreaseLoan(state, flags, command.amount);
+    case 'landscapeClear':
+      return landscapeClear(state, command.tile, flags, COMPANY_FIRST);
+    case 'clearArea':
+      return clearArea(
+        state,
+        flags,
+        command.endTile,
+        command.startTile,
+        command.diagonal,
+        COMPANY_FIRST,
+      );
     default: {
       const unreachable: never = command;
       return unreachable;

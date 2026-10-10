@@ -241,7 +241,7 @@ export function generateTrees(state: GameState): void {
 /** Port of tree_cmd.cpp:TileLoop_Trees (temperate, ETP_SPREAD_ALL). */
 export function tileLoopTrees(state: GameState, t: number, markDirty: (t: number) => void): void {
   const { map } = state;
-  if (getTreeGround(map, t) === TreeGround.Shore) tileLoopWater(map, t, markDirty);
+  if (getTreeGround(map, t) === TreeGround.Shore) tileLoopWater(state, t, markDirty);
 
   const cycle = 11 * tileX(map, t) + 9 * tileY(map, t) + (state.tickCounter >>> 8);
 

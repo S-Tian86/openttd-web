@@ -68,5 +68,11 @@
   "error.notEnoughCash": "No hay suficiente dinero - se necesita {money}",
   "error.maximumPermittedLoan": "... máxima cantidad de préstamo permitida es {money}",
   "error.loanAlreadyRepaid": "... no hay préstamo que pagar",
-  "error.currencyRequired": "... {money} requerido"
+  "error.currencyRequired": "... {money} requerido",
+  "error.buildingMustBeDemolished": "El edificio debe demolerse primero",
+  "error.cantBuildOnWater": "... no se puede construir sobre el agua",
+  "error.mustRemoveRoadFirst": "Primero se debe retirar la carretera",
+  "error.objectInTheWay": "{industry} en medio",
+  "error.clearingLimitReached": "... límite de casillas despejadas alcanzado",
+  "error.localAuthorityRefuses": "Las autoridades locales de {town} rechazan esto"
 }

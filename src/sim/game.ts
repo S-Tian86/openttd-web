@@ -101,12 +101,12 @@ export function tileLoopProcs(state: GameState): TileLoopProcs {
   const markDirty = (t: number): void => void state.dirtyTiles.add(t);
   return {
     [TileType.Clear]: (t) => tileLoopClear(state.map, t, markDirty),
-    [TileType.Water]: (t) => tileLoopWater(state.map, t, markDirty),
+    [TileType.Water]: (t) => tileLoopWater(state, t, markDirty),
     [TileType.House]: (t) => tileLoopTown(state, t, markDirty),
     [TileType.Road]: (t) => tileLoopRoad(state, t, markDirty),
     [TileType.Trees]: (t) => tileLoopTrees(state, t, markDirty),
     [TileType.Industry]: (t) => tileLoopIndustry(state, t, markDirty),
-    [TileType.Void]: (t) => tileLoopVoid(state.map, t, markDirty),
+    [TileType.Void]: (t) => tileLoopVoid(state, t, markDirty),
   };
 }
 

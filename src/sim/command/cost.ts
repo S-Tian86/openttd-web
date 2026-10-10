@@ -10,6 +10,12 @@ export const ERROR_KEYS = [
   'error.maximumPermittedLoan',
   'error.loanAlreadyRepaid',
   'error.currencyRequired',
+  'error.buildingMustBeDemolished',
+  'error.cantBuildOnWater',
+  'error.mustRemoveRoadFirst',
+  'error.objectInTheWay',
+  'error.clearingLimitReached',
+  'error.localAuthorityRefuses',
 ] as const;
 export type ErrorKey = (typeof ERROR_KEYS)[number];
 

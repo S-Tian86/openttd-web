@@ -6,8 +6,11 @@ import {
   reverseDir,
   tileOffsByDir,
 } from './geometry';
+import { DoFlag } from '../command/cost';
+import type { GameState } from '../game';
+import { landscapeClear } from './clear-tile';
 import { doClearSquare } from './landscape';
-import { getTileType, TileType, type MapState } from './map';
+import { getTileType, OWNER_WATER, TileType, type MapState } from './map';
 import { getTileSlopeZ, isSlopeWithOneCornerRaised, Slope } from './slope';
 import { getTreeGround, setTreeGroundDensity, TreeGround } from './tree-map';
 import {
@@ -74,21 +77,27 @@ export function getFloodingBehaviour(map: MapState, t: number): FloodingBehaviou
   }
 }
 
-/** Port of water_cmd.cpp:DoFloodTile (Stage 1: clear and tree tiles only). */
-function doFloodTile(map: MapState, target: number, markDirty: (t: number) => void): void {
+/**
+ * Port of water_cmd.cpp:DoFloodTile. A flat target of any type is cleared by the sea and becomes
+ * sea; a sloped one keeps the Stage 1 behaviour (clear and tree tiles only).
+ */
+function doFloodTile(state: GameState, target: number, markDirty: (t: number) => void): void {
+  const { map } = state;
   const type = getTileType(map, target);
-  if (type !== TileType.Clear && type !== TileType.Trees) return;
   const { slope } = getTileSlopeZ(map, target);
-  if (slope !== Slope.Flat) {
-    if (type === TileType.Trees && !isSlopeWithOneCornerRaised(slope)) {
-      setTreeGroundDensity(map, target, TreeGround.Shore, 3);
-    } else {
-      doClearSquare(map, target, false);
-      makeShore(map, target);
+  if (slope === Slope.Flat) {
+    if (landscapeClear(state, target, DoFlag.Execute, OWNER_WATER).ok) {
+      makeSea(map, target);
+      markDirty(target);
     }
+    return;
+  }
+  if (type !== TileType.Clear && type !== TileType.Trees) return;
+  if (type === TileType.Trees && !isSlopeWithOneCornerRaised(slope)) {
+    setTreeGroundDensity(map, target, TreeGround.Shore, 3);
   } else {
     doClearSquare(map, target, false);
-    makeSea(map, target);
+    makeShore(map, target);
   }
   markDirty(target);
 }
@@ -105,7 +114,8 @@ function doDryUp(map: MapState, t: number, markDirty: (t: number) => void): void
 }
 
 /** Port of water_cmd.cpp:TileLoop_Water. */
-export function tileLoopWater(map: MapState, t: number, markDirty: (t: number) => void): void {
+export function tileLoopWater(state: GameState, t: number, markDirty: (t: number) => void): void {
+  const { map } = state;
   const isWater = getTileType(map, t) === TileType.Water;
   if (isWater && isNonFloodingWaterTile(map, t)) return;
 
@@ -124,7 +134,7 @@ export function tileLoopWater(map: MapState, t: number, markDirty: (t: number) =
         const { slope, z } = getTileSlopeZ(map, dest);
         if (z > 0) continue;
         if (!FLOOD_FROM_DIRS[slope & SLOPE_MASK]!.includes(reverseDir(dir as Dir))) continue;
-        doFloodTile(map, dest, markDirty);
+        doFloodTile(state, dest, markDirty);
       }
       if (!continueFlooding && isWater) setNonFloodingWaterTile(map, t, true);
       break;
