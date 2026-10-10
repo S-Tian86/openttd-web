@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/preact';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_GAME_OPTIONS, type GameOptions } from '../sim/game';
-import { App } from './App.js';
+import { App } from './App';
 import type { GameSpeed, Locale, Tool, UiSession, UiSnapshot } from './session';
 
 const failed: UiSnapshot = {

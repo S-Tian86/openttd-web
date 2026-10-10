@@ -25,6 +25,7 @@
             "patterns": [
               {
                 "group": ["**/app", "**/app/**", "**/render", "**/render/**", "phaser", "phaser/*"],
+                "caseSensitive": true,
                 "message": "src/ui must not import app/, render/ or Phaser (master plan §2.2)."
               }
             ]
@@ -41,6 +42,7 @@
             "patterns": [
               {
                 "group": ["**/app", "**/app/**", "**/ui", "**/ui/**"],
+                "caseSensitive": true,
                 "message": "src/render must not import app/ or ui/ (master plan §2.2)."
               }
             ]
@@ -57,18 +59,22 @@
             "patterns": [
               {
                 "group": ["phaser", "phaser/*"],
+                "caseSensitive": true,
                 "message": "src/sim must not depend on Phaser (master plan §2.2)."
               },
               {
                 "group": ["node:*"],
+                "caseSensitive": true,
                 "message": "src/sim must not use Node APIs (master plan §2.2)."
               },
               {
                 "group": ["**/render", "**/render/**", "**/ui", "**/ui/**", "**/app", "**/app/**"],
+                "caseSensitive": true,
                 "message": "src/sim must not import outer layers (master plan §2.2)."
               },
               {
                 "group": ["**/reference/**"],
+                "caseSensitive": true,
                 "message": "reference/ is a local OpenTTD clone, not part of the build."
               }
             ]
