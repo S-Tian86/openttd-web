@@ -16,6 +16,11 @@ export const ERROR_KEYS = [
   'error.objectInTheWay',
   'error.clearingLimitReached',
   'error.localAuthorityRefuses',
+  'error.alreadyBuilt',
+  'error.mustRemoveRailroadTrack',
+  'error.areaIsOwnedByAnother',
+  'error.noRailroadTrack',
+  'error.flatLandRequired',
 ] as const;
 export type ErrorKey = (typeof ERROR_KEYS)[number];
 

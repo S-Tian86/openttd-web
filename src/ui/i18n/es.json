@@ -74,5 +74,10 @@
   "error.mustRemoveRoadFirst": "Primero se debe retirar la carretera",
   "error.objectInTheWay": "{industry} en medio",
   "error.clearingLimitReached": "... límite de casillas despejadas alcanzado",
-  "error.localAuthorityRefuses": "Las autoridades locales de {town} rechazan esto"
+  "error.localAuthorityRefuses": "Las autoridades locales de {town} rechazan esto",
+  "error.alreadyBuilt": "... ya construido",
+  "error.mustRemoveRailroadTrack": "Primero se debe retirar la vía de ferrocarril",
+  "error.areaIsOwnedByAnother": "... el área es propiedad de otra empresa",
+  "error.noRailroadTrack": "... no hay ferrocarril",
+  "error.flatLandRequired": "Se requiere terreno llano"
 }

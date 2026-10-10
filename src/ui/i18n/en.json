@@ -74,5 +74,10 @@
   "error.mustRemoveRoadFirst": "Must remove road first",
   "error.objectInTheWay": "{industry} in the way",
   "error.clearingLimitReached": "... tile clearing limit reached",
-  "error.localAuthorityRefuses": "{town} local authority refuses to allow this"
+  "error.localAuthorityRefuses": "{town} local authority refuses to allow this",
+  "error.alreadyBuilt": "... already built",
+  "error.mustRemoveRailroadTrack": "Must remove railway track first",
+  "error.areaIsOwnedByAnother": "... area is owned by another company",
+  "error.noRailroadTrack": "... there is no railway track",
+  "error.flatLandRequired": "Flat land required"
 }

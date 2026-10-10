@@ -4,6 +4,7 @@ import type { PriceName } from '../economy/prices';
 import type { GameState } from '../game';
 import { clearTileTown } from '../town/house-removal';
 import { clearTileRoad } from '../town/road-removal';
+import { clearTileTrack } from '../track/rail-cmd';
 import { ClearGround, getClearDensity, getClearGround } from './clear';
 import { isValidTile } from './geometry';
 import { getIndustryIndex } from './industry-map';
@@ -80,6 +81,8 @@ function clearTileProc(state: GameState, t: number, flags: number, actor: number
       return clearTileTown(state, t, flags, actor);
     case TileType.Road:
       return clearTileRoad(state, t, flags, actor);
+    case TileType.Railway:
+      return clearTileTrack(state, t, flags, actor);
     default:
       return CMD_ERROR;
   }
