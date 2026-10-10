@@ -24,6 +24,7 @@ the issue.
 - [x] 0.7 OpenTTD reference notes for Stage 1 — #6
 - [x] 0.7b Pin sim glob and sub-path guards (review) — #15
 - [x] 0.8 Close Stage 0 — #7
+- [x] 0.9 Correct the reason for the reference/ rule — #19
 
 ## Stage 1 — First train · milestone `Stage 1 — First train`
 
@@ -42,6 +43,8 @@ the issue.
   - [x] 1.1.11 HUD shell and app wiring — #42
   - [x] 1.1.12 Evaluate reusing OpenTTD translations — #44
   - [x] 1.1.13 Close block 1.1 — #48
+  - [x] 1.1.14 Address the block 1.1 final review — #46
+  - [ ] 1.1.B Backlog: minor findings deferred in block 1.1 — #50
 - [~] 1.2 World — branch stage-1/block-1.2 — awaiting playtest
   - [x] 1.2.0 Reference notes and block plan — #51
   - [x] 1.2.1 Map geometry and slopes — #53
@@ -58,6 +61,10 @@ the issue.
   - [x] 1.2.12 New-game window and background generation — #75
   - [x] 1.2.13 Query tool, town and industry windows — #77
   - [x] 1.2.14 Close block 1.2 — #84
+  - [x] 1.2.15 Keep real-time game speed on slow frames — #79
+  - [x] 1.2.16 Address the block 1.2 final review — #82
+  - [x] 1.2.17 Keep a long press when its timer runs after the release — #89
+  - [ ] 1.2.B Backlog: minor findings deferred in block 1.2 — #86
 - [~] 1.3 Construction — branch stage-1/block-1.3 — awaiting playtest
   - [x] 1.3.0 Reference notes and block plan — #87
   - [x] 1.3.1 Prices, company money and the command pipeline — #93
@@ -73,6 +80,9 @@ the issue.
   - [x] 1.3.11 Finances window with the loan — #113
   - [x] 1.3.12 Query tool for rail, depots, stations and crossings — #115
   - [x] 1.3.13 Close block 1.3 — #120
+  - [x] 1.3.14 Fix the block 1.3 final review findings — #117
+  - [ ] 1.3.B Backlog: minor findings deferred in block 1.3 — #119
+  - [x] 1.3.15 Record Stage 1 blocks in the quality log and tracking — #123
 - [ ] 1.4 Trains — _(to create)_
 - [ ] 1.5 Cargo and economy — _(to create)_
 - [ ] 1.6 Art and release — _(to create)_
