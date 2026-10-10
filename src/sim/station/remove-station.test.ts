@@ -25,6 +25,11 @@ const build = (g: GameState, x: number, y: number, platLength: number) =>
 const removePart = (g: GameState, x1: number, x2: number, y: number) =>
   execute(g, { type: 'removeFromRailStation', start: at(g, x1, y), end: at(g, x2, y) }, 'exec');
 
+const grayAt = (g: GameState, x: number, y: number): void => {
+  build(g, x, y, 1);
+  execute(g, { type: 'landscapeClear', tile: at(g, x, y) }, 'exec');
+};
+
 describe('removing stations (station_cmd.cpp)', () => {
   it('bulldozes the whole station for £37 a tile with no rail refund', () => {
     const g = newGame();
@@ -78,8 +83,8 @@ describe('removing stations (station_cmd.cpp)', () => {
     const g = newGame();
     build(g, 22, 20, 1);
     execute(g, { type: 'landscapeClear', tile: at(g, 22, 20) }, 'exec');
-    build(g, 16, 20, 1);
-    expect(g.stations[1]!.nameKind).toBe('central'); // "town" is still held by the unused station
+    build(g, 12, 20, 1); // too far (8) to revive station 0
+    expect(g.stations[1]!.nameKind).toBe('east'); // "town" is still held by the unused station
     for (let i = 0; i < 1999; i++) tick(g);
     expect(g.stations[0]!.deleteCtr).toBe(7);
     tick(g); // tick 2000 = (counter + index 0) % 250 === 0 for the eighth time
@@ -92,8 +97,123 @@ describe('removing stations (station_cmd.cpp)', () => {
     const g = newGame();
     build(g, 22, 30, 5);
     const before = hashGameState(g);
-    execute(g, { type: 'removeFromRailStation', start: at(g, 22, 30), end: at(g, 26, 30) }, 'test');
+    expect(
+      execute(
+        g,
+        { type: 'removeFromRailStation', start: at(g, 22, 30), end: at(g, 26, 30) },
+        'test',
+      ),
+    ).toEqual({ ok: true, cost: 185 });
     expect(hashGameState(g)).toBe(before);
+  });
+
+  it('leaves the world untouched when the bulldozer runs in test mode', () => {
+    const g = newGame();
+    build(g, 22, 30, 5);
+    const before = hashGameState(g);
+    expect(execute(g, { type: 'landscapeClear', tile: at(g, 24, 30) }, 'test')).toEqual({
+      ok: true,
+      cost: 185,
+    });
+    expect(hashGameState(g)).toBe(before);
+  });
+
+  it('shrinks the area from the right, top and bottom sides', () => {
+    const g = newGame();
+    build(g, 22, 30, 5);
+    removePart(g, 26, 26, 30);
+    expect(g.stations[0]!.trainStation).toEqual({ tile: at(g, 22, 30), w: 4, h: 1 });
+    const h = newGame();
+    execute(
+      h,
+      { type: 'buildRailStation', tile: at(h, 22, 30), axis: Axis.X, numTracks: 2, platLength: 3 },
+      'exec',
+    );
+    removePart(h, 22, 24, 31); // bottom row
+    expect(h.stations[0]!.trainStation).toEqual({ tile: at(h, 22, 30), w: 3, h: 1 });
+    const k = newGame();
+    execute(
+      k,
+      { type: 'buildRailStation', tile: at(k, 22, 30), axis: Axis.X, numTracks: 2, platLength: 3 },
+      'exec',
+    );
+    removePart(k, 22, 24, 30); // top row
+    expect(k.stations[0]!.trainStation).toEqual({ tile: at(k, 22, 30 + 1), w: 3, h: 1 });
+  });
+
+  it('accepts a drag ending on a void border tile like C++ (only end >= map size fails)', () => {
+    const g = newGame();
+    build(g, 22, 30, 5);
+    const border = at(g, 63, 63); // the last row and column are void
+    expect(getTileType(g.map, border)).toBe(TileType.Void);
+    expect(
+      execute(g, { type: 'removeFromRailStation', start: at(g, 22, 30), end: border }, 'test').ok,
+    ).toBe(true);
+    expect(
+      execute(g, { type: 'removeFromRailStation', start: at(g, 22, 30), end: g.map.size }, 'test'),
+    ).toEqual({ ok: false, error: null });
+  });
+
+  describe('reusing an unused station (GetClosestDeletedStation)', () => {
+    it('revives it within distance 7, keeping its name and index', () => {
+      const g = newGame();
+      grayAt(g, 22, 20);
+      build(g, 15, 20, 1);
+      expect([g.stations.length, isInUse(g.stations[0]!), g.stations[0]!.nameKind]).toEqual([
+        1,
+        true,
+        'town',
+      ]);
+      expect(g.stations[0]!.xy).toBe(at(g, 15, 20));
+    });
+
+    it('does not revive it at distance 8', () => {
+      const g = newGame();
+      grayAt(g, 22, 20);
+      build(g, 14, 20, 1);
+      expect([g.stations.length, isInUse(g.stations[0]!)]).toEqual([2, false]);
+    });
+
+    it('prefers the lowest index on a tie', () => {
+      const g = newGame();
+      grayAt(g, 22, 20);
+      grayAt(g, 22, 28);
+      build(g, 22, 24, 1);
+      expect([isInUse(g.stations[0]!), isInUse(g.stations[1]!)]).toEqual([true, false]);
+    });
+
+    it('prefers the closer one over a lower index', () => {
+      const g = newGame();
+      grayAt(g, 22, 20);
+      grayAt(g, 22, 28);
+      build(g, 22, 26, 1);
+      expect([isInUse(g.stations[0]!), isInUse(g.stations[1]!)]).toEqual([false, true]);
+    });
+
+    it('never reuses a station that is in use', () => {
+      const g = newGame();
+      build(g, 22, 20, 1);
+      build(g, 22, 24, 1);
+      expect(g.stations.length).toBe(2);
+    });
+
+    it('does not revive in test mode', () => {
+      const g = newGame();
+      grayAt(g, 22, 20);
+      const before = hashGameState(g);
+      execute(
+        g,
+        {
+          type: 'buildRailStation',
+          tile: at(g, 18, 20),
+          axis: Axis.X,
+          numTracks: 1,
+          platLength: 1,
+        },
+        'test',
+      );
+      expect(hashGameState(g)).toBe(before);
+    });
   });
 
   it('loses a platform tile to the sea (R21)', () => {

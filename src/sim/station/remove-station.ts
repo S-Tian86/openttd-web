@@ -1,6 +1,5 @@
 import { CMD_ERROR, DoFlag, addCost, fail, succeed, type CommandCost } from '../command/cost';
 import type { GameState } from '../game';
-import { isValidTile } from '../map/geometry';
 import { doClearSquare } from '../map/landscape';
 import { OWNER_WATER, tileX, tileXY, tileY, type MapState } from '../map/map';
 import { getStationIndex, isRailStationTile } from '../map/station-map';
@@ -116,8 +115,9 @@ export function removeFromRailStation(
   actor: number,
 ): CommandCost {
   void actor; // the owner check passes for the company and for the sea
-  if (!isValidTile(state.map, start) || !isValidTile(state.map, end)) return CMD_ERROR;
-  return removeFromRailBaseStation(state, orthogonalTiles(state.map, start, end), flags);
+  const last = end === 0 ? start : end;
+  if (start < 0 || start >= state.map.size || last < 0 || last >= state.map.size) return CMD_ERROR;
+  return removeFromRailBaseStation(state, orthogonalTiles(state.map, start, last), flags);
 }
 
 /** Port of station_cmd.cpp:ClearTile_Station (rail stations only so far). */
