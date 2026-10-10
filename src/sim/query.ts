@@ -4,7 +4,7 @@ import { IndustryType } from './industry/industry-specs';
 import { landscapeClear } from './map/clear-tile';
 import { ClearGround, getClearDensity, getClearGround } from './map/clear';
 import { getIndustryIndex } from './map/industry-map';
-import { getDepotIndex, isRailDepotTile } from './map/rail-map';
+import { getDepotIndex, getRailType, isRailDepotTile, RAILTYPE_RAIL } from './map/rail-map';
 import {
   COMPANY_FIRST,
   getTileOwner,
@@ -19,6 +19,7 @@ import { getTileZ } from './map/slope';
 import { getStationIndex } from './map/station-map';
 import { getWaterTileType, WaterTileType } from './map/water';
 import type { StationNameKind } from './station/station-name';
+import { convertDateToYMD } from './time/date';
 import { townName } from './town/town-names';
 
 /** Read-only views of the world for the UI (ruling R8): the UI never touches the map arrays. */
@@ -54,6 +55,12 @@ export interface TileInfo {
   depotIndex: number | null;
   /** The company's test run of the bulldozer (negative: a refund); null is OpenTTD's "N/A". */
   costToClear: number | null;
+  /** A crossing's road owner (m7); its rail owner is `owner`. */
+  roadOwner: 'none' | 'town' | 'company' | null;
+  railType: 'rail' | null;
+  /** td.rail_speed in km-ish/h; null when the tile has no limit. */
+  railSpeed: number | null;
+  buildDate: { year: number; month: number; day: number } | null;
 }
 
 export interface StationInfo {
@@ -126,6 +133,27 @@ function kindOf(state: GameState, t: number): TileKind {
   }
 }
 
+/** rail_cmd.cpp:GetTileDesc_Track: a depot's speed limit without the original acceleration. */
+const DEPOT_RAIL_SPEED = 61;
+
+function roadOwnerOf(map: GameState['map'], t: number): 'none' | 'town' | 'company' {
+  const owner = getRoadOwner(map, t);
+  if (owner === OWNER_TOWN) return 'town';
+  return owner === COMPANY_FIRST ? 'company' : 'none';
+}
+
+/** td.build_date of a depot or station tile (rail_cmd.cpp, station_cmd.cpp). */
+function buildDateOf(state: GameState, kind: TileKind, t: number): TileInfo['buildDate'] {
+  const { map } = state;
+  const built =
+    kind === 'depot'
+      ? state.depots[getDepotIndex(map, t)]
+      : kind === 'station'
+        ? state.stations[getStationIndex(map, t)]
+        : null;
+  return built === null || built === undefined ? null : convertDateToYMD(built.buildDate);
+}
+
 export function describeTile(state: GameState, t: number): TileInfo {
   const { map } = state;
   const kind = kindOf(state, t);
@@ -150,6 +178,12 @@ export function describeTile(state: GameState, t: number): TileInfo {
     stationIndex: kind === 'station' ? getStationIndex(map, t) : null,
     depotIndex: kind === 'depot' ? getDepotIndex(map, t) : null,
     costToClear: clear !== null && clear.ok ? clear.cost : null,
+    roadOwner: kind === 'crossing' ? roadOwnerOf(map, t) : null,
+    railType: hasRail && getRailType(map, t) === RAILTYPE_RAIL ? 'rail' : null,
+    // GetTileDesc_Track: the default rail has no limit; depots get 61 under the realistic
+    // acceleration model (the default).
+    railSpeed: kind === 'depot' ? DEPOT_RAIL_SPEED : null,
+    buildDate: buildDateOf(state, kind, t),
   };
 }
 

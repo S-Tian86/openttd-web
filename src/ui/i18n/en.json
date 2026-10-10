@@ -147,5 +147,11 @@
   "tile.railOwner": "Railway owner: {owner}",
   "tile.roadOwner": "Road owner: {owner}",
   "tile.costToClear": "Cost to clear: {money}",
-  "tile.costToClearNA": "Cost to clear: N/A"
+  "tile.costToClearNA": "Cost to clear: N/A",
+  "tile.revenueWhenCleared": "Revenue when cleared: {money}",
+  "tile.buildDate": "Built/renovated: {date}",
+  "tile.railType": "Rail type: {type}",
+  "tile.railSpeed": "Rail speed limit: {speed}",
+  "railType.rail": "Railway",
+  "unit.kmh": "{speed} km/h"
 }

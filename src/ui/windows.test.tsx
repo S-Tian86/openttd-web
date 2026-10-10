@@ -27,6 +27,10 @@ const ROAD = {
   stationIndex: null,
   depotIndex: null,
   costToClear: null,
+  roadOwner: null,
+  railType: null,
+  railSpeed: null,
+  buildDate: null,
 };
 const GRASS = {
   ...ROAD,
@@ -117,7 +121,14 @@ describe('town and industry windows', () => {
     render(
       <TileInfo
         locale="es"
-        info={{ ...base, kind: 'crossing', owner: 'company', townIndex: 0, costToClear: null }}
+        info={{
+          ...base,
+          kind: 'crossing',
+          owner: 'company',
+          townIndex: 0,
+          costToClear: null,
+          roadOwner: 'town',
+        }}
         townName="Invenville"
         station={null}
         depot={null}
@@ -143,5 +154,86 @@ describe('town and industry windows', () => {
   it('shows Population: 0 for a town whose houses were all demolished (Review Focus 3)', () => {
     render(<TownWindow locale="en" info={{ ...TOWN, population: 0, houses: 0 }} />);
     expect(screen.getByText('Population: 0')).toBeTruthy();
+  });
+
+  it('shows a refund as revenue when cleared (LandInfoWindow)', () => {
+    const rail = { ...ROAD, kind: 'rail' as const, owner: 'company' as const, townIndex: null };
+    const { unmount } = render(
+      <TileInfo
+        locale="en"
+        info={{ ...rail, costToClear: -53 }}
+        townName={null}
+        station={null}
+        depot={null}
+        onOpenTown={() => undefined}
+      />,
+    );
+    expect(screen.getByText('Revenue when cleared: £53')).toBeTruthy();
+    unmount();
+    render(
+      <TileInfo
+        locale="es"
+        info={{ ...rail, costToClear: -53 }}
+        townName={null}
+        station={null}
+        depot={null}
+        onOpenTown={() => undefined}
+      />,
+    );
+    expect(screen.getByText(/^Beneficio si es despejado: 53/)).toBeTruthy();
+  });
+
+  it('shows build date, rail type and the depot speed limit, in order', () => {
+    const depot = {
+      ...ROAD,
+      kind: 'depot' as const,
+      owner: 'company' as const,
+      townIndex: null,
+      depotIndex: 0,
+      costToClear: 60,
+      railType: 'rail' as const,
+      railSpeed: 61,
+      buildDate: { year: 1950, month: 0, day: 1 },
+    };
+    const props = {
+      info: depot,
+      townName: null,
+      station: null,
+      depot: { index: 0, townName: 'Invenville', townCn: 0 },
+      onOpenTown: () => undefined,
+    };
+    const { container, unmount } = render(<TileInfo locale="en" {...props} />);
+    const lines = [...container.querySelectorAll('p')].map((p) => p.textContent);
+    expect(lines.slice(-3)).toEqual([
+      expect.stringMatching(/^Built\/renovated: 1 Jan 1950$/),
+      'Rail type: Railway',
+      'Rail speed limit: 61\u00a0km/h',
+    ]);
+    unmount();
+    render(<TileInfo locale="es" {...props} />);
+    expect(screen.getByText('Tipo de ferrocarril: Ferrocarril')).toBeTruthy();
+    expect(screen.getByText(/^Límite de velocidad de ferrocarril: 61/)).toBeTruthy();
+    expect(screen.getByText(/^Construido\/renovado: .*1950/)).toBeTruthy();
+  });
+
+  it('names the company as road owner of a crossing', () => {
+    const crossing = {
+      ...ROAD,
+      kind: 'crossing' as const,
+      owner: 'company' as const,
+      roadOwner: 'company' as const,
+      railType: 'rail' as const,
+    };
+    render(
+      <TileInfo
+        locale="en"
+        info={crossing}
+        townName="Invenville"
+        station={null}
+        depot={null}
+        onOpenTown={() => undefined}
+      />,
+    );
+    expect(screen.getByText('Road owner: Your company')).toBeTruthy();
   });
 });

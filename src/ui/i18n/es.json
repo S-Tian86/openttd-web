@@ -147,5 +147,11 @@
   "tile.railOwner": "Propietario del ferrocarril: {owner}",
   "tile.roadOwner": "Propietario de la carretera: {owner}",
   "tile.costToClear": "Coste de despeje: {money}",
-  "tile.costToClearNA": "Coste de despeje: N/D"
+  "tile.costToClearNA": "Coste de despeje: N/D",
+  "tile.revenueWhenCleared": "Beneficio si es despejado: {money}",
+  "tile.buildDate": "Construido/renovado: {date}",
+  "tile.railType": "Tipo de ferrocarril: {type}",
+  "tile.railSpeed": "Límite de velocidad de ferrocarril: {speed}",
+  "railType.rail": "Ferrocarril",
+  "unit.kmh": "{speed} km/h"
 }

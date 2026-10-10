@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { execute } from './command/command';
-import { createEmptyGame } from './game';
+import { convertDateToYMD } from './time/date';
+import { createEmptyGame, hashGameState } from './game';
 import { IndustryType } from './industry/industry-specs';
 import { makeHouseTile } from './map/house-map';
 import { makeIndustry } from './map/industry-map';
 import { makeClear, ClearGround } from './map/clear';
 import { DiagDir } from './map/geometry';
-import { tileXY } from './map/map';
-import { makeRoadNormal, RoadBits } from './map/road-map';
+import { COMPANY_FIRST, tileXY } from './map/map';
+import { makeRoadCrossing, makeRoadNormal, RoadBits } from './map/road-map';
 import { makeSea } from './map/water';
 import { depotInfo, describeTile, industryInfo, stationInfo, townInfo } from './query';
 import { newTown } from './town/town';
@@ -42,6 +43,10 @@ describe('query functions for the UI', () => {
       stationIndex: null,
       depotIndex: null,
       costToClear: 15,
+      roadOwner: null,
+      railType: null,
+      railSpeed: null,
+      buildDate: null,
     });
     expect(describeTile(game, tileXY(map, 20, 20))).toMatchObject({
       kind: 'road',
@@ -135,24 +140,36 @@ describe('query functions for the UI', () => {
       stationIndex: null,
       depotIndex: null,
       costToClear: -53,
+      roadOwner: null,
+      railType: 'rail',
+      railSpeed: null,
+      buildDate: null,
     });
     expect(describeTile(game, at(12, 10))).toMatchObject({
       kind: 'depot',
       owner: 'company',
       depotIndex: 0,
       costToClear: 60,
+      railType: 'rail',
+      railSpeed: 61, // GetTileDesc_Track: depots under the realistic acceleration model
+      buildDate: convertDateToYMD(game.calendar.date),
     });
     expect(describeTile(game, at(15, 10))).toMatchObject({
       kind: 'station',
       owner: 'company',
       stationIndex: 0,
       costToClear: 74,
+      railType: 'rail',
+      railSpeed: null,
+      buildDate: convertDateToYMD(game.calendar.date),
     });
     expect(describeTile(game, at(20, 30))).toMatchObject({
       kind: 'crossing',
       owner: 'company',
       townIndex: 0,
       costToClear: -53,
+      roadOwner: 'town',
+      railType: 'rail',
     });
     expect(stationInfo(game, 0)).toEqual({ index: 0, townName: 'Invenville', nameKind: 'north' });
     expect(depotInfo(game, 0)).toEqual({ index: 0, townName: 'Invenville', townCn: 0 });
@@ -163,5 +180,31 @@ describe('query functions for the UI', () => {
     const game = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
     game.towns.push(newTown(0, tileXY(game.map, 20, 30), 0, true));
     expect(townInfo(game, 0)).toMatchObject({ population: 0, houses: 0 });
+  });
+
+  it('names the stored road owner of a crossing', () => {
+    const game = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    const t = tileXY(game.map, 20, 30);
+    game.towns.push(newTown(0, tileXY(game.map, 20, 20), 0, false));
+    makeRoadCrossing(game.map, t, COMPANY_FIRST, COMPANY_FIRST, Axis.Y, 0, 0);
+    expect(describeTile(game, t)).toMatchObject({ kind: 'crossing', roadOwner: 'company' });
+  });
+
+  it('never changes the game while querying (test run only)', () => {
+    const game = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    const at = (x: number, y: number): number => tileXY(game.map, x, y);
+    game.towns.push(newTown(0, at(20, 20), 0, false));
+    execute(game, { type: 'buildTrainDepot', tile: at(12, 10), dir: DiagDir.NW }, 'exec');
+    execute(
+      game,
+      { type: 'buildRailStation', tile: at(14, 10), axis: Axis.X, numTracks: 1, platLength: 2 },
+      'exec',
+    );
+    makeRoadNormal(game.map, at(20, 30), RoadBits.Y, 0);
+    execute(game, { type: 'buildRail', tile: at(20, 30), track: Track.X }, 'exec');
+    makeRoadNormal(game.map, at(20, 20), RoadBits.X, 0);
+    const before = [hashGameState(game), game.company.clearLimit];
+    for (const t of [at(12, 10), at(14, 10), at(20, 30), at(20, 20)]) describeTile(game, t);
+    expect([hashGameState(game), game.company.clearLimit]).toEqual(before);
   });
 });

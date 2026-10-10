@@ -1,10 +1,10 @@
 import type { DepotInfo, StationInfo } from '../sim/query';
-import { translate, type MessageKey } from './i18n/i18n';
+import { translate } from './i18n/i18n';
 import type { Locale } from './session';
 
 /** strings.cpp station names: the generated kind, relative to its town (stations-cargo.md 4.2). */
 export const stationName = (locale: Locale, info: StationInfo): string =>
-  translate(locale, `station.name.${info.nameKind}` as MessageKey, {
+  translate(locale, `station.name.${info.nameKind}`, {
     town: info.townName,
     number: info.index,
   });
