@@ -2,6 +2,7 @@ import { createRandomizer, type Randomizer } from './core/random';
 import { createCompany, DEFAULT_MAX_LOAN, type CompanyState } from './economy/company';
 import { ClearGround, makeClear, tileLoopClear } from './map/clear';
 import { createMap, isInnerTile, makeVoid, TileType, type MapState } from './map/map';
+import { tileLoopVoid, tileLoopWater } from './map/flood';
 import { runTileLoop } from './map/tile-loop';
 import { advanceDate, createDateState, type DateState } from './time/clock';
 import { DEF_START_YEAR } from './time/date';
@@ -35,16 +36,16 @@ export interface GameState {
 }
 
 /** Flat land at height 1, void border. Port of heightmap.cpp:FlatEmptyWorld (flat height 1). */
-export function createGame(options: Partial<GameOptions> = {}): GameState {
+export function createEmptyGame(options: Partial<GameOptions> = {}): GameState {
   const opts = { ...DEFAULT_GAME_OPTIONS, ...options };
   const map = createMap(opts.mapLogX, opts.mapLogY);
   for (let t = 0; t < map.size; t++) {
     if (isInnerTile(map, t)) {
-      map.height[t] = 1;
       makeClear(map, t, ClearGround.Grass, 3);
     } else {
       makeVoid(map, t);
     }
+    map.height[t] = 1; // FlatEmptyWorld raises every row and column, the void border too
   }
   return {
     options: opts,
@@ -59,6 +60,9 @@ export function createGame(options: Partial<GameOptions> = {}): GameState {
   };
 }
 
+/** Replaced by the world generator in Task 4. */
+export const createGame = createEmptyGame;
+
 /** One game tick, in OpenTTD's order. Port of openttd.cpp:StateGameLoop. */
 export function tick(state: GameState): void {
   if (state.paused) return;
@@ -68,6 +72,8 @@ export function tick(state: GameState): void {
   const markDirty = (t: number): void => void state.dirtyTiles.add(t);
   runTileLoop(state.map, state.tickCounter, {
     [TileType.Clear]: (t) => tileLoopClear(state.map, t, markDirty),
+    [TileType.Water]: (t) => tileLoopWater(state.map, t, markDirty),
+    [TileType.Void]: (t) => tileLoopVoid(state.map, t, markDirty),
   });
 }
 
