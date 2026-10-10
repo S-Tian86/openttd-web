@@ -49,6 +49,7 @@ the issue.
   - [x] 1.2.3 Sea, shore and the water tile loop — #57
   - [x] 1.2.4 World generation pipeline — #59
   - [x] 1.2.5 Trees — #61
+  - [x] 1.2.6 Town roads, towns and zones — #63
 - [ ] 1.3 Construction — _(to create)_
 - [ ] 1.4 Trains — _(to create)_
 - [ ] 1.5 Cargo and economy — _(to create)_

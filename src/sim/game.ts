@@ -3,6 +3,8 @@ import { createCompany, DEFAULT_MAX_LOAN, type CompanyState } from './economy/co
 import { ClearGround, makeClear, tileLoopClear } from './map/clear';
 import { createMap, isInnerTile, makeVoid, TileType, type MapState } from './map/map';
 import { tileLoopVoid, tileLoopWater } from './map/flood';
+import type { Town } from './town/town';
+import { tileLoopRoad } from './town/town-roads';
 import { onTickTrees, tileLoopTrees } from './world/trees';
 import { runTileLoop, type TileLoopProcs } from './map/tile-loop';
 import { advanceDate, createDateState, type DateState } from './time/clock';
@@ -44,6 +46,7 @@ export interface GameState {
   initialLandCount: number;
   /** Port of tree_cmd.cpp:_trees_tick_ctr (uint8). */
   treeTickCounter: number;
+  towns: Town[];
 }
 
 /** Allocates the map and seeds the generator; no tile is touched. Port of misc.cpp:InitializeGame. */
@@ -60,6 +63,7 @@ export function newGameState(options: GameOptions): GameState {
     dirtyTiles: new Set(),
     initialLandCount: 0,
     treeTickCounter: 0,
+    towns: [],
   };
 }
 
@@ -84,6 +88,7 @@ export function tileLoopProcs(state: GameState): TileLoopProcs {
   return {
     [TileType.Clear]: (t) => tileLoopClear(state.map, t, markDirty),
     [TileType.Water]: (t) => tileLoopWater(state.map, t, markDirty),
+    [TileType.Road]: (t) => tileLoopRoad(state, t, markDirty),
     [TileType.Trees]: (t) => tileLoopTrees(state, t, markDirty),
     [TileType.Void]: (t) => tileLoopVoid(state.map, t, markDirty),
   };
@@ -134,6 +139,10 @@ export function hashGameState(state: GameState): string {
   [state.random.state0, state.random.state1, map.tileLoopTile, state.tickCounter].forEach(num);
   for (const d of [state.calendar, state.economy])
     [d.date, d.dateFract, d.year, d.month].forEach(num);
+  for (const town of state.towns) {
+    [town.index, town.xy, town.nameParts, town.isCity ? 1 : 0].forEach(num);
+    [town.numHouses, town.population, ...town.squaredZoneRadius, town.flags].forEach(num);
+  }
   [state.paused ? 1 : 0, state.company.money, state.company.currentLoan].forEach(num);
   return h.toString(16).padStart(8, '0');
 }
