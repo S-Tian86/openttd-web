@@ -44,4 +44,15 @@ describe('pacing (port of video_driver.cpp:GameLoop and GetGameInterval)', () =>
     for (let f = 1; f <= 60; f++) total += ticksDue(clock, (f * 1000) / 60, interval);
     expect(total).toBe(38);
   });
+
+  it('keeps real-time speed with slow frames at normal speed', () => {
+    for (const frame of [150, 250]) {
+      const clock = { nextTickAt: 0 };
+      const interval = gameIntervalMs(false, SPEED_PERCENT.normal);
+      let total = 0;
+      for (let now = frame; now <= 6000; now += frame) total += ticksDue(clock, now, interval);
+      expect(total).toBeGreaterThanOrEqual(222);
+      expect(total).toBeLessThanOrEqual(223);
+    }
+  });
 });
