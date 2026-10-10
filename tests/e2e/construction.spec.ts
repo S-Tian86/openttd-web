@@ -282,3 +282,35 @@ test('the Remove toggle takes away the rail just built (C3)', async ({ page, isM
   await expect(dialog).toContainText(/Bare land|Grass/);
   await expect(dialog).not.toContainText('Railway track');
 });
+
+test.describe('at 800x600', () => {
+  test.use({ viewport: { width: 800, height: 600 } });
+
+  test('an error message shows above an open window (C2)', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'a desktop width');
+    await openWorld(page, world, SEED, A);
+    await page.getByRole('button', { name: 'Finances' }).click();
+    await expect(page.getByRole('dialog', { name: 'Finances' })).toBeVisible();
+    await page.getByRole('button', { name: 'Pause' }).click();
+    await page.getByRole('button', { name: 'Build railway track' }).click();
+    const a = await tileCentre(page, world, A);
+    await page.mouse.click(a.x, a.y);
+    const alert = page.getByRole('alert');
+    await expect(alert).toContainText('Not allowed while paused');
+    await expect(alert).toBeVisible();
+    // Its centre and its four corners (8 px in, clear of the rounded border) are the error,
+    // not the window above it.
+    const covered = await alert.evaluate((el) => {
+      const { left, right, top, bottom } = el.getBoundingClientRect();
+      const points = [
+        [(left + right) / 2, (top + bottom) / 2],
+        [left + 8, top + 8],
+        [right - 8, top + 8],
+        [left + 8, bottom - 8],
+        [right - 8, bottom - 8],
+      ];
+      return points.filter(([x, y]) => !el.contains(document.elementFromPoint(x!, y!)));
+    });
+    expect(covered).toEqual([]);
+  });
+});
