@@ -3,6 +3,7 @@ import { createCompany, DEFAULT_MAX_LOAN, type CompanyState } from './economy/co
 import { ClearGround, makeClear, tileLoopClear } from './map/clear';
 import { createMap, isInnerTile, makeVoid, TileType, type MapState } from './map/map';
 import { tileLoopVoid, tileLoopWater } from './map/flood';
+import { onTickTrees, tileLoopTrees } from './world/trees';
 import { runTileLoop, type TileLoopProcs } from './map/tile-loop';
 import { advanceDate, createDateState, type DateState } from './time/clock';
 import { DEF_START_YEAR } from './time/date';
@@ -41,6 +42,8 @@ export interface GameState {
   dirtyTiles: Set<number>;
   /** Port of _settings_game.game_creation.initial_land_count; 0 until generated. */
   initialLandCount: number;
+  /** Port of tree_cmd.cpp:_trees_tick_ctr (uint8). */
+  treeTickCounter: number;
 }
 
 /** Allocates the map and seeds the generator; no tile is touched. Port of misc.cpp:InitializeGame. */
@@ -56,6 +59,7 @@ export function newGameState(options: GameOptions): GameState {
     company: createCompany(DEFAULT_MAX_LOAN),
     dirtyTiles: new Set(),
     initialLandCount: 0,
+    treeTickCounter: 0,
   };
 }
 
@@ -80,6 +84,7 @@ export function tileLoopProcs(state: GameState): TileLoopProcs {
   return {
     [TileType.Clear]: (t) => tileLoopClear(state.map, t, markDirty),
     [TileType.Water]: (t) => tileLoopWater(state.map, t, markDirty),
+    [TileType.Trees]: (t) => tileLoopTrees(state, t, markDirty),
     [TileType.Void]: (t) => tileLoopVoid(state.map, t, markDirty),
   };
 }
@@ -91,6 +96,7 @@ export function tick(state: GameState): void {
   advanceDate(state.economy);
   state.tickCounter++;
   runTileLoop(state.map, state.tickCounter, tileLoopProcs(state));
+  onTickTrees(state);
 }
 
 /** Returns the tiles to redraw since the last call and forgets them. */
@@ -124,6 +130,7 @@ export function hashGameState(state: GameState): string {
   const o = state.options;
   [o.mapLogX, o.mapLogY, o.seed, o.startingYear].forEach(num);
   [o.townCount, o.industryDensity, state.initialLandCount].forEach(num);
+  num(state.treeTickCounter);
   [state.random.state0, state.random.state1, map.tileLoopTile, state.tickCounter].forEach(num);
   for (const d of [state.calendar, state.economy])
     [d.date, d.dateFract, d.year, d.month].forEach(num);
