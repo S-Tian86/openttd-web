@@ -42,6 +42,17 @@ describe('StatusBar', () => {
     expect(screen.getByText(/1950/)).toBeTruthy();
   });
 
+  it('names the group of speed buttons', () => {
+    render(
+      <StatusBar
+        session={fakeSession(snapshot)}
+        snapshot={snapshot}
+        onSettings={() => undefined}
+      />,
+    );
+    expect(screen.getByRole('group', { name: 'Game speed' })).toBeTruthy();
+  });
+
   it('pauses and changes speed through the session', () => {
     const session = fakeSession(snapshot);
     render(<StatusBar session={session} snapshot={snapshot} onSettings={() => undefined} />);

@@ -62,7 +62,8 @@ body {
   touch-action: none;
 }
 
-.status-controls {
+.status-controls,
+.speed-group {
   display: flex;
   gap: calc(var(--space) / 2);
 }
