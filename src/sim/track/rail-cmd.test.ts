@@ -9,7 +9,7 @@ import { makeHouseTile } from '../map/house-map';
 import { COMPANY_FIRST, getTileType, OWNER_TOWN, tileXY, TileType } from '../map/map';
 import { getRailGroundType, getTrackBits, RailGroundType } from '../map/rail-map';
 import { makeTree, TreeGround, TreeGrowth } from '../map/tree-map';
-import { isWaterTile, makeSea } from '../map/water';
+import { isWaterTile, makeSea, makeShore } from '../map/water';
 import { newTown } from '../town/town';
 import { tileLoopTrack } from './rail-cmd';
 import { Track, TrackBits } from './track';
@@ -19,6 +19,12 @@ const at = (g: GameState, x: number, y: number): number => tileXY(g.map, x, y);
 const NOOP = (): void => undefined;
 const build = (g: GameState, t: number, track: Track) =>
   execute(g, { type: 'buildRail', tile: t, track }, 'exec');
+
+const line = (g: GameState, y: number) => ({
+  endTile: at(g, 14, y),
+  startTile: at(g, 10, y),
+  track: Track.X,
+});
 
 describe('CmdBuildSingleRail / CmdRemoveSingleRail (port of rail_cmd.cpp)', () => {
   it('lays a piece on generated grass for £90 and adds pieces for £75 each', () => {
@@ -87,6 +93,41 @@ describe('CmdBuildSingleRail / CmdRemoveSingleRail (port of rail_cmd.cpp)', () =
       { ok: false, error: { key: 'error.flatLandRequired', params: {} } },
       { ok: false, error: null },
     ]);
+  });
+
+  it('checks coast water before flat land, as CheckRailSlope does', () => {
+    const g = newGame();
+    const t = at(g, 20, 20);
+    g.map.height[t] = 2; // N corner raised: slope N, a coast tile
+    makeShore(g.map, t);
+    const test = (track: Track) => execute(g, { type: 'buildRail', tile: t, track }, 'test');
+    // valid_tracks_on_leveled_foundation[SLOPE_N] = UPPER only
+    expect(test(Track.X)).toEqual({
+      ok: false,
+      error: { key: 'error.cantBuildOnWater', params: {} },
+    });
+    expect(test(Track.Upper)).toEqual({
+      ok: false,
+      error: { key: 'error.flatLandRequired', params: {} },
+    });
+  });
+
+  it('leaves the game untouched in test mode for removals and drags', () => {
+    const commands = [
+      (g: GameState) => ({ type: 'removeRail', tile: at(g, 10, 10), track: Track.X }) as const,
+      (g: GameState) => ({ type: 'buildRailroadTrack', ...line(g, 12) }) as const,
+      (g: GameState) => ({ type: 'removeRailroadTrack', ...line(g, 10) }) as const,
+    ];
+    for (const make of commands) {
+      const g = newGame();
+      execute(g, { type: 'buildRailroadTrack', ...line(g, 10) }, 'exec');
+      const command = make(g);
+      const before = hashGameState(g);
+      const tested = execute(g, command, 'test');
+      expect(tested.ok).toBe(true);
+      expect(hashGameState(g)).toBe(before);
+      expect(execute(g, command, 'exec')).toEqual(tested);
+    }
   });
 
   it('refunds £53 per removed piece and leaves bare grass after the last one', () => {

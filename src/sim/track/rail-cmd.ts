@@ -33,11 +33,12 @@ import {
   setRailGroundType,
   setTrackBits,
 } from '../map/rail-map';
-import { isTileFlat } from '../map/slope';
+import { Slope, getTileSlopeZ } from '../map/slope';
 import {
   countBits,
   isDiagonalTrack,
   Track,
+  TrackBits,
   TRACK_BITS_AT_EDGE,
   TRACKDELTA,
   trackToTrackBits,
@@ -58,12 +59,45 @@ export const railInfrastructurePieces = (bits: number): number =>
 const errorKey = (c: CommandCost): ErrorKey | null =>
   c.ok || c.error === null ? null : c.error.key;
 
-/** Port of rail_cmd.cpp:CheckRailSlope for Stage 1 (R26: no foundations). */
-export function checkRailSlope(map: MapState, t: number): CommandCost {
-  if (!isTileFlat(map, t)) return fail('error.flatLandRequired');
-  if (getFloodingBehaviour(map, t) !== FloodingBehaviour.None) {
+/** Port of rail_cmd.cpp:_valid_tracks_on_leveled_foundation, by non-steep Slope (0..14). */
+const VALID_TRACKS_ON_LEVELED_FOUNDATION: readonly number[] = [
+  TrackBits.None,
+  TrackBits.Left,
+  TrackBits.Lower,
+  TrackBits.Y | TrackBits.Lower | TrackBits.Left,
+  TrackBits.Right,
+  TrackBits.All,
+  TrackBits.X | TrackBits.Lower | TrackBits.Right,
+  TrackBits.All,
+  TrackBits.Upper,
+  TrackBits.X | TrackBits.Upper | TrackBits.Left,
+  TrackBits.All,
+  TrackBits.All,
+  TrackBits.Y | TrackBits.Upper | TrackBits.Right,
+  TrackBits.All,
+  TrackBits.All,
+];
+
+/**
+ * Port of rail_cmd.cpp:CheckRailSlope for Stage 1 (R26: no foundations, so any slope is refused
+ * after the coast check). `existing` is the track already on the tile.
+ */
+export function checkRailSlope(
+  map: MapState,
+  t: number,
+  railBits: number,
+  existing: number,
+): CommandCost {
+  const { slope } = getTileSlopeZ(map, t);
+  // don't allow building on the lower side of a coast
+  if (
+    getFloodingBehaviour(map, t) !== FloodingBehaviour.None &&
+    (slope & Slope.Steep) === 0 &&
+    (~VALID_TRACKS_ON_LEVELED_FOUNDATION[slope]! & (railBits | existing)) !== 0
+  ) {
     return fail('error.cantBuildOnWater');
   }
+  if (slope !== Slope.Flat) return fail('error.flatLandRequired');
   return succeed(0);
 }
 
@@ -85,7 +119,7 @@ export function cmdBuildSingleRail(
     const bits = getTrackBits(map, t);
     if ((bits | bit) === bits) return fail('error.alreadyBuilt'); // CheckTrackCombination
     // EnsureNoTrainOnTrack: no trains until block 1.4
-    cost = addCost(cost, checkRailSlope(map, t));
+    cost = addCost(cost, checkRailSlope(map, t, bit, bits));
     if (!cost.ok) return cost;
     if (exec) {
       setRailGroundType(map, t, RailGroundType.Barren);
@@ -95,7 +129,7 @@ export function cmdBuildSingleRail(
     }
   } else {
     // (Task 4 inserts the MP_ROAD level-crossing branch here.)
-    cost = addCost(cost, checkRailSlope(map, t));
+    cost = addCost(cost, checkRailSlope(map, t, bit, 0));
     if (!cost.ok) return cost;
     cost = addCost(cost, landscapeClear(state, t, flags, COMPANY_FIRST));
     if (!cost.ok) return cost;
@@ -139,16 +173,15 @@ export function cmdRemoveSingleRail(
 
 /** Port of rail_cmd.cpp:ValidateAutoDrag: the starting trackdir turned the right way, or null. */
 export function validateAutoDrag(
-  trackdir: number,
+  track: Track,
   startX: number,
   startY: number,
   endX: number,
   endY: number,
 ): number | null {
-  if (trackdir < 0 || trackdir > 5) return null;
   const dx = endX - startX;
   const dy = endY - startY;
-  let td = trackdir;
+  let td: number = track; // TrackToTrackdir(track) is the track itself
   let [trdx, trdy] = TRACKDELTA[td]!;
   if (!isDiagonalTrack((td & 7) as Track)) {
     trdx += TRACKDELTA[td ^ 1]![0];
@@ -183,6 +216,7 @@ export function railDragPieces(
   endTile: number,
   track: Track,
 ): { tile: number; track: Track }[] | null {
+  if (track < 0 || track > 5) return null; // ValParamTrackOrientation
   if (startTile < 0 || startTile >= map.size || endTile < 0 || endTile >= map.size) return null;
   let td = validateAutoDrag(
     track,
