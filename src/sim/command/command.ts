@@ -4,6 +4,8 @@ import type { GameState } from '../game';
 import { clearArea, landscapeClear } from '../map/clear-tile';
 import { COMPANY_FIRST } from '../map/map';
 import { isValidTile } from '../map/geometry';
+import { cmdBuildSingleRail, cmdRailTrackHelper, cmdRemoveSingleRail } from '../track/rail-cmd';
+import type { Track } from '../track/track';
 import { DoFlag, succeed, type CommandCost, type CommandError } from './cost';
 
 export type Command =
@@ -11,7 +13,11 @@ export type Command =
   | { type: 'increaseLoan'; amount: LoanAmount }
   | { type: 'decreaseLoan'; amount: LoanAmount }
   | { type: 'landscapeClear'; tile: number }
-  | { type: 'clearArea'; endTile: number; startTile: number; diagonal: boolean };
+  | { type: 'clearArea'; endTile: number; startTile: number; diagonal: boolean }
+  | { type: 'buildRail'; tile: number; track: Track }
+  | { type: 'removeRail'; tile: number; track: Track }
+  | { type: 'buildRailroadTrack'; endTile: number; startTile: number; track: Track }
+  | { type: 'removeRailroadTrack'; endTile: number; startTile: number; track: Track };
 export type CommandMode = 'test' | 'exec';
 export type CommandResult = { ok: true; cost: number } | { ok: false; error: CommandError | null };
 
@@ -26,6 +32,10 @@ const COMMAND_TYPE: Record<Command['type'], CommandType> = {
   decreaseLoan: 'moneyManagement',
   landscapeClear: 'landscapeConstruction',
   clearArea: 'landscapeConstruction',
+  buildRail: 'landscapeConstruction',
+  removeRail: 'landscapeConstruction',
+  buildRailroadTrack: 'landscapeConstruction',
+  removeRailroadTrack: 'landscapeConstruction',
 };
 
 /** Port of command.cpp:IsCommandAllowedWhilePaused: pause level per command type. */
@@ -42,6 +52,10 @@ const COMMAND_FLAGS: Record<Command['type'], number> = {
   decreaseLoan: 0,
   landscapeClear: 0,
   clearArea: 0,
+  buildRail: DoFlag.Auto | DoFlag.NoWater,
+  removeRail: DoFlag.Auto,
+  buildRailroadTrack: DoFlag.Auto | DoFlag.NoWater,
+  removeRailroadTrack: DoFlag.Auto,
 };
 
 /** Commands flagged CommandFlag::NoTest: the test run is skipped. */
@@ -57,8 +71,12 @@ export function commandTile(command: Command): number | null {
     case 'decreaseLoan':
       return null;
     case 'landscapeClear':
+    case 'buildRail':
+    case 'removeRail':
       return command.tile;
     case 'clearArea':
+    case 'buildRailroadTrack':
+    case 'removeRailroadTrack':
       return command.endTile;
     default: {
       const unreachable: never = command;
@@ -87,6 +105,28 @@ function run(state: GameState, command: Command, flags: number): CommandCost {
         command.startTile,
         command.diagonal,
         COMPANY_FIRST,
+      );
+    case 'buildRail':
+      return cmdBuildSingleRail(state, flags, command.tile, command.track);
+    case 'removeRail':
+      return cmdRemoveSingleRail(state, flags, command.tile, command.track, COMPANY_FIRST);
+    case 'buildRailroadTrack':
+      return cmdRailTrackHelper(
+        state,
+        flags,
+        command.startTile,
+        command.endTile,
+        command.track,
+        false,
+      );
+    case 'removeRailroadTrack':
+      return cmdRailTrackHelper(
+        state,
+        flags,
+        command.startTile,
+        command.endTile,
+        command.track,
+        true,
       );
     default: {
       const unreachable: never = command;

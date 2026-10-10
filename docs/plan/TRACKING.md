@@ -62,7 +62,7 @@ the issue.
   - [x] 1.3.0 Reference notes and block plan — #87
   - [x] 1.3.1 Prices, company money and the command pipeline — #93
   - [x] 1.3.2 The bulldozer — natural ground, water, houses and town roads — #95
-  - [ ] 1.3.3 Rail track — pieces, drags and the track tile loop
+  - [x] 1.3.3 Rail track — pieces, drags and the track tile loop — #97
   - [ ] 1.3.4 Level crossings over town roads
   - [ ] 1.3.5 Train depots
   - [ ] 1.3.6 Rail stations — building, joining and naming

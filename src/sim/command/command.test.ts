@@ -23,5 +23,10 @@ describe('commands (port of command.cpp)', () => {
     expect((['landscapeClear', 'clearArea'] as const).map((type) => pauseLevel(type))).toEqual([
       3, 3,
     ]);
+    expect(
+      (['buildRail', 'removeRail', 'buildRailroadTrack', 'removeRailroadTrack'] as const).map(
+        (type) => pauseLevel(type),
+      ),
+    ).toEqual([3, 3, 3, 3]);
   });
 });
