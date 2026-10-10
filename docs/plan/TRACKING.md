@@ -64,7 +64,7 @@ the issue.
   - [x] 1.3.2 The bulldozer — natural ground, water, houses and town roads — #95
   - [x] 1.3.3 Rail track — pieces, drags and the track tile loop — #97
   - [x] 1.3.4 Level crossings over town roads — #99
-  - [ ] 1.3.5 Train depots
+  - [x] 1.3.5 Train depots — #101
   - [ ] 1.3.6 Rail stations — building, joining and naming
   - [ ] 1.3.7 Removing stations and deleting unused ones
   - [ ] 1.3.8 Autorail drags and gesture → command planning

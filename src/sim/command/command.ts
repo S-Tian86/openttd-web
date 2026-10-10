@@ -3,8 +3,9 @@ import { cmdDecreaseLoan, cmdIncreaseLoan, type LoanAmount } from '../economy/lo
 import type { GameState } from '../game';
 import { clearArea, landscapeClear } from '../map/clear-tile';
 import { COMPANY_FIRST } from '../map/map';
-import { isValidTile } from '../map/geometry';
+import { isValidTile, type DiagDir } from '../map/geometry';
 import { cmdBuildSingleRail, cmdRailTrackHelper, cmdRemoveSingleRail } from '../track/rail-cmd';
+import { cmdBuildTrainDepot } from '../track/depot';
 import type { Track } from '../track/track';
 import { DoFlag, succeed, type CommandCost, type CommandError } from './cost';
 
@@ -17,7 +18,8 @@ export type Command =
   | { type: 'buildRail'; tile: number; track: Track }
   | { type: 'removeRail'; tile: number; track: Track }
   | { type: 'buildRailroadTrack'; endTile: number; startTile: number; track: Track }
-  | { type: 'removeRailroadTrack'; endTile: number; startTile: number; track: Track };
+  | { type: 'removeRailroadTrack'; endTile: number; startTile: number; track: Track }
+  | { type: 'buildTrainDepot'; tile: number; dir: DiagDir };
 export type CommandMode = 'test' | 'exec';
 export type CommandResult = { ok: true; cost: number } | { ok: false; error: CommandError | null };
 
@@ -36,6 +38,7 @@ const COMMAND_TYPE: Record<Command['type'], CommandType> = {
   removeRail: 'landscapeConstruction',
   buildRailroadTrack: 'landscapeConstruction',
   removeRailroadTrack: 'landscapeConstruction',
+  buildTrainDepot: 'landscapeConstruction',
 };
 
 /** Port of command.cpp:IsCommandAllowedWhilePaused: pause level per command type. */
@@ -56,6 +59,7 @@ const COMMAND_FLAGS: Record<Command['type'], number> = {
   removeRail: DoFlag.Auto,
   buildRailroadTrack: DoFlag.Auto | DoFlag.NoWater,
   removeRailroadTrack: DoFlag.Auto,
+  buildTrainDepot: DoFlag.Auto | DoFlag.NoWater,
 };
 
 /** Commands flagged CommandFlag::NoTest: the test run is skipped. */
@@ -73,6 +77,7 @@ export function commandTile(command: Command): number | null {
     case 'landscapeClear':
     case 'buildRail':
     case 'removeRail':
+    case 'buildTrainDepot':
       return command.tile;
     case 'clearArea':
     case 'buildRailroadTrack':
@@ -128,6 +133,8 @@ function run(state: GameState, command: Command, flags: number): CommandCost {
         command.track,
         true,
       );
+    case 'buildTrainDepot':
+      return cmdBuildTrainDepot(state, flags, command.tile, command.dir);
     default: {
       const unreachable: never = command;
       return unreachable;

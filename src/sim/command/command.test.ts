@@ -28,5 +28,6 @@ describe('commands (port of command.cpp)', () => {
         (type) => pauseLevel(type),
       ),
     ).toEqual([3, 3, 3, 3]);
+    expect(pauseLevel('buildTrainDepot')).toBe(3);
   });
 });
