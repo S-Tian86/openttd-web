@@ -18,12 +18,14 @@
     "lint": "oxlint --deny-warnings --ignore-pattern 'tests/architecture/sim-*.ts'",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "phaser": "^4.2.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "@types/node": "^24.19.2",
     "husky": "^9.1.7",
     "oxlint": "^1.87.0",
