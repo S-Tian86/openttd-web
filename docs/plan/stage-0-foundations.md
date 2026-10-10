@@ -1659,3 +1659,31 @@ Line 0.8 → `[x]`, push, PR, checks, merge. Then:
 ```bash
 gh api -X PATCH repos/S-Tian86/openttd-web/milestones/1 -f state=closed
 ```
+
+---
+
+## Execution notes
+
+Decisions taken while executing this plan. Where they differ from the tasks above, **these
+notes and the code are the truth**.
+
+| Task   | Decision                                                                                                                  | Why                                                             |
+| ------ | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| 1      | `git init` + `git symbolic-ref HEAD refs/heads/main` instead of `git init -b main`                                        | The host has git 2.25, which lacks `-b`                         |
+| 1      | No default `bug`/`enhancement` labels; every label is created on first use                                                | The new repository came without GitHub's default labels         |
+| 3      | `chunkSizeWarningLimit: 1500` in `vite.config.ts`                                                                         | Phaser alone is ~1.3 MB minified; one game, one chunk           |
+| 3–5    | Previews and e2e use port **4317**                                                                                        | Other projects on the host preview on Vite's default 4173       |
+| 4      | **No lint-staged**: the pre-commit hook runs `lint`, `typecheck` and `format:check` on the whole repo                     | lint-staged 17 needs git ≥ 2.32; the full checks take seconds   |
+| 4      | Phaser is imported by name (`import { Scene } from 'phaser'`)                                                             | oxlint `import/no-named-as-default-member`                      |
+| 5      | Local e2e uses the installed Google Chrome (`channel: 'chrome'`); CI uses Playwright's Chromium                           | Playwright ships no Chromium for Ubuntu 20.04                   |
+| 5      | `public/favicon.svg` added                                                                                                | The e2e test caught a real 404 on `/favicon.ico`                |
+| 5      | `reuseExistingServer: false`; console errors include the failing URL                                                      | A stale preview once made the test run against an old build     |
+| 6      | Private vulnerability reporting and Dependabot alerts/security updates enabled                                            | `SECURITY.md` links to private reporting                        |
+| 7      | Notes researched by parallel agents, reviewed against the template; formulas spot-checked against the source              | Keeps ~50 C++ files out of one context                          |
+| 7      | `/reference/` anchored to the repo root in `.gitignore` and `.prettierignore`                                             | Unanchored, it also hid `docs/reference/`                       |
+| Review | Boundary test lints a temporary file inside `src/sim/` (and a control outside); e2e serves the build from `/openttd-web/` | The final review proved both guards could not fail before (#15) |
+| 8      | `@types/node` pinned to `^22`; Dependabot ignores its major updates                                                       | Node types must follow the runtime in `.nvmrc`                  |
+
+Deferred from the final review (minor): no e2e resize after load; `globalThis.Date` and
+`globalThis.Math.random` bypass the sim barrier; `constants.ts` cites `TimerGameTick::DAY_TICKS`
+where the source names it `Ticks::DAY_TICKS`.
