@@ -31,7 +31,6 @@ Bound to paths, not to recognising intent. Load the skill **before** the first e
   behaviour is unclear, ask; do not invent it.
 - Integer arithmetic in game rules, as in OpenTTD.
 - Test first (Vitest). Visual checks with Playwright on headless Chromium.
-- Never `cd` into `reference/`: it is another git repository and tools that resolve the
-  project from the working directory (such as the Engram memory hook) pick the wrong one.
-  Use absolute paths.
+- Never `cd` into `reference/`: it is a separate git clone, so git commands run there act on
+  OpenTTD, not on this project. Use absolute paths.
 - Keep it simple: no abstraction or infrastructure the current stage does not need.
