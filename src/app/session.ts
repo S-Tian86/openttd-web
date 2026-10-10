@@ -197,6 +197,26 @@ export class GameSession implements UiSession {
     this.refresh();
   };
 
+  /**
+   * Port of company_gui.cpp's loan buttons: one LOAN_INTERVAL step, or the most possible
+   * (Ctrl+click on desktop, long press on phones).
+   */
+  changeLoan = (action: 'borrow' | 'repay', all: boolean): void => {
+    const amount = all ? 'max' : 'interval';
+    const result = execute(
+      this.state,
+      { type: action === 'borrow' ? 'increaseLoan' : 'decreaseLoan', amount },
+      'exec',
+    );
+    if (!result.ok) {
+      this.error = {
+        header: action === 'borrow' ? 'header.cantBorrow' : 'header.cantRepay',
+        detail: toUiError(this.state, result.error),
+      };
+    }
+    this.refresh();
+  };
+
   openTown = (index: number): void => {
     this.windowRef = { kind: 'town', index };
     this.refresh();
@@ -346,6 +366,8 @@ export class GameSession implements UiSession {
       month,
       day,
       money: this.state.company.money,
+      loan: this.state.company.currentLoan,
+      maxLoan: this.state.company.maxLoan,
       paused: this.state.paused,
       speed: this.speed,
       locale: this.locale,

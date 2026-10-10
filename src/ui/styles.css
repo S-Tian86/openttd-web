@@ -321,7 +321,8 @@ body {
 
 .tile-info,
 .town-window,
-.industry-window {
+.industry-window,
+.finances-window {
   display: flex;
   flex-direction: column;
   gap: calc(var(--space) / 2);
@@ -329,8 +330,25 @@ body {
 
 .tile-info p,
 .town-window p,
-.industry-window p {
+.industry-window p,
+.finances-window p {
   margin: 0;
+}
+
+.finances-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--space) / 2);
+}
+
+.loan-button {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.finances-hint {
+  font-size: 0.85em;
 }
 
 .tile-kind {

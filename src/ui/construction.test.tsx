@@ -15,18 +15,32 @@ afterEach(() => {
 describe('construction toolbar', () => {
   it('toggles tools and shows each tool its options', () => {
     const session = fakeSession();
-    const { rerender } = render(<Toolbar session={session} snapshot={BASE_SNAPSHOT} />);
+    const { rerender } = render(
+      <Toolbar session={session} snapshot={BASE_SNAPSHOT} onFinances={() => undefined} />,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Build railway track' }));
     expect(session.setTool).toHaveBeenCalledWith('rail');
     expect(screen.queryByRole('button', { name: 'Remove' })).toBeNull();
-    rerender(<Toolbar session={session} snapshot={{ ...BASE_SNAPSHOT, tool: 'station' }} />);
+    rerender(
+      <Toolbar
+        session={session}
+        snapshot={{ ...BASE_SNAPSHOT, tool: 'station' }}
+        onFinances={() => undefined}
+      />,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
     expect(session.setRemoveMode).toHaveBeenCalledWith(true);
     fireEvent.click(screen.getByRole('button', { name: 'Platforms along Y' }));
     expect(session.setStationAxis).toHaveBeenCalledWith(1);
     fireEvent.click(screen.getByRole('button', { name: 'Build railway station' }));
     expect(session.setTool).toHaveBeenLastCalledWith(null);
-    rerender(<Toolbar session={session} snapshot={{ ...BASE_SNAPSHOT, tool: 'depot' }} />);
+    rerender(
+      <Toolbar
+        session={session}
+        snapshot={{ ...BASE_SNAPSHOT, tool: 'depot' }}
+        onFinances={() => undefined}
+      />,
+    );
     expect(
       screen.getByRole('button', { name: 'Exit north-west' }).getAttribute('aria-pressed'),
     ).toBe('true');
@@ -39,6 +53,7 @@ describe('construction toolbar', () => {
       <Toolbar
         session={fakeSession()}
         snapshot={{ ...BASE_SNAPSHOT, tool: 'station', removeMode: true }}
+        onFinances={() => undefined}
       />,
     );
     expect(screen.queryByRole('group', { name: 'Orientation' })).toBeNull();

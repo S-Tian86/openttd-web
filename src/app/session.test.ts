@@ -365,3 +365,32 @@ describe('GameSession construction state', () => {
     expect([session.state.company.money, session.getSnapshot().error]).toEqual([money, null]);
   });
 });
+
+describe('GameSession loan (economy.md §4.8)', () => {
+  it('borrows and repays through commands and shows the loan', () => {
+    const session = builder();
+    session.changeLoan('borrow', false);
+    expect([
+      session.getSnapshot().money,
+      session.getSnapshot().loan,
+      session.getSnapshot().maxLoan,
+    ]).toEqual([110000, 110000, 300000]);
+    session.changeLoan('borrow', true);
+    expect(session.getSnapshot().loan).toBe(300000);
+    session.state.company.money = 95500;
+    session.state.company.currentLoan = 100000;
+    session.changeLoan('repay', true); // never more than the cash (Review Focus 2)
+    expect([session.state.company.money, session.state.company.currentLoan]).toEqual([5500, 10000]);
+  });
+
+  it('refuses the loan while paused with OpenTTD headers (R24, Review Focus 4)', () => {
+    const session = builder();
+    session.togglePause();
+    session.changeLoan('borrow', false);
+    expect(session.getSnapshot().error).toEqual({
+      header: 'header.cantBorrow',
+      detail: { key: 'error.notAllowedWhilePaused', money: null, industry: null, town: null },
+    });
+    expect(session.getSnapshot().loan).toBe(100000);
+  });
+});
