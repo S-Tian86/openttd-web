@@ -3,6 +3,7 @@ import { createEmptyGame } from './game';
 import { IndustryType } from './industry/industry-specs';
 import { makeHouseTile } from './map/house-map';
 import { makeIndustry } from './map/industry-map';
+import { makeClear, ClearGround } from './map/clear';
 import { tileXY } from './map/map';
 import { makeRoadNormal, RoadBits } from './map/road-map';
 import { makeSea } from './map/water';
@@ -10,6 +11,15 @@ import { describeTile, industryInfo, townInfo } from './query';
 import { newTown } from './town/town';
 
 describe('query functions for the UI', () => {
+  it('reports grass with density 0 as bare land (GetTileDesc_Clear)', () => {
+    const game = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    const t = tileXY(game.map, 3, 3);
+    makeClear(game.map, t, ClearGround.Grass, 0);
+    expect(describeTile(game, t).kind).toBe('bare');
+    makeClear(game.map, t, ClearGround.Grass, 2);
+    expect(describeTile(game, t).kind).toBe('grass');
+  });
+
   it('describes tiles with their kind, owner and location', () => {
     const game = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
     const { map } = game;

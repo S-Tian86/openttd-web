@@ -1,6 +1,6 @@
 import type { GameState } from './game';
 import { IndustryType } from './industry/industry-specs';
-import { ClearGround, getClearGround } from './map/clear';
+import { ClearGround, getClearDensity, getClearGround } from './map/clear';
 import { getIndustryIndex } from './map/industry-map';
 import { getTileType, OWNER_TOWN, tileX, tileY, TileType } from './map/map';
 import { getRoadOwner, getTownIndex } from './map/road-map';
@@ -12,6 +12,7 @@ import { townName } from './town/town-names';
 
 export type TileKind =
   | 'void'
+  | 'bare'
   | 'grass'
   | 'rough'
   | 'rocks'
@@ -55,7 +56,8 @@ export interface IndustryInfo {
 function clearKind(state: GameState, t: number): TileKind {
   switch (getClearGround(state.map, t)) {
     case ClearGround.Grass:
-      return 'grass';
+      // GetTileDesc_Clear: grass at density 0 is described as bare land (snow is not modelled yet).
+      return getClearDensity(state.map, t) === 0 ? 'bare' : 'grass';
     case ClearGround.Rough:
       return 'rough';
     case ClearGround.Rocks:
