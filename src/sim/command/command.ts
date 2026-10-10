@@ -6,6 +6,7 @@ import { COMPANY_FIRST } from '../map/map';
 import { isValidTile, type DiagDir } from '../map/geometry';
 import { cmdBuildSingleRail, cmdRailTrackHelper, cmdRemoveSingleRail } from '../track/rail-cmd';
 import { cmdBuildRailStation } from '../station/build-station';
+import { removeFromRailStation } from '../station/remove-station';
 import { cmdBuildTrainDepot } from '../track/depot';
 import type { Axis, Track } from '../track/track';
 import { DoFlag, succeed, type CommandCost, type CommandError } from './cost';
@@ -21,7 +22,8 @@ export type Command =
   | { type: 'buildRailroadTrack'; endTile: number; startTile: number; track: Track }
   | { type: 'removeRailroadTrack'; endTile: number; startTile: number; track: Track }
   | { type: 'buildTrainDepot'; tile: number; dir: DiagDir }
-  | { type: 'buildRailStation'; tile: number; axis: Axis; numTracks: number; platLength: number };
+  | { type: 'buildRailStation'; tile: number; axis: Axis; numTracks: number; platLength: number }
+  | { type: 'removeFromRailStation'; start: number; end: number };
 export type CommandMode = 'test' | 'exec';
 export type CommandResult = { ok: true; cost: number } | { ok: false; error: CommandError | null };
 
@@ -42,6 +44,7 @@ const COMMAND_TYPE: Record<Command['type'], CommandType> = {
   removeRailroadTrack: 'landscapeConstruction',
   buildTrainDepot: 'landscapeConstruction',
   buildRailStation: 'landscapeConstruction',
+  removeFromRailStation: 'landscapeConstruction',
 };
 
 /** Port of command.cpp:IsCommandAllowedWhilePaused: pause level per command type. */
@@ -64,6 +67,7 @@ const COMMAND_FLAGS: Record<Command['type'], number> = {
   removeRailroadTrack: DoFlag.Auto,
   buildTrainDepot: DoFlag.Auto | DoFlag.NoWater,
   buildRailStation: DoFlag.Auto | DoFlag.NoWater,
+  removeFromRailStation: 0,
 };
 
 /** Commands flagged CommandFlag::NoTest: the test run is skipped. */
@@ -84,6 +88,8 @@ export function commandTile(command: Command): number | null {
     case 'buildTrainDepot':
     case 'buildRailStation':
       return command.tile;
+    case 'removeFromRailStation':
+      return command.start;
     case 'clearArea':
     case 'buildRailroadTrack':
     case 'removeRailroadTrack':
@@ -150,6 +156,8 @@ function run(state: GameState, command: Command, flags: number): CommandCost {
         command.numTracks,
         command.platLength,
       );
+    case 'removeFromRailStation':
+      return removeFromRailStation(state, flags, command.start, command.end, COMPANY_FIRST);
     default: {
       const unreachable: never = command;
       return unreachable;

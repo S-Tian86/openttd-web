@@ -4,6 +4,7 @@ import type { PriceName } from '../economy/prices';
 import type { GameState } from '../game';
 import { clearTileTown } from '../town/house-removal';
 import { clearTileRoad } from '../town/road-removal';
+import { clearTileStation } from '../station/remove-station';
 import { clearTileTrack } from '../track/rail-cmd';
 import { ClearGround, getClearDensity, getClearGround } from './clear';
 import { isValidTile } from './geometry';
@@ -84,10 +85,7 @@ function clearTileProc(state: GameState, t: number, flags: number, actor: number
     case TileType.Railway:
       return clearTileTrack(state, t, flags, actor);
     case TileType.Station:
-      // Port of station_cmd.cpp:ClearTile_Station's Auto refusal (rail stations only so far);
-      // the bulldozer comes with RemoveRailStation.
-      if ((flags & DoFlag.Auto) !== 0) return fail('error.mustDemolishRailroad');
-      return CMD_ERROR;
+      return clearTileStation(state, t, flags, actor);
     default:
       return CMD_ERROR;
   }

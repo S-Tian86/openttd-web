@@ -82,5 +82,6 @@
   "error.flatLandRequired": "Se requiere terreno llano",
   "error.adjoinsMoreThanOne": "Contigua a más de una estación/zona de carga existente",
   "error.stationTooSpreadOut": "... estación demasiado extendida",
-  "error.mustDemolishRailroad": "Primero debe demolerse la estación de trenes"
+  "error.mustDemolishRailroad": "Primero debe demolerse la estación de trenes",
+  "error.noStation": "... no hay ninguna estación aquí"
 }

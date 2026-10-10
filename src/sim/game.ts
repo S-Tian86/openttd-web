@@ -18,6 +18,7 @@ import { STATION_NAME_KINDS } from './station/station-name';
 import type { Depot } from './track/depot';
 import { tileLoopTrack } from './track/rail-cmd';
 import { tileLoopRoad } from './town/town-roads';
+import { onTickStation } from './station/remove-station';
 import { onTickTrees, tileLoopTrees } from './world/trees';
 import { runTileLoop, type TileLoopProcs } from './map/tile-loop';
 import { advanceDate, createDateState, type DateState } from './time/clock';
@@ -132,6 +133,7 @@ export function tick(state: GameState): void {
   state.tickCounter++;
   runTileLoop(state.map, state.tickCounter, tileLoopProcs(state));
   onTickTrees(state);
+  onTickStation(state);
   updateLandscapingLimit(state.company);
 }
 

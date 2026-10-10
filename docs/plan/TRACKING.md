@@ -66,7 +66,7 @@ the issue.
   - [x] 1.3.4 Level crossings over town roads — #99
   - [x] 1.3.5 Train depots — #101
   - [x] 1.3.6 Rail stations — building, joining and naming — #103
-  - [ ] 1.3.7 Removing stations and deleting unused ones
+  - [x] 1.3.7 Removing stations and deleting unused ones — #105
   - [ ] 1.3.8 Autorail drags and gesture → command planning
   - [ ] 1.3.9 Drawing construction and build gestures on the map
   - [ ] 1.3.10 Construction tools, cost bar, Confirm and error messages

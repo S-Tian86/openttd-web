@@ -3,7 +3,7 @@ import { lowestFreeSlot } from '../core/pool';
 import { nextRandom } from '../core/random';
 import type { GameState } from '../game';
 import { landscapeClear } from '../map/clear-tile';
-import { INVALID_TILE, isValidTile, tileAddWrap } from '../map/geometry';
+import { distanceManhattan, INVALID_TILE, isValidTile, tileAddWrap } from '../map/geometry';
 import { COMPANY_FIRST, getTileType, TileType, tileX, tileXY, tileY } from '../map/map';
 import { getTrackBits, isPlainRail, RAILTYPE_RAIL } from '../map/rail-map';
 import { getTileZ, isTileFlat } from '../map/slope';
@@ -20,7 +20,7 @@ import { closestTownFromTile } from '../town/town';
 import { cmdRemoveSingleRail, railBuildCost } from '../track/rail-cmd';
 import { Axis, Track, trackToTrackBits } from '../track/track';
 import { generateStationName } from './station-name';
-import { STATION_SPREAD, StationFacility, type Station, type TileArea } from './station';
+import { isInUse, STATION_SPREAD, StationFacility, type Station, type TileArea } from './station';
 
 /** Port of RailStationTileLayout::Iterator::operator* for stations without a NewGRF spec. */
 export function railStationLayout(numTracks: number, platLength: number): number[] {
@@ -106,6 +106,24 @@ function getStationAround(
   return { ok: true, index: closest };
 }
 
+/**
+ * Port of station_cmd.cpp:GetClosestDeletedStation: the own unused station (gray sign) closest to
+ * the tile, within Manhattan distance 7; ties go to the lowest index.
+ */
+function getClosestDeletedStation(state: GameState, t: number): Station | null {
+  let threshold = 8;
+  let best: Station | null = null;
+  for (const st of state.stations) {
+    if (st === null || isInUse(st) || st.owner !== COMPANY_FIRST) continue;
+    const dist = distanceManhattan(state.map, t, st.xy);
+    if (dist < threshold) {
+      threshold = dist;
+      best = st;
+    }
+  }
+  return best;
+}
+
 /** Port of station_cmd.cpp:CanExpandRailStation: the union area, or the spread error. */
 function canExpandRailStation(
   state: GameState,
@@ -189,8 +207,10 @@ export function cmdBuildRailStation(
     st = around.index === -1 ? null : state.stations[around.index]!;
   }
 
-  // BuildStationPart (reuse = false). A found station is always ours; its rect.BeforeAddRect
-  // (ADD_TEST) is CanExpandRailStation's check on the same rectangle (R29).
+  // BuildStationPart (reuse = true: the GUI sends StationID::Invalid(), not NEW_STATION). A found
+  // station is always ours; its rect.BeforeAddRect (ADD_TEST) is CanExpandRailStation's check on
+  // the same rectangle (R29).
+  if (st === null) st = getClosestDeletedStation(state, area.tile);
   if (st === null && (flags & DoFlag.Execute) !== 0) {
     const index = lowestFreeSlot(state.stations);
     st = {
