@@ -18,8 +18,7 @@ export type TileType = (typeof TileType)[keyof typeof TileType];
 export const MIN_MAP_SIZE_BITS = 6;
 export const MAX_MAP_SIZE_BITS = 12;
 
-/** Owner values used on tiles. Port of company_type.h. */
-/** The player's company (single player). */
+/** Owner values used on tiles (port of company_type.h). COMPANY_FIRST is the player's company. */
 export const COMPANY_FIRST = 0x00;
 export const OWNER_TOWN = 0x0f;
 export const OWNER_NONE = 0x10;

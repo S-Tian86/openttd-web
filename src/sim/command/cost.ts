@@ -35,9 +35,12 @@ export const fail = (key: ErrorKey, params: Record<string, number> = {}): Comman
 
 export const CMD_ERROR: CommandCost = { ok: false, error: null };
 
-/** Port of CommandCost::AddCost: a failed part is returned as is. */
+/**
+ * Port of CommandCost::AddCost: the first error is kept. A failure carries no cost here, so the
+ * accumulated cost of a failed total is not tracked.
+ */
 export function addCost(total: CommandCost, part: CommandCost): CommandCost {
-  if (!part.ok) return part;
   if (!total.ok) return total;
+  if (!part.ok) return part;
   return { ...total, cost: total.cost + part.cost };
 }
