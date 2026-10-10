@@ -95,16 +95,56 @@ body {
   padding: var(--space);
 }
 
-.settings {
+.settings,
+.new-game {
   display: flex;
   flex-direction: column;
   gap: var(--space);
 }
 
-.settings label {
+.settings label,
+.new-game label {
   display: flex;
   flex-direction: column;
   gap: calc(var(--space) / 2);
+}
+
+.new-game input {
+  min-height: var(--touch-target);
+  box-sizing: border-box;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-panel);
+  border: 2px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  padding: 0 var(--space);
+}
+
+.new-game input[aria-invalid='true'] {
+  border-color: var(--color-accent);
+}
+
+.new-game p[role='alert'] {
+  margin: 0;
+  font-weight: 600;
+}
+
+.new-game button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.generating {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: var(--space) calc(2 * var(--space));
+  background: var(--color-panel);
+  border: 2px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  font-weight: 600;
+  pointer-events: none;
 }
 
 .ui-error {
@@ -135,6 +175,15 @@ body {
     border-bottom: 0;
     border-top: 2px solid var(--color-panel-border);
     padding-bottom: calc(var(--space) + env(safe-area-inset-bottom));
+  }
+
+  .new-game {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .new-game > :nth-child(n + 5) {
+    grid-column: 1 / -1;
   }
 
   .panel {

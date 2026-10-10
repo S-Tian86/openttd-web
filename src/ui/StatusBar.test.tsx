@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen } from '@testing-library/preact';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_GAME_OPTIONS, type GameOptions } from '../sim/game';
 import type { GameSpeed, Locale, UiSession, UiSnapshot } from './session';
 import { StatusBar } from './StatusBar';
 
@@ -14,6 +15,9 @@ const snapshot: UiSnapshot = {
   locale: 'en',
   themeId: 'blocks',
   themes: [{ id: 'blocks', name: 'Blocks' }],
+  generating: null,
+  generationError: null,
+  gameOptions: DEFAULT_GAME_OPTIONS,
 };
 
 function fakeSession(s: UiSnapshot): UiSession {
@@ -24,6 +28,7 @@ function fakeSession(s: UiSnapshot): UiSession {
     setSpeed: vi.fn<(speed: GameSpeed) => void>(),
     setLocale: vi.fn<(locale: Locale) => void>(),
     setTheme: vi.fn<(id: string) => void>(),
+    newGame: vi.fn<(options: GameOptions) => void>(),
   };
 }
 
@@ -35,6 +40,7 @@ describe('StatusBar', () => {
       <StatusBar
         session={fakeSession(snapshot)}
         snapshot={snapshot}
+        onNewGame={() => undefined}
         onSettings={() => undefined}
       />,
     );
@@ -47,6 +53,7 @@ describe('StatusBar', () => {
       <StatusBar
         session={fakeSession(snapshot)}
         snapshot={snapshot}
+        onNewGame={() => undefined}
         onSettings={() => undefined}
       />,
     );
@@ -55,7 +62,14 @@ describe('StatusBar', () => {
 
   it('pauses and changes speed through the session', () => {
     const session = fakeSession(snapshot);
-    render(<StatusBar session={session} snapshot={snapshot} onSettings={() => undefined} />);
+    render(
+      <StatusBar
+        session={session}
+        snapshot={snapshot}
+        onNewGame={() => undefined}
+        onSettings={() => undefined}
+      />,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
     fireEvent.click(screen.getByRole('button', { name: 'Fast forward' }));
     expect(session.togglePause).toHaveBeenCalled();
