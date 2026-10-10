@@ -12,6 +12,7 @@ import {
   getStationIndex,
   isRailStationTile,
   makeRailStation,
+  setRailStationTileFlags,
   setStationTileRandomBits,
 } from '../map/station-map';
 import { orthogonalTiles } from '../map/tile-area';
@@ -135,6 +136,8 @@ export function cmdBuildRailStation(
   platLength: number,
 ): CommandCost {
   const { map, prices: p } = state;
+  // BuildStationPart names a new station after ClosestTownFromTile: OpenTTD assumes a town exists.
+  if (state.towns.length === 0) return CMD_ERROR;
   // CheckIfAuthorityAllowsNewStation: the rating stays at 500 > RATING_VERYPOOR (R15), so allowed.
   if (axis !== Axis.X && axis !== Axis.Y) return CMD_ERROR;
   if (platLength < 1 || numTracks < 1) return CMD_ERROR;
@@ -193,7 +196,7 @@ export function cmdBuildRailStation(
     st = {
       index,
       xy: area.tile,
-      townIndex: closestTownFromTile(state, area.tile, Infinity)!.index,
+      townIndex: closestTownFromTile(state, area.tile, Infinity)!.index, // a town exists (above)
       nameKind: 'town',
       owner: COMPANY_FIRST,
       trainStation: null,
@@ -248,6 +251,7 @@ export function cmdBuildRailStation(
           RAILTYPE_RAIL,
         );
         setStationTileRandomBits(map, t, nextRandom(state.random) & 0xf);
+        setRailStationTileFlags(map, t);
         infra.rail++;
         infra.station++;
         state.dirtyTiles.add(t);

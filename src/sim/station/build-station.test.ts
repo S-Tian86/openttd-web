@@ -187,7 +187,40 @@ describe('test mode and station tile predicates', () => {
       false,
       false,
     ]);
-    station(g, 32, 30, Axis.X, 1, 1);
-    expect(g.stations.map((s) => s?.trainStation)).toEqual([{ tile: at(g, 32, 30), w: 1, h: 1 }]);
+  });
+
+  it('does not join a station through a tree or house tile whose m2 holds its index', () => {
+    const g = newGame();
+    station(g, 20, 30, Axis.X, 1, 1);
+    makeTree(g.map, at(g, 24, 30), 0, 3, TreeGrowth.Grown, TreeGround.Grass, 0);
+    makeHouseTile(g.map, at(g, 24, 31), 0, 0, 3, 0x06, 0);
+    expect([g.map.m2[at(g, 24, 30)], g.map.m2[at(g, 24, 31)]]).toEqual([0, 0]); // station 0
+    station(g, 25, 30, Axis.X, 1, 1);
+    expect(g.stations.map((s) => s?.trainStation)).toEqual([
+      { tile: at(g, 20, 30), w: 1, h: 1 },
+      { tile: at(g, 25, 30), w: 1, h: 1 },
+    ]);
+  });
+});
+
+describe('SetRailStationTileFlags (station_cmd.cpp, no NewGRF spec)', () => {
+  it('gives every tile wires and the tiles below gfx 4 pylons; none is blocked', () => {
+    const g = newGame();
+    station(g, 22, 30, Axis.X, 1, 3); // gfx 0, 2, 0
+    station(g, 22, 40, Axis.X, 2, 3); // gfx 4, 4, 4 / 6, 6, 6
+    const flags = (x: number, y: number): number => g.map.m3[at(g, x, y)]! & 0x0f;
+    expect([flags(22, 30), flags(23, 30), flags(24, 30)]).toEqual([6, 6, 6]);
+    expect([flags(22, 40), flags(24, 40), flags(22, 41), flags(24, 41)]).toEqual([2, 2, 2, 2]);
+  });
+});
+
+describe('a map without towns', () => {
+  it('refuses a new station before touching anything (OpenTTD assumes a town exists)', () => {
+    const g = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+    makeClear(g.map, at(g, 22, 30), ClearGround.Rough, 3);
+    const before = hashGameState(g);
+    expect(station(g, 22, 30, Axis.X, 1, 1, 'test')).toEqual({ ok: false, error: null });
+    expect(station(g, 22, 30, Axis.X, 1, 1)).toEqual({ ok: false, error: null });
+    expect(hashGameState(g)).toBe(before);
   });
 });

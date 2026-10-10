@@ -47,6 +47,15 @@ export const getRailStationAxis = (map: MapState, t: number): Axis => (map.m5[t]
 /** Port of station_map.h:GetStationTileRandomBits (m3 bits 7..4). */
 export const getStationTileRandomBits = (map: MapState, t: number): number => map.m3[t]! >>> 4;
 
+/**
+ * Port of station_cmd.cpp:SetRailStationTileFlags for a station without a NewGRF spec
+ * (GetStationTileFlags: pylons below gfx 4, wires always, never blocked): m3 bits 0..2.
+ */
+export function setRailStationTileFlags(map: MapState, t: number): void {
+  const pylons = getStationGfx(map, t) < 4 ? 4 : 0;
+  map.m3[t] = (map.m3[t]! & ~0x07) | pylons | 2;
+}
+
 /** Port of station_map.h:SetStationTileRandomBits. */
 export function setStationTileRandomBits(map: MapState, t: number, bits: number): void {
   map.m3[t] = (map.m3[t]! & 0x0f) | ((bits & 0xf) << 4);
