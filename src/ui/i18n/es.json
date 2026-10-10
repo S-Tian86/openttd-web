@@ -79,5 +79,8 @@
   "error.mustRemoveRailroadTrack": "Primero se debe retirar la vía de ferrocarril",
   "error.areaIsOwnedByAnother": "... el área es propiedad de otra empresa",
   "error.noRailroadTrack": "... no hay ferrocarril",
-  "error.flatLandRequired": "Se requiere terreno llano"
+  "error.flatLandRequired": "Se requiere terreno llano",
+  "error.adjoinsMoreThanOne": "Contigua a más de una estación/zona de carga existente",
+  "error.stationTooSpreadOut": "... estación demasiado extendida",
+  "error.mustDemolishRailroad": "Primero debe demolerse la estación de trenes"
 }

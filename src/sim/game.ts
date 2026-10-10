@@ -13,6 +13,8 @@ import { tileLoopVoid, tileLoopWater } from './map/flood';
 import type { Town } from './town/town';
 import { tileLoopIndustry, type Industry } from './industry/industry-gen';
 import { tileLoopTown } from './town/houses';
+import type { Station } from './station/station';
+import { STATION_NAME_KINDS } from './station/station-name';
 import type { Depot } from './track/depot';
 import { tileLoopTrack } from './track/rail-cmd';
 import { tileLoopRoad } from './town/town-roads';
@@ -63,6 +65,8 @@ export interface GameState {
   industries: Industry[];
   /** Port of the depot pool: a new depot takes the lowest free index. */
   depots: (Depot | null)[];
+  /** Port of the station pool: a new station takes the lowest free index. */
+  stations: (Station | null)[];
 }
 
 /** Allocates the map and seeds the generator; no tile is touched. Port of misc.cpp:InitializeGame. */
@@ -83,6 +87,7 @@ export function newGameState(options: GameOptions): GameState {
     towns: [],
     industries: [],
     depots: [],
+    stations: [],
   };
 }
 
@@ -176,6 +181,16 @@ export function hashGameState(state: GameState): string {
   for (const d of state.depots) {
     if (d === null) num(-1);
     else [d.index, d.xy, d.townIndex, d.townCn, d.buildDate].forEach(num);
+  }
+  for (const s of state.stations) {
+    if (s === null) {
+      num(-1);
+      continue;
+    }
+    const ts = s.trainStation;
+    [s.index, s.xy, s.townIndex, STATION_NAME_KINDS.indexOf(s.nameKind), s.owner].forEach(num);
+    [ts?.tile ?? -1, ts?.w ?? 0, ts?.h ?? 0].forEach(num);
+    [s.facilities, s.deleteCtr, s.buildDate, s.randomBits].forEach(num);
   }
   const c = state.company;
   [state.paused ? 1 : 0, c.money, c.currentLoan, c.maxLoan, c.clearLimit].forEach(num);

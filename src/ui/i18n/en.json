@@ -79,5 +79,8 @@
   "error.mustRemoveRailroadTrack": "Must remove railway track first",
   "error.areaIsOwnedByAnother": "... area is owned by another company",
   "error.noRailroadTrack": "... there is no railway track",
-  "error.flatLandRequired": "Flat land required"
+  "error.flatLandRequired": "Flat land required",
+  "error.adjoinsMoreThanOne": "Adjoins more than one existing station/loading area",
+  "error.stationTooSpreadOut": "... station too spread out",
+  "error.mustDemolishRailroad": "Must demolish railway station first"
 }

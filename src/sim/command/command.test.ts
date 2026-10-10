@@ -29,5 +29,6 @@ describe('commands (port of command.cpp)', () => {
       ),
     ).toEqual([3, 3, 3, 3]);
     expect(pauseLevel('buildTrainDepot')).toBe(3);
+    expect(pauseLevel('buildRailStation')).toBe(3);
   });
 });
