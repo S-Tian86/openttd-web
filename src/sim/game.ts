@@ -4,6 +4,7 @@ import { ClearGround, makeClear, tileLoopClear } from './map/clear';
 import { createMap, isInnerTile, makeVoid, TileType, type MapState } from './map/map';
 import { tileLoopVoid, tileLoopWater } from './map/flood';
 import type { Town } from './town/town';
+import { tileLoopIndustry, type Industry } from './industry/industry-gen';
 import { tileLoopTown } from './town/houses';
 import { tileLoopRoad } from './town/town-roads';
 import { onTickTrees, tileLoopTrees } from './world/trees';
@@ -48,6 +49,7 @@ export interface GameState {
   /** Port of tree_cmd.cpp:_trees_tick_ctr (uint8). */
   treeTickCounter: number;
   towns: Town[];
+  industries: Industry[];
 }
 
 /** Allocates the map and seeds the generator; no tile is touched. Port of misc.cpp:InitializeGame. */
@@ -65,6 +67,7 @@ export function newGameState(options: GameOptions): GameState {
     initialLandCount: 0,
     treeTickCounter: 0,
     towns: [],
+    industries: [],
   };
 }
 
@@ -92,6 +95,7 @@ export function tileLoopProcs(state: GameState): TileLoopProcs {
     [TileType.House]: (t) => tileLoopTown(state, t, markDirty),
     [TileType.Road]: (t) => tileLoopRoad(state, t, markDirty),
     [TileType.Trees]: (t) => tileLoopTrees(state, t, markDirty),
+    [TileType.Industry]: (t) => tileLoopIndustry(state, t, markDirty),
     [TileType.Void]: (t) => tileLoopVoid(state.map, t, markDirty),
   };
 }
@@ -144,6 +148,10 @@ export function hashGameState(state: GameState): string {
   for (const town of state.towns) {
     [town.index, town.xy, town.nameParts, town.isCity ? 1 : 0].forEach(num);
     [town.numHouses, town.population, ...town.squaredZoneRadius, town.flags].forEach(num);
+  }
+  for (const i of state.industries) {
+    [i.index, i.type, i.tile, i.width, i.height, i.townIndex, i.layoutIndex].forEach(num);
+    [i.productionRate, i.counter, i.randomColour, i.random, i.prodLevel].forEach(num);
   }
   [state.paused ? 1 : 0, state.company.money, state.company.currentLoan].forEach(num);
   return h.toString(16).padStart(8, '0');
