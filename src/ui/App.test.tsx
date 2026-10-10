@@ -1,39 +1,11 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen } from '@testing-library/preact';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_GAME_OPTIONS, type GameOptions } from '../sim/game';
+import { afterEach, describe, expect, it } from 'vitest';
 import { App } from './App';
-import type { GameSpeed, Locale, Tool, UiSession, UiSnapshot } from './session';
+import type { UiSnapshot } from './session';
+import { fakeSession } from './testing';
 
-const failed: UiSnapshot = {
-  year: 1950,
-  month: 0,
-  day: 1,
-  money: 100000,
-  paused: false,
-  speed: 'normal',
-  locale: 'en',
-  themeId: 'blocks',
-  themes: [{ id: 'blocks', name: 'Blocks' }],
-  generating: null,
-  generationError: 'error.noTownCreated',
-  gameOptions: DEFAULT_GAME_OPTIONS,
-  tool: null,
-  window: null,
-};
-
-const fakeSession = (snapshot: UiSnapshot): UiSession => ({
-  getSnapshot: () => snapshot,
-  subscribe: () => () => undefined,
-  togglePause: vi.fn<() => void>(),
-  setSpeed: vi.fn<(speed: GameSpeed) => void>(),
-  setLocale: vi.fn<(locale: Locale) => void>(),
-  setTheme: vi.fn<(id: string) => void>(),
-  newGame: vi.fn<(options: GameOptions) => void>(),
-  setTool: vi.fn<(tool: Tool | null) => void>(),
-  openTown: vi.fn<(index: number) => void>(),
-  closeWindow: vi.fn<() => void>(),
-});
+const failed: Partial<UiSnapshot> = { generationError: 'error.noTownCreated' };
 
 afterEach(cleanup);
 
@@ -65,11 +37,7 @@ const TOWN = {
 
 describe('App query windows', () => {
   it('shows a city window with its title and closes it through the session', () => {
-    const session = fakeSession({
-      ...failed,
-      generationError: null,
-      window: { kind: 'town', info: TOWN },
-    });
+    const session = fakeSession({ window: { kind: 'town', info: TOWN } });
     render(<App session={session} />);
     const dialog = screen.getByRole('dialog', { name: 'Invenville (City)' });
     expect(dialog.textContent).toContain('Population: 412');
@@ -78,18 +46,14 @@ describe('App query windows', () => {
   });
 
   it('closes the query window when Settings opens', () => {
-    const session = fakeSession({
-      ...failed,
-      generationError: null,
-      window: { kind: 'town', info: TOWN },
-    });
+    const session = fakeSession({ window: { kind: 'town', info: TOWN } });
     render(<App session={session} />);
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     expect(session.closeWindow).toHaveBeenCalled();
   });
 
   it('toggles the query tool', () => {
-    const session = fakeSession({ ...failed, generationError: null });
+    const session = fakeSession();
     render(<App session={session} />);
     fireEvent.click(screen.getByRole('button', { name: 'Query tile' }));
     expect(session.setTool).toHaveBeenCalledWith('query');

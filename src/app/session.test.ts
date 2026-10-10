@@ -1,4 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { BuildGesture } from '../render/gesture';
+import type { MapPreview } from '../render/preview';
+import type { OttdPoint } from '../render/projection';
+import { execute, type Command } from '../sim/command/command';
 import {
   createEmptyGame,
   DEFAULT_GAME_OPTIONS,
@@ -9,11 +13,14 @@ import {
 import { makeHouseTile } from '../sim/map/house-map';
 import { makeIndustry } from '../sim/map/industry-map';
 import { tileXY } from '../sim/map/map';
+import { getTrackBits } from '../sim/map/rail-map';
+import { Track, TrackBits } from '../sim/track/track';
+import { industryInfo, townInfo } from '../sim/query';
 import { newTown } from '../sim/town/town';
 import { WorldGenerationError } from '../sim/world/errors';
 import { createGame, type GenerationProgress } from '../sim/world/generate';
 import type { Locale } from '../ui/session';
-import { GameSession, type SessionDeps } from './session';
+import { GameSession, toUiError, type SessionDeps } from './session';
 
 const OPTIONS: GameOptions = { ...DEFAULT_GAME_OPTIONS, mapLogX: 6, mapLogY: 6, seed: 9 };
 
@@ -167,5 +174,194 @@ describe('GameSession query tool', () => {
     state.towns[0]!.population = 99;
     session.setTool(null);
     expect(session.getSnapshot().window).toMatchObject({ info: { population: 99 } });
+  });
+});
+
+const P = (tx: number, ty: number, fx = 8, fy = 8): OttdPoint => ({
+  x: tx * 16 + fx,
+  y: ty * 16 + fy,
+});
+const gesture = (
+  phase: BuildGesture['phase'],
+  press: OttdPoint,
+  current: OttdPoint,
+  touch = false,
+): BuildGesture => ({ phase, press, current, touch, ctrl: false });
+const builder = (overrides: Partial<SessionDeps> = {}): GameSession => {
+  const game = createEmptyGame({ mapLogX: 6, mapLogY: 6 });
+  game.towns.push(newTown(0, tileXY(game.map, 20, 20), 0, false));
+  return new GameSession(game, deps(overrides));
+};
+const DRAG: Command = {
+  type: 'buildRailroadTrack',
+  endTile: 14 + (10 << 6),
+  startTile: 10 + (10 << 6),
+  track: Track.X,
+}; // tileXY(64-wide map, x, 10)
+
+describe('GameSession construction (R20, R25, R31)', () => {
+  it('previews a mouse drag with its cost and builds on release', () => {
+    const onPreview = vi.fn<(p: MapPreview | null) => void>();
+    const onExecuted = vi.fn<(c: Command, cost: number) => void>();
+    const session = builder({ onPreview, onExecuted });
+    session.setTool('rail');
+    session.buildGesture(gesture('move', P(10, 10), P(14, 10)));
+    expect(session.getSnapshot().preview).toEqual({
+      ok: true,
+      cost: 450,
+      error: null,
+      needsConfirm: false,
+    });
+    expect(onPreview.mock.lastCall?.[0]).toMatchObject({ ok: true, tiles: [] });
+    expect(onPreview.mock.lastCall?.[0]?.rails).toHaveLength(5);
+    session.buildGesture(gesture('end', P(10, 10), P(14, 10)));
+    expect([session.state.company.money, session.getSnapshot().preview]).toEqual([99550, null]);
+    expect(onPreview).toHaveBeenLastCalledWith(null);
+    expect(onExecuted).toHaveBeenCalledWith(DRAG, 450);
+  });
+
+  it('keeps a finger drag as a preview until Confirm, then builds exactly that (Review Focus 1)', () => {
+    const onExecuted = vi.fn<(c: Command, cost: number) => void>();
+    const session = builder({ onExecuted });
+    session.setTool('rail');
+    session.buildGesture(gesture('move', P(10, 10), P(14, 10), true));
+    session.buildGesture(gesture('end', P(10, 10), P(14, 10), true));
+    expect([session.state.company.money, session.getSnapshot().preview?.needsConfirm]).toEqual([
+      100000,
+      true,
+    ]);
+    session.confirmBuild();
+    expect(session.state.company.money).toBe(99550);
+    expect(onExecuted.mock.calls).toEqual([[DRAG, 450]]);
+  });
+
+  it('cancels a pending preview without building', () => {
+    const session = builder();
+    session.setTool('rail');
+    session.buildGesture(gesture('end', P(10, 10), P(14, 10), true));
+    session.cancelBuild();
+    session.confirmBuild(); // nothing pending any more
+    expect([session.state.company.money, session.getSnapshot().preview]).toEqual([100000, null]);
+  });
+
+  it('says why nothing is built while paused (R24, Review Focus 4)', () => {
+    const session = builder();
+    session.togglePause();
+    session.setTool('rail');
+    session.buildGesture(gesture('move', P(10, 10), P(14, 10)));
+    const paused = { key: 'error.notAllowedWhilePaused', money: null, industry: null, town: null };
+    expect(session.getSnapshot().preview).toEqual({
+      ok: false,
+      cost: 0,
+      error: paused,
+      needsConfirm: false,
+    });
+    session.buildGesture(gesture('end', P(10, 10), P(14, 10)));
+    expect(session.getSnapshot().error).toEqual({ header: 'header.cantBuildRail', detail: paused });
+    expect(session.state.company.money).toBe(100000);
+    session.dismissError();
+    expect(session.getSnapshot().error).toBeNull();
+  });
+
+  it('turns the ghost red and names the amount when the cash is short (R31)', () => {
+    const session = builder();
+    session.state.company.money = 449;
+    session.setTool('rail');
+    session.buildGesture(gesture('move', P(10, 10), P(14, 10)));
+    expect(session.getSnapshot().preview).toEqual({
+      ok: false,
+      cost: 0,
+      error: { key: 'error.notEnoughCash', money: 450, industry: null, town: null },
+      needsConfirm: false,
+    });
+  });
+
+  it('turns a demolition ghost red when the cash is short, though clearArea skips the check (R31)', () => {
+    const onPreview = vi.fn<(p: MapPreview | null) => void>();
+    const session = builder({ onPreview });
+    session.state.company.money = 0;
+    session.setTool('demolish');
+    session.buildGesture(gesture('move', P(10, 10), P(10, 10)));
+    expect(onPreview.mock.lastCall?.[0]?.ok).toBe(false);
+    expect(session.getSnapshot().preview).toMatchObject({ ok: false, error: null });
+    expect(session.getSnapshot().preview?.cost).toBeGreaterThan(0);
+  });
+
+  it('adds the follow-up rails after a depot (CcRailDepot)', () => {
+    const session = builder();
+    execute(
+      session.state,
+      { type: 'buildRail', tile: tileXY(session.state.map, 10, 9), track: Track.X },
+      'exec',
+    );
+    session.setTool('depot'); // exit NW by default (InitializeRailGui)
+    session.buildGesture(gesture('end', P(10, 10), P(10, 10)));
+    expect(getTrackBits(session.state.map, tileXY(session.state.map, 10, 9))).toBe(
+      TrackBits.X | TrackBits.Right | TrackBits.Lower,
+    );
+    expect(session.state.company.money).toBe(100000 - 90 - 540 - 75 - 75);
+  });
+
+  it('does nothing, silently, for a drag that ends on the map edge (InternalPost)', () => {
+    const session = builder();
+    session.setTool('rail');
+    session.buildGesture(gesture('end', P(3, 10), P(0, 10)));
+    expect([session.state.company.money, session.getSnapshot().error]).toEqual([100000, null]);
+  });
+
+  it('clears the ghost when the tool changes', () => {
+    const onPreview = vi.fn<(p: MapPreview | null) => void>();
+    const session = builder({ onPreview });
+    session.setTool('rail');
+    session.buildGesture(gesture('move', P(10, 10), P(14, 10)));
+    session.setTool('station');
+    expect([session.getSnapshot().preview, onPreview.mock.lastCall?.[0]]).toEqual([null, null]);
+    expect([session.getSnapshot().stationAxis, session.getSnapshot().depotDir]).toEqual([0, 3]);
+  });
+});
+
+describe('GameSession construction state', () => {
+  it('names the industry and the town of an error (Task 2: the industry type)', () => {
+    const state = queryWorld();
+    expect([
+      toUiError(state, { key: 'error.objectInTheWay', params: { industry: 0 } }),
+      toUiError(state, { key: 'error.localAuthorityRefuses', params: { town: 0 } }),
+      toUiError(state, null),
+    ]).toEqual([
+      {
+        key: 'error.objectInTheWay',
+        money: null,
+        industry: industryInfo(state, 0),
+        town: null,
+      },
+      {
+        key: 'error.localAuthorityRefuses',
+        money: null,
+        industry: null,
+        town: townInfo(state, 0)!.name,
+      },
+      null,
+    ]);
+  });
+
+  it('turns the remove toggle off when a tool is chosen (rail_gui.cpp OnClick)', () => {
+    const session = builder();
+    session.setTool('rail');
+    session.setRemoveMode(true);
+    expect(session.getSnapshot().removeMode).toBe(true);
+    session.setTool('station');
+    expect(session.getSnapshot().removeMode).toBe(false);
+  });
+
+  it('drops a build waiting for Confirm when a new world arrives', () => {
+    const session = builder();
+    session.setTool('rail');
+    session.buildGesture(gesture('end', P(10, 10), P(14, 10), true));
+    session.newGame(OPTIONS);
+    session.frame(0);
+    expect(session.getSnapshot().preview).toBeNull();
+    const money = session.state.company.money;
+    session.confirmBuild(); // a kept plan would build (money) or fail (error) on the new map
+    expect([session.state.company.money, session.getSnapshot().error]).toEqual([money, null]);
   });
 });
