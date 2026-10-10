@@ -7,6 +7,7 @@ import {
   tileToChunkCell,
   tileToWorld,
   visibleChunks,
+  worldToOttd,
   worldToTile,
 } from './projection';
 
@@ -16,6 +17,10 @@ describe('top-down projection', () => {
   it('maps tile y to columns and tile x to rows', () => {
     expect(tileToWorld(3, 5)).toEqual({ px: 320, py: 192 });
     expect(worldToTile(320 + 10, 192 + 63)).toEqual({ x: 3, y: 5 });
+  });
+
+  it('converts world pixels to OpenTTD world units (16 per tile, screen x = tile y)', () => {
+    expect(worldToOttd(12 * 64 + 35, 10 * 64 + 9)).toEqual({ x: 10 * 16 + 2, y: 12 * 16 + 8 });
   });
 
   it('groups tiles in 32×32 chunks', () => {
