@@ -6,6 +6,7 @@ import { tileLoopWater } from '../map/flood';
 import { DiagDir } from '../map/geometry';
 import { makeHouseTile } from '../map/house-map';
 import { getTileType, tileXY, TileType } from '../map/map';
+import { makeTree, TreeGrowth, TreeGround } from '../map/tree-map';
 import { getRailDepotDirection, isRailDepotTile } from '../map/rail-map';
 import { isWaterTile, makeSea } from '../map/water';
 import { newTown } from '../town/town';
@@ -138,5 +139,44 @@ describe('train depots (port of rail_cmd.cpp:CmdBuildTrainDepot)', () => {
     expect(depot(g, t, DiagDir.NE, 'test')).toEqual({ ok: true, cost: 525 });
     expect(execute(g, { type: 'landscapeClear', tile: t }, 'test')).toEqual({ ok: true, cost: 60 });
     expect(hashGameState(g)).toBe(before);
+  });
+
+  it('builds a real depot on a 4-tree tile, not a rotation (IsRailDepotTile)', () => {
+    const g = newGame();
+    const t = at(g, 22, 22);
+    makeTree(g.map, t, 0, 3, TreeGrowth.Grown, TreeGround.Grass, 0); // m5 >> 6 === 3
+    const trees = 4 * g.prices.clearTrees;
+    expect(depot(g, t, DiagDir.NW)).toEqual({ ok: true, cost: trees + 525 });
+    expect([getTileType(g.map, t), isRailDepotTile(g.map, t), g.depots.length]).toEqual([
+      TileType.Railway,
+      true,
+      1,
+    ]);
+  });
+
+  it('ignores a 4-tree tile across the exit when proposing the straight piece', () => {
+    const g = newGame();
+    depot(g, at(g, 10, 10), DiagDir.NW);
+    execute(g, { type: 'buildRail', tile: at(g, 10, 9), track: Track.Y }, 'exec');
+    makeTree(g.map, at(g, 10, 8), 0, 3, TreeGrowth.Grown, TreeGround.Grass, 0);
+    expect(depotExtraRail(g, at(g, 10, 10), DiagDir.NW, 1)).toEqual({
+      tile: at(g, 10, 9),
+      track: Track.Y,
+    });
+  });
+
+  it('names a depot after the closest town and numbers depots per town', () => {
+    const g = newGame();
+    g.towns.push(newTown(1, tileXY(g.map, 50, 50), 0, false));
+    depot(g, at(g, 22, 22), DiagDir.NW);
+    depot(g, at(g, 48, 48), DiagDir.NW);
+    depot(g, at(g, 24, 24), DiagDir.NW);
+    depot(g, at(g, 52, 52), DiagDir.NW);
+    expect(g.depots.map((d) => [d?.townIndex, d?.townCn])).toEqual([
+      [0, 0],
+      [1, 0],
+      [0, 1],
+      [1, 1],
+    ]);
   });
 });

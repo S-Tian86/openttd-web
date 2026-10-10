@@ -57,6 +57,8 @@ export function cmdBuildTrainDepot(
   let cost = succeed(0);
   const rotate = isRailDepotTile(map, t) && getRailType(map, t) === RAILTYPE_RAIL;
   if (rotate) {
+    // CheckTileOwnership: OpenTTD says "owned by", unreachable in single player
+    if (getTileOwner(map, t) !== COMPANY_FIRST) return CMD_ERROR;
     if (dir === getRailDepotDirection(map, t)) return succeed(0);
   } else {
     cost = addCost(cost, landscapeClear(state, t, flags, COMPANY_FIRST));

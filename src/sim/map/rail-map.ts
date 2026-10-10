@@ -1,4 +1,4 @@
-import { resetTileKeepingHeight, setTileType, TileType, type MapState } from './map';
+import { getTileType, resetTileKeepingHeight, setTileType, TileType, type MapState } from './map';
 import type { DiagDir } from './geometry';
 
 /** Port of rail_map.h:RailTileType. */
@@ -67,9 +67,9 @@ export const getRailTileType = (map: MapState, t: number): RailTileType =>
 export const isPlainRail = (map: MapState, t: number): boolean =>
   getRailTileType(map, t) !== RailTileType.Depot;
 
-/** Port of rail_map.h:IsRailDepot. */
+/** Port of rail_map.h:IsRailDepotTile: IsRailDepot on a railway tile (other types reuse m5). */
 export const isRailDepotTile = (map: MapState, t: number): boolean =>
-  getRailTileType(map, t) === RailTileType.Depot;
+  getTileType(map, t) === TileType.Railway && getRailTileType(map, t) === RailTileType.Depot;
 
 /** Port of rail_map.h:GetTrackBits (plain rail only). */
 export const getTrackBits = (map: MapState, t: number): number => map.m5[t]! & 0x3f;
