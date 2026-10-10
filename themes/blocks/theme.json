@@ -1,0 +1,15 @@
+{
+  "id": "blocks",
+  "name": "Blocks",
+  "author": "openttd-web",
+  "license": "GPL-2.0-or-later",
+  "tokens": "tokens.css",
+  "sprites": {
+    "terrain.void": "sprites/void.svg",
+    "terrain.grass.0": "sprites/grass-0.svg",
+    "terrain.grass.1": "sprites/grass-1.svg",
+    "terrain.grass.2": "sprites/grass-2.svg",
+    "terrain.grass.3": "sprites/grass-3.svg",
+    "terrain.unknown": "sprites/unknown.svg"
+  }
+}
