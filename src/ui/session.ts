@@ -10,6 +10,24 @@ export type Locale = 'en' | 'es';
 
 export type Tool = 'query' | 'rail' | 'station' | 'depot' | 'demolish';
 
+/** OpenTTD's viewport scroll behaviour (gui.scroll_mode), in its settings window order. */
+export const SCROLL_MODES = ['viewportRmbLocked', 'mapRmbLocked', 'mapRmb', 'mapLmb'] as const;
+export type ScrollMode = (typeof SCROLL_MODES)[number];
+
+/** OpenTTD's function of the scroll wheel (gui.scrollwheel_scrolling). */
+export const WHEEL_MODES = ['zoom', 'scroll', 'off'] as const;
+export type WheelMode = (typeof WHEEL_MODES)[number];
+
+/** OpenTTD's map scroll wheel speed (gui.scrollwheel_multiplier), 1 to 15. */
+export const WHEEL_SPEEDS: readonly number[] = Array.from({ length: 15 }, (_, i) => i + 1);
+
+/** The map control settings shown in the settings window. */
+export interface UiControls {
+  scrollMode: ScrollMode;
+  wheel: WheelMode;
+  wheelSpeed: number;
+}
+
 export const isBuildTool = (tool: Tool | null): tool is 'rail' | 'station' | 'depot' | 'demolish' =>
   tool !== null && tool !== 'query';
 
@@ -70,6 +88,7 @@ export interface UiSnapshot {
   locale: Locale;
   themeId: string;
   themes: readonly { id: string; name: string }[];
+  controls: UiControls;
   /** World generation progress 0..1, or null when idle. */
   generating: number | null;
   generationError: 'error.noTownCreated' | null;
@@ -91,6 +110,7 @@ export interface UiSession {
   setSpeed(speed: GameSpeed): void;
   setLocale(locale: Locale): void;
   setTheme(id: string): void;
+  setControls(controls: UiControls): void;
   /** Starts generating a new world in the background; replaces a running request. */
   newGame(options: GameOptions): void;
   setTool(tool: Tool | null): void;

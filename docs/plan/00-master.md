@@ -149,6 +149,11 @@ instead of one object per tile, so large maps stay fast and cheap to serialise.
   with its reason. If a behaviour is not listed there, it must match OpenTTD; a mismatch is a
   bug.
 - Default settings follow OpenTTD's defaults for a new game.
+- **OpenTTD's settings come with the feature they control.** Porting a feature ports the
+  settings in `table/settings/*.ini` that change it, game and interface alike, with OpenTTD's
+  defaults. Leaving one out needs a ruling recorded in the stage plan. _AMENDED in #141 (PR
+  #PRNUM): the camera shipped without OpenTTD's scroll settings, and the playtest found its
+  mouse controls differing from the original._
 - Out of scope unless a stage says otherwise: NewGRF, AI scripts (NoAI/GameScript),
   scenario editor, network protocol compatibility with OpenTTD.
 
@@ -190,6 +195,11 @@ The look is pluggable, so anyone can make their own style.
   from a user's file at runtime is a later step: it is untrusted input and needs validation
   (§2.10).
 - The theme contract is created with the first theme (Stage 1), not before.
+- A **Classic** theme that looks like OpenTTD is wanted: its windows and HUD, the OpenGFX
+  sprites (GPL-2.0, like this project) and therefore the isometric view, so a theme must be
+  able to choose the projection. The original Transport Tycoon sprites are not free and
+  never ship. Planned with the art block (1.6). _AMENDED in #141 (PR #PRNUM): requested by
+  the author during the block 1.3 playtest._
 
 ---
 
@@ -315,4 +325,5 @@ community themes from files, more languages.
 | Art direction (style, palette)                         | Stage 1, with mockups |
 | Public name                                            | Stage 1               |
 | Height rendering in top-down view                      | Stage 2               |
+| Classic theme: OpenTTD's look, OpenGFX, isometric view | Block 1.6             |
 | Opponent behaviour (port of an existing AI or our own) | Stage 4               |

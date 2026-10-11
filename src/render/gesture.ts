@@ -37,15 +37,30 @@ export interface BuildGesture {
 
 /**
  * What a new press does while a build tool is on (R30): two fingers pinch, one finger or the
- * left mouse button builds, any other mouse button pans, so the map can still be moved.
+ * left mouse button builds (HandleViewportClicked runs before any scrolling, even in the LMB
+ * scroll mode), the scroll mode's button pans, and any other button does nothing.
  */
 export function buildPointerAction(p: {
   button: number;
   touch: boolean;
   pointers: number;
-}): 'build' | 'pan' | 'pinch' {
+  scrollButton: number;
+}): 'build' | 'pan' | 'pinch' | 'none' {
   if (p.pointers >= 2) return 'pinch';
-  return p.touch || p.button === 0 ? 'build' : 'pan';
+  if (p.touch || p.button === 0) return 'build';
+  return p.button === p.scrollButton ? 'pan' : 'none';
+}
+
+/**
+ * What a press does with no build tool on (window.cpp MouseLoop): the left button clicks (a tap,
+ * or a long press), the scroll mode's button drags the map. One finger does both.
+ */
+export function idlePointerRoles(p: { button: number; touch: boolean; scrollButton: number }): {
+  tap: boolean;
+  pan: boolean;
+} {
+  if (p.touch) return { tap: true, pan: true };
+  return { tap: p.button === 0, pan: p.button === p.scrollButton };
 }
 
 /**
