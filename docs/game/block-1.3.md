@@ -6,6 +6,27 @@ Open it on your phone. Everything here is meant to be tried with your fingers. F
 with coal mines and a power station close together, use for example
 `?seed=7&size=64x64`.
 
+## Controls
+
+The construction toolbar: ╪ railway track, ▤ railway station, ⌂ train depot, ✖ demolish,
+⌫ remove (with track or station), ↕ ↔ station orientation, ↑ → ↓ ← depot exit, £ finances.
+A tool stays on after building; press its button again to turn it off.
+
+With a mouse, as in OpenTTD (defaults; Settings changes them):
+
+| Action                 | How                                                         |
+| ---------------------- | ----------------------------------------------------------- |
+| Move the map           | Drag with the right button, or the arrow keys (Shift: fast) |
+| Zoom                   | Scroll wheel                                                |
+| Use the tool, or query | Left button                                                 |
+| Drop the tool          | Esc, or a right click without dragging                      |
+
+Settings has OpenTTD's viewport scroll behaviour (which button moves the map, and whether the
+mouse stays in place), the function of the scroll wheel (zoom, scroll, off) and its speed.
+
+With fingers: one finger moves the map, or uses the tool when one is on; two fingers zoom and
+move the map; a long press queries a tile.
+
 ## What is new
 
 - Rail track with the autorail drag: drag diagonally and the track follows as a staircase.

@@ -17,6 +17,7 @@ import {
   type Locale,
   type Tool,
   type UiCommandError,
+  type UiControls,
   type UiError,
   type UiPreview,
   type UiSession,
@@ -33,6 +34,8 @@ export interface SessionDeps {
   themeId: string;
   onLocale(locale: Locale): void;
   onTheme(id: string): void;
+  controls: UiControls;
+  onControls(controls: UiControls): void;
   /** Called once for each finished world, so the renderer can show it. */
   onNewState(state: GameState): void;
   clock?: () => number;
@@ -70,6 +73,7 @@ export class GameSession implements UiSession {
   private currentState: GameState;
   private locale: Locale;
   private themeId: string;
+  private controls: UiControls;
   private generation: Generator<GenerationProgress, GameState, void> | null = null;
   private generatingFraction = 0;
   private generationError: UiSnapshot['generationError'] = null;
@@ -99,6 +103,7 @@ export class GameSession implements UiSession {
     this.currentState = state;
     this.locale = deps.locale;
     this.themeId = deps.themeId;
+    this.controls = deps.controls;
     this.snapshot = this.buildSnapshot();
   }
 
@@ -132,6 +137,12 @@ export class GameSession implements UiSession {
   setTheme = (id: string): void => {
     this.themeId = id;
     this.deps.onTheme(id);
+    this.refresh();
+  };
+
+  setControls = (controls: UiControls): void => {
+    this.controls = controls;
+    this.deps.onControls(controls);
     this.refresh();
   };
 
@@ -406,6 +417,7 @@ export class GameSession implements UiSession {
       locale: this.locale,
       themeId: this.themeId,
       themes: this.deps.themes,
+      controls: this.controls,
       generating: this.generation === null ? null : this.generatingFraction,
       generationError: this.generationError,
       gameOptions: this.state.options,

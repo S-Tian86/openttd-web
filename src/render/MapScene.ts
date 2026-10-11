@@ -12,9 +12,20 @@ import type { Town } from '../sim/town/town';
 import { ATLAS_COLUMNS, atlasCell } from './atlas';
 import { clampScrollToMap, pinchZoom, wheelZoom } from './camera';
 import {
+  DEFAULT_MAP_CONTROLS,
+  KEY_SCROLL_INTERVAL_MS,
+  keyScrollDelta,
+  scrollButton,
+  scrollDirection,
+  scrollLocksPointer,
+  wheelScrollDelta,
+  type MapControls,
+} from './controls';
+import {
   buildPointerAction,
   buildPressEnds,
   classifyPress,
+  idlePointerRoles,
   LONG_PRESS_MS,
   TAP_SLOP_PX,
   type BuildGesture,
@@ -42,11 +53,13 @@ import {
   type Theme,
 } from './theme';
 
-/** What the map reports back: taps and long presses on tiles, and build-tool gestures. */
+/** What the map reports back: taps and long presses on tiles, build-tool gestures and clicks. */
 export interface MapInput {
   onTap(tile: number): void;
   onLongPress(tile: number): void;
   onBuildGesture(g: BuildGesture): void;
+  /** A right click that did not drag the map. */
+  onRightClick(): void;
 }
 
 /** Text the map draws, written by the app in the player's language. */
@@ -108,9 +121,25 @@ export class MapScene extends Scene {
   private pinchStartDistance = 0;
   private pinching = false;
   private cameraReadout = '';
-  /** The single-pointer press in progress, classified once when it ends. */
-  private press: { x: number; y: number; at: number; moved: boolean; consumed: boolean } | null =
-    null;
+  /**
+   * The single-pointer press in progress, classified once when it ends; `pans` when it drags
+   * the map, `consumed` when its release is not a tap.
+   */
+  private press: {
+    x: number;
+    y: number;
+    at: number;
+    moved: boolean;
+    consumed: boolean;
+    pans: boolean;
+  } | null = null;
+  /** The right-button press in progress and how far it dragged, in screen pixels. */
+  private rightPress: { dx: number; dy: number } | null = null;
+  private controls: MapControls = DEFAULT_MAP_CONTROLS;
+  /** The held arrow keys (gfx.cpp _dirkeys), Shift, and the time of the last key scroll step. */
+  private dirkeys = 0;
+  private dirShift = false;
+  private keyScrollAt: number | null = null;
   /** Whether a build tool is on: one pointer then builds instead of panning and tapping (R30). */
   private buildMode = false;
   /** The press of a build tool in progress. */
@@ -145,6 +174,18 @@ export class MapScene extends Scene {
   /** Swaps the world at the next update and centres on `focusTile` (or the map centre). */
   showGame(state: GameState, focusTile?: number): void {
     this.pending = { state, focusTile };
+  }
+
+  /** Applies OpenTTD's map control settings from the next press or wheel turn. */
+  setControls(controls: MapControls): void {
+    this.controls = controls;
+  }
+
+  /** Scrolls the map while arrow keys are held, as _dirkeys bits (window.cpp HandleKeyScrolling). */
+  setDirKeys(dirkeys: number, shift: boolean): void {
+    this.dirkeys = dirkeys;
+    this.dirShift = shift;
+    if (dirkeys === 0) this.keyScrollAt = null;
   }
 
   /** Turns build gestures on or off; turning them off cancels a gesture in progress. */
@@ -309,6 +350,24 @@ export class MapScene extends Scene {
     this.justSwapped = true;
   }
 
+  /**
+   * OpenTTD scrolls for held arrow keys on a 30 ms window timer; this runs the steps due since
+   * the last frame, on the wall clock (a slow frame catches up, a hidden tab does not).
+   */
+  private keyScroll(now: number): void {
+    if (this.dirkeys === 0) return;
+    if (this.keyScrollAt === null || now - this.keyScrollAt > 10 * KEY_SCROLL_INTERVAL_MS) {
+      this.keyScrollAt = now - KEY_SCROLL_INTERVAL_MS;
+    }
+    const camera = this.cameras.main;
+    const [dx, dy] = keyScrollDelta(this.dirkeys, this.dirShift);
+    while (now - this.keyScrollAt >= KEY_SCROLL_INTERVAL_MS) {
+      this.keyScrollAt += KEY_SCROLL_INTERVAL_MS;
+      camera.scrollX += dx / camera.zoom;
+      camera.scrollY += dy / camera.zoom;
+    }
+  }
+
   private destroyChunk(chunk: Chunk): void {
     chunk.objects.destroy();
     chunk.map.destroy();
@@ -325,6 +384,7 @@ export class MapScene extends Scene {
     this.applyPending();
     const { map } = this.state;
     const camera = this.cameras.main;
+    this.keyScroll(performance.now());
     camera.scrollX = clampScrollToMap(camera.scrollX, camera.width, map.sizeY, TILE_PX);
     camera.scrollY = clampScrollToMap(camera.scrollY, camera.height, map.sizeX, TILE_PX);
     const wanted = visibleChunks(this.cameras.main.worldView, map.sizeX, map.sizeY);
@@ -366,7 +426,7 @@ export class MapScene extends Scene {
   private setupInput(): void {
     const camera = this.cameras.main;
     this.input.addPointer(1);
-    this.input.mouse?.disableContextMenu(); // a right-drag pans while a build tool is on
+    this.input.mouse?.disableContextMenu(); // the right button drags the map and drops tools
 
     const startPinch = (): void => {
       const { pointer1, pointer2 } = this.input;
@@ -378,6 +438,10 @@ export class MapScene extends Scene {
 
     this.input.on('pointerdown', (pointer: Input.Pointer) => {
       const { pointer1, pointer2 } = this.input;
+      // A right button pressed during a left-button build belongs to the build (R30).
+      if (!pointer.wasTouch && pointer.button === 2 && this.build === null) {
+        this.rightPress = { dx: 0, dy: 0 };
+      }
       if (this.buildMode) {
         this.buildPointerDown(pointer, startPinch);
         return;
@@ -386,13 +450,21 @@ export class MapScene extends Scene {
         startPinch();
         return;
       }
+      const roles = idlePointerRoles({
+        button: pointer.button,
+        touch: pointer.wasTouch,
+        scrollButton: scrollButton(this.controls.scrollMode),
+      });
+      if (!roles.tap && !roles.pan) return;
       this.press = {
         x: pointer.x,
         y: pointer.y,
         at: performance.now(),
         moved: false,
-        consumed: false,
+        consumed: !roles.tap,
+        pans: roles.pan,
       };
+      if (roles.pan) this.lockPointer(pointer);
       const press = this.press;
       // A wall-clock timer, not the scene clock: Phaser slows its clock on a slow frame rate,
       // which would stretch the hold time on exactly the devices that need it to be 500 ms.
@@ -405,6 +477,14 @@ export class MapScene extends Scene {
       }, LONG_PRESS_MS);
     });
 
+    /** The end of a right-button press: a click drops the tool, as Esc does. */
+    const rightPointerUp = (pointer: Input.Pointer): void => {
+      if (pointer.wasTouch || pointer.button !== 2 || this.rightPress === null) return;
+      const { dx, dy } = this.rightPress;
+      this.rightPress = null;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) <= TAP_SLOP_PX) this.callbacks.onRightClick();
+    };
+
     const buildPointerUp = (pointer: Input.Pointer): boolean => {
       const build = this.build;
       if (build === null || pointer.id !== build.pointerId) return false;
@@ -414,12 +494,18 @@ export class MapScene extends Scene {
       return true;
     };
     // A drag released outside the canvas still ends, as OpenTTD builds on any mouse-up.
-    this.input.on('pointerupoutside', buildPointerUp);
+    this.input.on('pointerupoutside', (pointer: Input.Pointer) => {
+      this.unlockPointer();
+      this.rightPress = null;
+      buildPointerUp(pointer);
+    });
 
     this.input.on('pointerup', (pointer: Input.Pointer) => {
       if (!this.input.pointer1.isDown || !this.input.pointer2.isDown) {
         this.pinching = false;
       }
+      if (this.press?.pans === true) this.unlockPointer();
+      rightPointerUp(pointer);
       // Before classifyPress: a build press is neither a tap nor a long press (R30).
       if (buildPointerUp(pointer)) return;
       const press = this.press;
@@ -443,6 +529,14 @@ export class MapScene extends Scene {
 
     this.input.on('pointermove', (pointer: Input.Pointer) => {
       const { pointer1, pointer2 } = this.input;
+      // A locked pointer stays put and reports its movement instead (Pointer Lock API).
+      const locked = this.input.mouse?.locked === true;
+      const dx = locked ? pointer.movementX : pointer.x - pointer.prevPosition.x;
+      const dy = locked ? pointer.movementY : pointer.y - pointer.prevPosition.y;
+      if (this.rightPress !== null) {
+        this.rightPress.dx += dx;
+        this.rightPress.dy += dy;
+      }
       const build = this.build;
       if (build !== null && pointer.id === build.pointerId) {
         build.current = this.ottdUnder(pointer);
@@ -473,14 +567,28 @@ export class MapScene extends Scene {
         this.zoomAt((pointer1.x + pointer2.x) / 2, (pointer1.y + pointer2.y) / 2, zoom);
         return;
       }
-      if (this.pinching || !pointer.isDown) return;
-      camera.scrollX -= (pointer.x - pointer.prevPosition.x) / camera.zoom;
-      camera.scrollY -= (pointer.y - pointer.prevPosition.y) / camera.zoom;
+      if (this.pinching || !pointer.isDown || this.press?.pans !== true) return;
+      // Port of window.cpp HandleViewportScroll: the map follows the mouse, or the viewport
+      // does in VSM_VIEWPORT_RMB_FIXED. A finger always drags the map.
+      const direction = pointer.wasTouch ? 1 : scrollDirection(this.controls.scrollMode);
+      camera.scrollX -= (direction * dx) / camera.zoom;
+      camera.scrollY -= (direction * dy) / camera.zoom;
     });
 
-    this.input.on('wheel', (pointer: Input.Pointer, _objects: unknown, _dx: number, dy: number) => {
-      this.zoomAt(pointer.x, pointer.y, wheelZoom(camera.zoom, dy));
-    });
+    // Port of window.cpp MouseLoop and main_gui.cpp OnMouseWheel for gui.scrollwheel_scrolling.
+    this.input.on(
+      'wheel',
+      (pointer: Input.Pointer, _objects: unknown, deltaX: number, deltaY: number) => {
+        const { wheel, wheelSpeed } = this.controls;
+        if (wheel === 'zoom') {
+          this.zoomAt(pointer.x, pointer.y, wheelZoom(camera.zoom, deltaY));
+        } else if (wheel === 'scroll') {
+          const [x, y] = wheelScrollDelta(deltaX, deltaY, wheelSpeed);
+          camera.scrollX += x / camera.zoom;
+          camera.scrollY += y / camera.zoom;
+        }
+      },
+    );
   }
 
   /** A press while a build tool is on: build, pan or pinch (R30); never a long-press timer. */
@@ -492,6 +600,7 @@ export class MapScene extends Scene {
       button: pointer.button,
       touch: pointer.wasTouch,
       pointers: (pointer1.isDown ? 1 : 0) + (pointer2.isDown ? 1 : 0),
+      scrollButton: scrollButton(this.controls.scrollMode),
     });
     if (action === 'build') {
       const press = this.ottdUnder(pointer);
@@ -506,11 +615,22 @@ export class MapScene extends Scene {
     } else if (action === 'pinch') {
       this.cancelBuild();
       startPinch();
-    } else {
+    } else if (action === 'pan') {
       // A pan: consumed up front, so its release is never a tap.
       const at = performance.now();
-      this.press = { x: pointer.x, y: pointer.y, at, moved: true, consumed: true };
+      this.press = { x: pointer.x, y: pointer.y, at, moved: true, consumed: true, pans: true };
+      this.lockPointer(pointer);
     }
+  }
+
+  /** The "mouse position locked" scroll modes hold the cursor still while dragging the map. */
+  private lockPointer(pointer: Input.Pointer): void {
+    if (pointer.wasTouch || !scrollLocksPointer(this.controls.scrollMode)) return;
+    this.input.mouse?.requestPointerLock();
+  }
+
+  private unlockPointer(): void {
+    if (this.input.mouse?.locked === true) this.input.mouse.releasePointerLock();
   }
 
   /** Ends a build press without building. */

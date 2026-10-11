@@ -76,9 +76,9 @@ test('dragging the map with the query tool does not query (Review Focus 4)', asy
     await game.getAttribute('data-camera-y'),
   ];
   await page.mouse.move(x, y);
-  await page.mouse.down();
+  await page.mouse.down({ button: 'right' });
   await page.mouse.move(x - 120, y - 60, { steps: 6 });
-  await page.mouse.up();
+  await page.mouse.up({ button: 'right' });
   // Positive control: the gesture really scrolled the map, so "no dialog" is not vacuous.
   await expect
     .poll(async () => [

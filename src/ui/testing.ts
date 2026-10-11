@@ -2,7 +2,7 @@ import { vi } from 'vitest';
 import { DEFAULT_GAME_OPTIONS, type GameOptions } from '../sim/game';
 import { DiagDir } from '../sim/map/geometry';
 import { Axis } from '../sim/track/track';
-import type { GameSpeed, Locale, Tool, UiSession, UiSnapshot } from './session';
+import type { GameSpeed, Locale, Tool, UiControls, UiSession, UiSnapshot } from './session';
 
 /** A snapshot of a running game with nothing selected, for UI tests. */
 export const BASE_SNAPSHOT: UiSnapshot = {
@@ -17,6 +17,7 @@ export const BASE_SNAPSHOT: UiSnapshot = {
   locale: 'en',
   themeId: 'blocks',
   themes: [{ id: 'blocks', name: 'Blocks' }],
+  controls: { scrollMode: 'mapRmb', wheel: 'zoom', wheelSpeed: 5 },
   generating: null,
   generationError: null,
   gameOptions: DEFAULT_GAME_OPTIONS,
@@ -39,6 +40,7 @@ export function fakeSession(snapshot: Partial<UiSnapshot> = {}): UiSession {
     setSpeed: vi.fn<(speed: GameSpeed) => void>(),
     setLocale: vi.fn<(locale: Locale) => void>(),
     setTheme: vi.fn<(id: string) => void>(),
+    setControls: vi.fn<(controls: UiControls) => void>(),
     newGame: vi.fn<(options: GameOptions) => void>(),
     setTool: vi.fn<(tool: Tool | null) => void>(),
     openTown: vi.fn<(index: number) => void>(),

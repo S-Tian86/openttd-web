@@ -9,6 +9,8 @@ import { loadLocale, saveLocale, translate } from '../ui/i18n/i18n';
 import { isBuildTool } from '../ui/session';
 import '../ui/styles.css';
 import { townLabel } from '../ui/town-label';
+import { loadControls, saveControls } from './controls-storage';
+import { installKeyboard } from './keyboard';
 import { GameSession } from './session';
 import { parseStartParams } from './start-params';
 import { applyTokens, FALLBACK_THEME_ID, loadThemes } from './theme-loader';
@@ -36,6 +38,7 @@ async function start(): Promise<Game | undefined> {
 
   const storage = getStorage();
   const locale = loadLocale(storage, navigator.languages);
+  const controls = loadControls(storage);
   document.documentElement.lang = locale;
 
   let loaded;
@@ -74,6 +77,7 @@ async function start(): Promise<Game | undefined> {
       onTap: (tile) => session.tapTile(tile, false),
       onLongPress: (tile) => session.tapTile(tile, true),
       onBuildGesture: (g) => session.buildGesture(g),
+      onRightClick: () => dropTool(),
     },
     {
       townLabel: (town, small) =>
@@ -84,6 +88,15 @@ async function start(): Promise<Game | undefined> {
         ),
     },
   );
+  scene.setControls(controls);
+  // main_gui.cpp reset_object_to_place: Esc, and here a right click too, drops the tool.
+  const dropTool = (): void => {
+    if (session.getSnapshot().tool !== null) session.setTool(null);
+  };
+  installKeyboard(window, {
+    onEscape: dropTool,
+    onDirKeys: (dirkeys, shift) => scene.setDirKeys(dirkeys, shift),
+  });
   let focus = params.focus;
   const session = new GameSession(placeholder, {
     locale,
@@ -97,6 +110,11 @@ async function start(): Promise<Game | undefined> {
       const theme = themes.find((candidate) => candidate.id === id);
       if (theme !== undefined) applyTokens(theme, baseOf(id));
       scene.restyleLabels();
+    },
+    controls,
+    onControls: (next) => {
+      saveControls(getStorage(), next);
+      scene.setControls(next);
     },
     onNewState: (state) => {
       const tile =

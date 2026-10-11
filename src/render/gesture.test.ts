@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { buildPointerAction, buildPressEnds, classifyPress } from './gesture';
+import { buildPointerAction, buildPressEnds, classifyPress, idlePointerRoles } from './gesture';
 
 const down = { x: 100, y: 100, at: 1000 };
+const action = (button: number, touch: boolean, pointers: number, scroll = 2) =>
+  buildPointerAction({ button, touch, pointers, scrollButton: scroll });
+const roles = (button: number, touch: boolean, scroll = 2) =>
+  idlePointerRoles({ button, touch, scrollButton: scroll });
 
 describe('tap, long press and drag (Review Focus 4)', () => {
   it('is a tap when short and still', () => {
@@ -17,14 +21,35 @@ describe('tap, long press and drag (Review Focus 4)', () => {
 });
 
 describe('pointers while a build tool is on (R30, Review Focus 1)', () => {
-  it('builds with the left button or one finger, pans with other buttons, pinches with two fingers', () => {
+  it('builds with the left button or one finger, pans with the scroll button, pinches with two fingers', () => {
     expect([
-      buildPointerAction({ button: 0, touch: false, pointers: 1 }),
-      buildPointerAction({ button: 2, touch: false, pointers: 1 }),
-      buildPointerAction({ button: 1, touch: false, pointers: 1 }),
-      buildPointerAction({ button: 0, touch: true, pointers: 1 }),
-      buildPointerAction({ button: 0, touch: true, pointers: 2 }),
-    ]).toEqual(['build', 'pan', 'pan', 'build', 'pinch']);
+      action(0, false, 1),
+      action(2, false, 1),
+      action(1, false, 1),
+      action(0, true, 1),
+      action(0, true, 2),
+    ]).toEqual(['build', 'pan', 'none', 'build', 'pinch']);
+  });
+
+  it('still builds with the left button in the LMB scroll mode (HandleViewportClicked comes first)', () => {
+    expect([action(0, false, 1, 0), action(2, false, 1, 0)]).toEqual(['build', 'none']);
+  });
+});
+
+describe('pointers with no build tool on (window.cpp MouseLoop)', () => {
+  it('taps with the left button and pans only with the scroll button', () => {
+    expect(roles(0, false)).toEqual({ tap: true, pan: false });
+    expect(roles(2, false)).toEqual({ tap: false, pan: true });
+    expect(roles(1, false)).toEqual({ tap: false, pan: false });
+  });
+
+  it('taps and pans with the left button in the LMB scroll mode', () => {
+    expect(roles(0, false, 0)).toEqual({ tap: true, pan: true });
+    expect(roles(2, false, 0)).toEqual({ tap: false, pan: false });
+  });
+
+  it('taps and pans with one finger whatever the mouse setting', () => {
+    expect(roles(0, true)).toEqual({ tap: true, pan: true });
   });
 });
 

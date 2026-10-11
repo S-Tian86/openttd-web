@@ -127,22 +127,62 @@ test('a mouse hovering with a build tool shows the ghost (R30)', async ({ page, 
   expect(await lastCommand(page)).toBeNull();
 });
 
-for (const button of ['right', 'middle'] as const) {
-  test(`a ${button}-button drag pans the map with a build tool on (R30)`, async ({
+test('a right-button drag pans the map with a build tool on and keeps the tool (R30)', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'mouse buttons');
+  await openWorld(page, world, SEED, A);
+  const tool = page.getByRole('button', { name: 'Build railway track' });
+  await tool.click();
+  const a = await tileCentre(page, world, A);
+  const before = await camera(page);
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down({ button: 'right' });
+  await page.mouse.move(a.x - 120, a.y - 60, { steps: 6 });
+  await page.mouse.up({ button: 'right' });
+  await expect.poll(() => camera(page)).not.toEqual(before);
+  await expect(page.getByRole('status')).toHaveCount(0); // no cost bar: nothing was planned
+  expect(await lastCommand(page)).toBeNull();
+  await expect(tool).toHaveAttribute('aria-pressed', 'true'); // a drag is not a click
+});
+
+test('a middle-button drag neither builds nor pans with a build tool on', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'mouse buttons');
+  await openWorld(page, world, SEED, A);
+  await page.getByRole('button', { name: 'Build railway track' }).click();
+  const a = await tileCentre(page, world, A);
+  const before = await camera(page);
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down({ button: 'middle' });
+  await page.mouse.move(a.x - 120, a.y - 60, { steps: 6 });
+  await page.mouse.up({ button: 'middle' });
+  await page.mouse.move(a.x, a.y);
+  await expect(page.locator('html')).toHaveAttribute('data-preview', 'ok'); // hover ghost only
+  expect(await camera(page)).toEqual(before);
+  expect(await lastCommand(page)).toBeNull();
+});
+
+for (const [how, drop] of [
+  ['a right click', (page: Page) => page.mouse.click(400, 300, { button: 'right' })],
+  ['Esc', (page: Page) => page.keyboard.press('Escape')],
+] as const) {
+  test(`${how} drops the tool and the drag in progress (reset_object_to_place)`, async ({
     page,
     isMobile,
   }) => {
-    test.skip(isMobile, 'mouse buttons');
+    test.skip(isMobile, 'mouse and keyboard');
     await openWorld(page, world, SEED, A);
-    await page.getByRole('button', { name: 'Build railway track' }).click();
-    const a = await tileCentre(page, world, A);
-    const before = await camera(page);
-    await page.mouse.move(a.x, a.y);
-    await page.mouse.down({ button });
-    await page.mouse.move(a.x - 120, a.y - 60, { steps: 6 });
-    await page.mouse.up({ button });
-    await expect.poll(() => camera(page)).not.toEqual(before);
-    await expect(page.getByRole('status')).toHaveCount(0); // no cost bar: nothing was planned
+    const tool = page.getByRole('button', { name: 'Build railway track' });
+    await tool.click();
+    await page.mouse.move(400, 300);
+    await expect(page.locator('html')).toHaveAttribute('data-preview', 'ok');
+    await drop(page);
+    await expect(tool).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('html')).not.toHaveAttribute('data-preview');
     expect(await lastCommand(page)).toBeNull();
   });
 }
