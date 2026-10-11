@@ -8,6 +8,9 @@ const BASE_PATH = '/openttd-web/';
 export default defineConfig({
   testDir: 'tests/e2e',
   forbidOnly: Boolean(process.env['CI']),
+  // Headless Chrome draws the map in software; the default of half the cores starts enough
+  // browsers to fill a developer machine's memory. CI keeps Playwright's default.
+  ...(process.env['CI'] ? {} : { workers: 4 }),
   reporter: process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: { baseURL: `http://localhost:${PORT}${BASE_PATH}` },
   projects: [
