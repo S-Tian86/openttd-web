@@ -44,3 +44,34 @@ test('the theme dropdown opens inside the screen and a tap outside closes it', a
   // The settings window stays open, like OpenTTD's windows.
   await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible();
 });
+
+test('icon buttons name themselves in a tooltip after hovering (misc_gui.cpp)', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'hover');
+  const tooltip = page.locator('.tooltip');
+  await page.getByRole('button', { name: 'Build railway track' }).hover();
+  await expect(tooltip).toHaveText('Build railway track');
+  const box = (await tooltip.boundingBox())!;
+  const view = page.viewportSize()!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(view.width);
+  await page.mouse.move(view.width / 2, view.height / 2);
+  await expect(tooltip).toHaveCount(0);
+  await page.getByRole('button', { name: 'Settings' }).hover();
+  await expect(tooltip).toHaveText('Settings');
+});
+
+test('a tap on an icon button acts and shows its name for a moment', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'touch');
+  const tool = page.getByRole('button', { name: 'Build railway track' });
+  await tool.tap();
+  await expect(tool).toHaveAttribute('aria-pressed', 'true');
+  const tooltip = page.locator('.tooltip');
+  await expect(tooltip).toHaveText('Build railway track');
+  const box = (await tooltip.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  await expect(tooltip).toHaveCount(0, { timeout: 4000 });
+});

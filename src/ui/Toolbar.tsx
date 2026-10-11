@@ -1,6 +1,7 @@
 import { DiagDir } from '../sim/map/geometry';
 import { Axis } from '../sim/track/track';
 import { translate, type MessageKey } from './i18n/i18n';
+import { IconButton } from './IconButton';
 import type { Tool, UiSession, UiSnapshot } from './session';
 
 const TOOLS: readonly { tool: Tool; label: MessageKey; glyph: string }[] = [
@@ -42,65 +43,56 @@ export function Toolbar({
   return (
     <nav class="toolbar" aria-label={t('toolbar.label')}>
       {TOOLS.map(({ tool: id, label, glyph }) => (
-        <button
+        <IconButton
           key={id}
-          type="button"
-          aria-pressed={tool === id}
-          aria-label={t(label)}
+          label={t(label)}
+          pressed={tool === id}
           onClick={() => session.setTool(tool === id ? null : id)}
         >
           {glyph}
-        </button>
+        </IconButton>
       ))}
       {tool === 'rail' || tool === 'station' ? (
-        <button
-          type="button"
+        <IconButton
           class="toolbar-option"
-          aria-pressed={removeMode}
-          aria-label={t('tool.remove')}
+          label={t('tool.remove')}
+          pressed={removeMode}
           onClick={() => session.setRemoveMode(!removeMode)}
         >
           ⌫
-        </button>
+        </IconButton>
       ) : null}
       {tool === 'station' && !removeMode ? (
         <div class="toolbar-group" role="group" aria-label={t('build.orientation')}>
           {AXES.map(({ axis, label, glyph }) => (
-            <button
+            <IconButton
               key={axis}
-              type="button"
-              aria-pressed={snapshot.stationAxis === axis}
-              aria-label={t(label)}
+              label={t(label)}
+              pressed={snapshot.stationAxis === axis}
               onClick={() => session.setStationAxis(axis)}
             >
               {glyph}
-            </button>
+            </IconButton>
           ))}
         </div>
       ) : null}
       {tool === 'depot' ? (
         <div class="toolbar-group" role="group" aria-label={t('build.orientation')}>
           {DIRS.map(({ dir, label, glyph }) => (
-            <button
+            <IconButton
               key={dir}
-              type="button"
-              aria-pressed={snapshot.depotDir === dir}
-              aria-label={t(label)}
+              label={t(label)}
+              pressed={snapshot.depotDir === dir}
               onClick={() => session.setDepotDir(dir)}
             >
               {glyph}
-            </button>
+            </IconButton>
           ))}
         </div>
       ) : null}
-      <button
-        type="button"
-        class="toolbar-option"
-        aria-label={t('hud.finances')}
-        onClick={onFinances}
-      >
+      <IconButton class="toolbar-option" label={t('hud.finances')} onClick={onFinances}>
         £
-      </button>
+      </IconButton>
     </nav>
   );
 }

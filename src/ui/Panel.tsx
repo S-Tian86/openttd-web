@@ -1,4 +1,5 @@
 import type { ComponentChildren } from 'preact';
+import { IconButton } from './IconButton';
 
 interface PanelProps {
   title: string;
@@ -12,9 +13,9 @@ export function Panel({ title, closeLabel, onClose, children }: PanelProps) {
     <section class="panel" role="dialog" aria-label={title}>
       <header class="panel-header">
         <h2>{title}</h2>
-        <button type="button" aria-label={closeLabel} onClick={onClose}>
+        <IconButton label={closeLabel} onClick={onClose}>
           ✕
-        </button>
+        </IconButton>
       </header>
       <div class="panel-body">{children}</div>
     </section>

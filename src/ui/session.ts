@@ -21,11 +21,18 @@ export type WheelMode = (typeof WHEEL_MODES)[number];
 /** OpenTTD's map scroll wheel speed (gui.scrollwheel_multiplier), 1 to 15. */
 export const WHEEL_SPEEDS: readonly number[] = Array.from({ length: 15 }, (_, i) => i + 1);
 
-/** The map control settings shown in the settings window. */
+/** OpenTTD's tooltip delay (gui.hover_delay_ms): 0 for the right click, or 50 to 6000 ms by 50. */
+export const HOVER_DELAYS: readonly number[] = [
+  0,
+  ...Array.from({ length: 120 }, (_, i) => 50 * (i + 1)),
+];
+
+/** The control settings shown in the settings window. */
 export interface UiControls {
   scrollMode: ScrollMode;
   wheel: WheelMode;
   wheelSpeed: number;
+  hoverDelay: number;
 }
 
 export const isBuildTool = (tool: Tool | null): tool is 'rail' | 'station' | 'depot' | 'demolish' =>

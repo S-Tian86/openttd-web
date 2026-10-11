@@ -121,6 +121,38 @@ body {
   gap: calc(var(--space) / 2);
 }
 
+.stepper {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space) / 2);
+}
+
+.stepper-controls {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--space) / 2);
+}
+
+.stepper-value {
+  flex: 1;
+  text-align: center;
+}
+
+/* A tooltip lives on <body>, above everything, and never takes the pointer. */
+.tooltip {
+  position: fixed;
+  z-index: 10;
+  max-width: min(20rem, calc(100vw - 12px));
+  padding: calc(var(--space) / 2) var(--space);
+  font-family: var(--font);
+  color: var(--color-text);
+  background: var(--color-panel);
+  border: 2px solid var(--color-panel-border);
+  border-radius: var(--radius);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
 .dropdown {
   position: relative;
   display: flex;

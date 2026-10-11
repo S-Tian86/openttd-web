@@ -1,4 +1,5 @@
 import { formatDate, formatMoney, translate, type MessageKey } from './i18n/i18n';
+import { IconButton } from './IconButton';
 import type { GameSpeed, UiSession, UiSnapshot } from './session';
 
 const SPEEDS: readonly { speed: GameSpeed; label: MessageKey; glyph: string }[] = [
@@ -26,41 +27,38 @@ export function StatusBar({ session, snapshot, onNewGame, onSettings }: StatusBa
         {formatMoney(snapshot.locale, snapshot.money)}
       </span>
       <div class="status-controls">
-        <button
-          type="button"
-          aria-pressed={snapshot.paused}
-          aria-label={snapshot.paused ? t('hud.resume') : t('hud.pause')}
+        <IconButton
+          label={snapshot.paused ? t('hud.resume') : t('hud.pause')}
+          pressed={snapshot.paused}
           onClick={() => session.togglePause()}
         >
           {snapshot.paused ? '▶' : '⏸'}
-        </button>
+        </IconButton>
         <div class="speed-group" role="group" aria-label={t('hud.speed')}>
           {SPEEDS.map(({ speed, label, glyph }) => (
-            <button
+            <IconButton
               key={speed}
-              type="button"
-              aria-pressed={snapshot.speed === speed}
-              aria-label={t(label)}
+              label={t(label)}
+              pressed={snapshot.speed === speed}
               onClick={() => session.setSpeed(speed)}
             >
               {glyph}
-            </button>
+            </IconButton>
           ))}
         </div>
-        <button
-          type="button"
-          aria-pressed={snapshot.tool === 'query'}
-          aria-label={t('tool.query')}
+        <IconButton
+          label={t('tool.query')}
+          pressed={snapshot.tool === 'query'}
           onClick={() => session.setTool(snapshot.tool === 'query' ? null : 'query')}
         >
           ?
-        </button>
-        <button type="button" aria-label={t('hud.newGame')} onClick={onNewGame}>
+        </IconButton>
+        <IconButton label={t('hud.newGame')} onClick={onNewGame}>
           ＋
-        </button>
-        <button type="button" aria-label={t('hud.settings')} onClick={onSettings}>
+        </IconButton>
+        <IconButton label={t('hud.settings')} onClick={onSettings}>
           ⚙
-        </button>
+        </IconButton>
       </div>
     </header>
   );
