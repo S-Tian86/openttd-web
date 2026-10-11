@@ -28,7 +28,7 @@ the issue.
 ## Stage 1 — First train · milestone `Stage 1 — First train`
 
 - [x] 1.0 Stage 1 design spec — #20
-- [~] 1.1 Core and shell — branch stage-1/block-1.1 — awaiting playtest
+- [x] 1.1 Core and shell — branch stage-1/block-1.1 — playtested, merged to main
   - [x] 1.1.1 Preview deploys and block workflow — #22
   - [x] 1.1.2 Random generator — #24
   - [x] 1.1.3 Map storage and the tile loop — #26
@@ -44,7 +44,7 @@ the issue.
   - [x] 1.1.13 Close block 1.1 — #48
   - [x] 1.1.15 Let the map edges scroll out from under the HUD — #125
   - [x] 1.1.16 Replace native selects with a themed dropdown — #127
-- [~] 1.2 World — branch stage-1/block-1.2 — awaiting playtest
+- [x] 1.2 World — branch stage-1/block-1.2 — playtested, merged to main
   - [x] 1.2.0 Reference notes and block plan — #51
   - [x] 1.2.1 Map geometry and slopes — #53
   - [x] 1.2.2 TerraGenesis land mask — #55
