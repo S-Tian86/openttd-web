@@ -87,7 +87,7 @@ the issue.
   - [x] 1.3.14 Fix the block 1.3 final review findings — #117
   - [ ] 1.3.B Backlog: minor findings deferred in block 1.3 — #119
   - [x] 1.3.15 Record Stage 1 blocks in the quality log and tracking — #123
-  - [~] 1.3.16 Use OpenTTD's mouse and keyboard controls for the map — #141
+  - [x] 1.3.16 Use OpenTTD's mouse and keyboard controls for the map — #141
   - [ ] 1.3.17 Show the names of icon buttons as themed tooltips — #142
   - [ ] 1.3.18 Audit OpenTTD settings for the features of blocks 1.1 to 1.3 — #143
 - [ ] 1.4 Trains — _(to create)_
