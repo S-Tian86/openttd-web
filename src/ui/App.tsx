@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { BuildBar } from './BuildBar';
 import { ErrorMessage } from './ErrorMessage';
 import { FinancesWindow } from './FinancesWindow';
+import { HoverDelay } from './IconButton';
 import { translate } from './i18n/i18n';
 import { IndustryWindow, industryName } from './IndustryWindow';
 import { NewGame } from './NewGame';
@@ -45,7 +46,7 @@ export function App({ session }: { session: UiSession }) {
       : w.info.name;
   };
   return (
-    <>
+    <HoverDelay.Provider value={snapshot.controls.hoverDelay}>
       <div class="hud">
         <StatusBar
           session={session}
@@ -129,6 +130,6 @@ export function App({ session }: { session: UiSession }) {
           })}
         </div>
       )}
-    </>
+    </HoverDelay.Provider>
   );
 }

@@ -11,6 +11,7 @@ with coal mines and a power station close together, use for example
 The construction toolbar: ╪ railway track, ▤ railway station, ⌂ train depot, ✖ demolish,
 ⌫ remove (with track or station), ↕ ↔ station orientation, ↑ → ↓ ← depot exit, £ finances.
 A tool stays on after building; press its button again to turn it off.
+Hover over any icon button to see its name; on a phone, tapping it shows the name too.
 
 With a mouse, as in OpenTTD (defaults; Settings changes them):
 
@@ -22,7 +23,9 @@ With a mouse, as in OpenTTD (defaults; Settings changes them):
 | Drop the tool          | Esc, or a right click without dragging                      |
 
 Settings has OpenTTD's viewport scroll behaviour (which button moves the map, and whether the
-mouse stays in place), the function of the scroll wheel (zoom, scroll, off) and its speed.
+mouse stays in place), the function of the scroll wheel (zoom, scroll, off) and its speed, and
+how long to hover before a tooltip shows (or "Right click" to show it while holding the right
+button).
 
 With fingers: one finger moves the map, or uses the tool when one is on; two fingers zoom and
 move the map; a long press queries a tile.

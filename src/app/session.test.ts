@@ -20,8 +20,8 @@ import { industryInfo, townInfo } from '../sim/query';
 import { newTown } from '../sim/town/town';
 import { WorldGenerationError } from '../sim/world/errors';
 import { createGame, type GenerationProgress } from '../sim/world/generate';
-import { DEFAULT_MAP_CONTROLS } from '../render/controls';
 import type { Locale, UiControls } from '../ui/session';
+import { DEFAULT_CONTROLS } from './controls-storage';
 import { GameSession, toUiError, type SessionDeps } from './session';
 
 const OPTIONS: GameOptions = { ...DEFAULT_GAME_OPTIONS, mapLogX: 6, mapLogY: 6, seed: 9 };
@@ -32,7 +32,7 @@ const deps = (overrides: Partial<SessionDeps> = {}): SessionDeps => ({
   themeId: 'blocks',
   onLocale: vi.fn<(locale: Locale) => void>(),
   onTheme: vi.fn<(id: string) => void>(),
-  controls: DEFAULT_MAP_CONTROLS,
+  controls: DEFAULT_CONTROLS,
   onControls: vi.fn<(controls: UiControls) => void>(),
   onNewState: vi.fn<(state: GameState) => void>(),
   clock: () => 0,
@@ -60,8 +60,8 @@ describe('GameSession settings', () => {
       createEmptyGame({ mapLogX: 6, mapLogY: 6 }),
       deps({ onControls }),
     );
-    expect(session.getSnapshot().controls).toEqual(DEFAULT_MAP_CONTROLS);
-    const next: UiControls = { scrollMode: 'mapLmb', wheel: 'off', wheelSpeed: 3 };
+    expect(session.getSnapshot().controls).toEqual(DEFAULT_CONTROLS);
+    const next: UiControls = { scrollMode: 'mapLmb', wheel: 'off', wheelSpeed: 3, hoverDelay: 0 };
     session.setControls(next);
     expect(session.getSnapshot().controls).toEqual(next);
     expect(onControls).toHaveBeenCalledWith(next);

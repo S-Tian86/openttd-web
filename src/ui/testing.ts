@@ -17,7 +17,7 @@ export const BASE_SNAPSHOT: UiSnapshot = {
   locale: 'en',
   themeId: 'blocks',
   themes: [{ id: 'blocks', name: 'Blocks' }],
-  controls: { scrollMode: 'mapRmb', wheel: 'zoom', wheelSpeed: 5 },
+  controls: { scrollMode: 'mapRmb', wheel: 'zoom', wheelSpeed: 5, hoverDelay: 250 },
   generating: null,
   generationError: null,
   gameOptions: DEFAULT_GAME_OPTIONS,

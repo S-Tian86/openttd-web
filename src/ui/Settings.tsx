@@ -1,6 +1,8 @@
 import { Dropdown } from './Dropdown';
 import { formatNumber, LOCALES, translate } from './i18n/i18n';
+import { Stepper } from './Stepper';
 import {
+  HOVER_DELAYS,
   SCROLL_MODES,
   WHEEL_MODES,
   WHEEL_SPEEDS,
@@ -51,14 +53,27 @@ export function Settings({ session, snapshot }: SettingsProps) {
         }))}
         onChange={(wheel) => session.setControls({ ...controls, wheel })}
       />
-      <Dropdown
+      <Stepper
         label={translate(locale, 'settings.wheelSpeed')}
         value={controls.wheelSpeed}
-        options={WHEEL_SPEEDS.map((speed) => ({
-          value: speed,
-          label: formatNumber(locale, speed),
-        }))}
+        values={WHEEL_SPEEDS}
+        format={(speed) => formatNumber(locale, speed)}
+        decreaseLabel={translate(locale, 'settings.decrease')}
+        increaseLabel={translate(locale, 'settings.increase')}
         onChange={(wheelSpeed) => session.setControls({ ...controls, wheelSpeed })}
+      />
+      <Stepper
+        label={translate(locale, 'settings.hoverDelay')}
+        value={controls.hoverDelay}
+        values={HOVER_DELAYS}
+        format={(ms) =>
+          ms === 0
+            ? translate(locale, 'settings.hoverDelay.rightClick')
+            : translate(locale, 'settings.hoverDelay.value', { ms: formatNumber(locale, ms) })
+        }
+        decreaseLabel={translate(locale, 'settings.decrease')}
+        increaseLabel={translate(locale, 'settings.increase')}
+        onChange={(hoverDelay) => session.setControls({ ...controls, hoverDelay })}
       />
     </div>
   );
