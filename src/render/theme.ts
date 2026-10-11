@@ -1,12 +1,90 @@
-/** Every logical sprite the game draws in block 1.1. Grows with each block. */
-export const SPRITE_IDS = [
+/** Sprites drawn as 64x64 ground tiles (the tilemap layer). */
+export const GROUND_SPRITE_IDS = [
   'terrain.void',
   'terrain.grass.0',
   'terrain.grass.1',
   'terrain.grass.2',
   'terrain.grass.3',
   'terrain.unknown',
+  'terrain.rough',
+  'terrain.rocks',
+  'water.sea',
+  'water.coast.1',
+  'water.coast.2',
+  'water.coast.3',
+  'water.coast.4',
+  'water.coast.6',
+  'water.coast.7',
+  'water.coast.8',
+  'water.coast.9',
+  'water.coast.11',
+  'water.coast.12',
+  'water.coast.13',
+  'water.coast.14',
+  'road.1',
+  'road.2',
+  'road.3',
+  'road.4',
+  'road.5',
+  'road.6',
+  'road.7',
+  'road.8',
+  'road.9',
+  'road.10',
+  'road.11',
+  'road.12',
+  'road.13',
+  'road.14',
+  'road.15',
+  'ground.house',
+  'ground.industry',
 ] as const;
+
+/** Sprites drawn as tall 64x128 objects on the blitter layer; the tile footprint is the bottom 64 px. */
+export const OBJECT_SPRITE_IDS = [
+  'tree.small',
+  'tree.medium',
+  'tree.large',
+  'tree.dying',
+  'tree.dead',
+  'house.construction.0',
+  'house.construction.1',
+  'house.construction.2',
+  'house.church',
+  'house.town-houses',
+  'house.statue',
+  'house.fountain',
+  'house.park',
+  'house.shops-offices',
+  'house.stadium.0',
+  'house.stadium.1',
+  'house.stadium.2',
+  'house.stadium.3',
+  'house.old-houses',
+  'house.cottages',
+  'house.houses',
+  'house.flats',
+  'house.theatre',
+  'house.cinema',
+  'industry.gfx.0',
+  'industry.gfx.1',
+  'industry.gfx.2',
+  'industry.gfx.3',
+  'industry.gfx.4',
+  'industry.gfx.5',
+  'industry.gfx.6',
+  'industry.gfx.7',
+  'industry.gfx.8',
+  'industry.gfx.9',
+  'industry.gfx.10',
+  'object.unknown',
+] as const;
+
+/** Height in pixels of an object sprite. */
+export const OBJECT_PX_HEIGHT = 128;
+
+/** Every logical sprite the game draws. Grows with each block. */
+export const SPRITE_IDS = [...GROUND_SPRITE_IDS, ...OBJECT_SPRITE_IDS] as const;
 export type SpriteId = (typeof SPRITE_IDS)[number];
 
 export const THEMES_INDEX_PATH = 'themes/index.json';

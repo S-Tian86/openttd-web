@@ -90,4 +90,13 @@ describe('ui/ and render/ boundaries', () => {
     expect(output).toContain("'../../src/ui/session' import is restricted");
     expect(output).not.toContain("'../../src/sim/game' import is restricted");
   });
+
+  it('allows a sibling ./App import inside ui/ (patterns are case-sensitive)', () => {
+    const output = lintTemporaryFile(
+      `src/ui/boundary-probe-${process.pid}.ts`,
+      "import { App } from './App';\nimport { x } from '../app/x';\nexport const leaks = [App, x];\n",
+    );
+    expect(output).not.toContain("'./App' import is restricted");
+    expect(output).toContain("'../app/x' import is restricted");
+  });
 });

@@ -28,7 +28,7 @@ the issue.
 ## Stage 1 — First train · milestone `Stage 1 — First train`
 
 - [x] 1.0 Stage 1 design spec — #20
-- [~] 1.1 Core and shell — branch stage-1/block-1.1 — awaiting playtest
+- [x] 1.1 Core and shell — branch stage-1/block-1.1 — playtested, merged to main
   - [x] 1.1.1 Preview deploys and block workflow — #22
   - [x] 1.1.2 Random generator — #24
   - [x] 1.1.3 Map storage and the tile loop — #26
@@ -44,7 +44,24 @@ the issue.
   - [x] 1.1.13 Close block 1.1 — #48
   - [x] 1.1.15 Let the map edges scroll out from under the HUD — #125
   - [x] 1.1.16 Replace native selects with a themed dropdown — #127
-- [ ] 1.2 World — _(to create)_
+- [x] 1.2 World — branch stage-1/block-1.2 — playtested, merged to main
+  - [x] 1.2.0 Reference notes and block plan — #51
+  - [x] 1.2.1 Map geometry and slopes — #53
+  - [x] 1.2.2 TerraGenesis land mask — #55
+  - [x] 1.2.3 Sea, shore and the water tile loop — #57
+  - [x] 1.2.4 World generation pipeline — #59
+  - [x] 1.2.5 Trees — #61
+  - [x] 1.2.6 Town roads, towns and zones — #63
+  - [x] 1.2.7 Houses — #65
+  - [x] 1.2.8 Town growth walk — #67
+  - [x] 1.2.9 Town names and town generation — #69
+  - [x] 1.2.10 Coal mines and power stations — #71
+  - [x] 1.2.11 Drawing the world — #73
+  - [x] 1.2.12 New-game window and background generation — #75
+  - [x] 1.2.13 Query tool, town and industry windows — #77
+  - [x] 1.2.14 Close block 1.2 — #84
+  - [x] 1.2.18 Draw town names at a constant screen size — #133
+  - [x] 1.2.19 Match the OpenTTD zoom range and reset it on a new game — #135
 - [ ] 1.3 Construction — _(to create)_
 - [ ] 1.4 Trains — _(to create)_
 - [ ] 1.5 Cargo and economy — _(to create)_

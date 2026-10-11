@@ -11,10 +11,11 @@ const SPEEDS: readonly { speed: GameSpeed; label: MessageKey; glyph: string }[] 
 interface StatusBarProps {
   session: UiSession;
   snapshot: UiSnapshot;
+  onNewGame: () => void;
   onSettings: () => void;
 }
 
-export function StatusBar({ session, snapshot, onSettings }: StatusBarProps) {
+export function StatusBar({ session, snapshot, onNewGame, onSettings }: StatusBarProps) {
   const t = (key: MessageKey): string => translate(snapshot.locale, key);
   return (
     <header class="status-bar">
@@ -46,6 +47,17 @@ export function StatusBar({ session, snapshot, onSettings }: StatusBarProps) {
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          aria-pressed={snapshot.tool === 'query'}
+          aria-label={t('tool.query')}
+          onClick={() => session.setTool(snapshot.tool === 'query' ? null : 'query')}
+        >
+          ?
+        </button>
+        <button type="button" aria-label={t('hud.newGame')} onClick={onNewGame}>
+          ＋
+        </button>
         <button type="button" aria-label={t('hud.settings')} onClick={onSettings}>
           ⚙
         </button>
