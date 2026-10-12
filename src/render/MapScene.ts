@@ -208,8 +208,10 @@ export class MapScene extends Scene {
     ghost.clear();
     if (this.preview === null) return;
     const { colour, lines, rects } = previewShapes(this.state.map, this.preview);
-    ghost.lineStyle(12, colour, 0.8);
-    for (const { x1, y1, x2, y2 } of lines) ghost.lineBetween(x1, y1, x2, y2);
+    for (const line of lines) {
+      ghost.lineStyle(12, line.colour, 0.8);
+      ghost.lineBetween(line.x1, line.y1, line.x2, line.y2);
+    }
     ghost.fillStyle(colour, 0.35);
     for (const { x, y, w, h } of rects) ghost.fillRect(x, y, w, h);
   }

@@ -4,7 +4,12 @@ import type { GameState } from '../game';
 import { clearArea, landscapeClear } from '../map/clear-tile';
 import { COMPANY_FIRST } from '../map/map';
 import { isValidTile, type DiagDir } from '../map/geometry';
-import { cmdBuildSingleRail, cmdRailTrackHelper, cmdRemoveSingleRail } from '../track/rail-cmd';
+import {
+  cmdBuildSingleRail,
+  cmdRailTrackHelper,
+  cmdRemoveSingleRail,
+  railTrackHelper,
+} from '../track/rail-cmd';
 import { cmdBuildRailStation } from '../station/build-station';
 import { removeFromRailStation } from '../station/remove-station';
 import { cmdBuildTrainDepot } from '../track/depot';
@@ -163,6 +168,24 @@ function run(state: GameState, command: Command, flags: number): CommandCost {
       return unreachable;
     }
   }
+}
+
+/**
+ * Which pieces of a rail drag (railDragPieces order) its test run leaves as the command wants
+ * them, for the ghost: a drag stops at its first obstacle after a built piece (R31).
+ */
+export function testRailDrag(
+  state: GameState,
+  command: Extract<Command, { type: 'buildRailroadTrack' | 'removeRailroadTrack' }>,
+): boolean[] {
+  return railTrackHelper(
+    state,
+    COMMAND_FLAGS[command.type],
+    command.startTile,
+    command.endTile,
+    command.track,
+    command.type === 'removeRailroadTrack',
+  ).done;
 }
 
 /**

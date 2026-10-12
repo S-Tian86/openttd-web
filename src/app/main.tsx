@@ -128,10 +128,11 @@ async function start(): Promise<Game | undefined> {
     },
     onPreview: (preview) => {
       scene.showPreview(preview);
-      // e2e signal: the colour of the ghost on the map, if any.
+      // e2e signal: the colour of the ghost on the map, if any ('partial': red past an obstacle).
       const html = document.documentElement;
       if (preview === null) delete html.dataset['preview'];
-      else html.dataset['preview'] = preview.ok ? 'ok' : 'bad';
+      else if (!preview.ok) html.dataset['preview'] = 'bad';
+      else html.dataset['preview'] = preview.rails.every((r) => r.ok) ? 'ok' : 'partial';
     },
     onExecuted: (command, cost) => {
       // e2e signal: the exact command a gesture posted, and what it cost.

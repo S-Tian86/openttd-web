@@ -239,6 +239,22 @@ describe('GameSession construction (R20, R25, R31)', () => {
     expect(onExecuted).toHaveBeenCalledWith(DRAG, 450);
   });
 
+  it('marks the ghost pieces past an obstacle, which the drag will not build (R31)', () => {
+    const onPreview = vi.fn<(p: MapPreview | null) => void>();
+    const session = builder({ onPreview });
+    makeHouseTile(session.state.map, tileXY(session.state.map, 12, 10), 0, 0, 3, 0x06, 0);
+    session.setTool('rail');
+    session.buildGesture(gesture('move', P(10, 10), P(14, 10)));
+    expect(session.getSnapshot().preview).toMatchObject({ ok: true, cost: 180 });
+    expect(onPreview.mock.lastCall?.[0]?.rails.map((r) => r.ok)).toEqual([
+      true,
+      true,
+      false,
+      false,
+      false,
+    ]);
+  });
+
   it('keeps a finger drag as a preview until Confirm, then builds exactly that (Review Focus 1)', () => {
     const onExecuted = vi.fn<(c: Command, cost: number) => void>();
     const session = builder({ onExecuted });

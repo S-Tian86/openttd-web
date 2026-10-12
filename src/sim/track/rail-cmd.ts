@@ -300,35 +300,51 @@ export function railDragPieces(
   }
 }
 
-/** Port of rail_cmd.cpp:CmdRailTrackHelper (build and remove; no signals, no fail_on_obstacle). */
-export function cmdRailTrackHelper(
+/**
+ * Port of rail_cmd.cpp:CmdRailTrackHelper (build and remove; no signals, no fail_on_obstacle).
+ * `done` also tells, per piece of railDragPieces, whether it ends up as the command wants it:
+ * built or already there (removed, for a removal). The ghost colours the drag by it.
+ */
+export function railTrackHelper(
   state: GameState,
   flags: number,
   startTile: number,
   endTile: number,
   track: Track,
   remove: boolean,
-): CommandCost {
+): { cost: CommandCost; done: boolean[] } {
   const pieces = railDragPieces(state.map, startTile, endTile, track);
-  if (pieces === null) return CMD_ERROR;
+  if (pieces === null) return { cost: CMD_ERROR, done: [] };
+  const done = pieces.map(() => false);
   let hadSuccess = false;
   let lastError: CommandCost = CMD_ERROR;
   let total = succeed(0);
-  for (const piece of pieces) {
+  for (const [i, piece] of pieces.entries()) {
     const ret = remove
       ? cmdRemoveSingleRail(state, flags, piece.tile, piece.track, COMPANY_FIRST)
       : cmdBuildSingleRail(state, flags, piece.tile, piece.track);
     if (!remove && errorKey(lastError) === 'error.alreadyBuilt') hadSuccess = true;
     if (!ret.ok) {
       lastError = ret;
+      done[i] = !remove && errorKey(ret) === 'error.alreadyBuilt';
       if (errorKey(lastError) !== 'error.alreadyBuilt' && !remove && hadSuccess) break;
     } else {
       hadSuccess = true;
+      done[i] = true;
       total = addCost(total, ret);
     }
   }
-  return hadSuccess ? total : lastError;
+  return { cost: hadSuccess ? total : lastError, done };
 }
+
+export const cmdRailTrackHelper = (
+  state: GameState,
+  flags: number,
+  startTile: number,
+  endTile: number,
+  track: Track,
+  remove: boolean,
+): CommandCost => railTrackHelper(state, flags, startTile, endTile, track, remove).cost;
 
 /** Port of rail_cmd.cpp:ClearTile_Track. */
 export function clearTileTrack(

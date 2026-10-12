@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { execute } from '../command/command';
+import { execute, testRailDrag } from '../command/command';
 import { DoFlag } from '../command/cost';
 import { createEmptyGame, hashGameState, type GameState } from '../game';
 import { ClearGround, getClearDensity, makeClear } from '../map/clear';
@@ -110,6 +110,38 @@ describe('CmdBuildSingleRail / CmdRemoveSingleRail (port of rail_cmd.cpp)', () =
       ok: false,
       error: { key: 'error.flatLandRequired', params: {} },
     });
+  });
+
+  it('tells which pieces of a drag a house leaves unbuilt (CmdRailTrackHelper, the ghost)', () => {
+    const g = newGame();
+    g.towns.push(newTown(0, at(g, 20, 20), 0, false));
+    makeHouseTile(g.map, at(g, 12, 10), 0, 0, 3, 0x06, 0);
+    makeHouseTile(g.map, at(g, 10, 12), 0, 0, 3, 0x06, 0);
+    // Stops at the first obstacle after a piece is built; skips obstacles before it.
+    expect(testRailDrag(g, { type: 'buildRailroadTrack', ...line(g, 10) })).toEqual([
+      true,
+      true,
+      false,
+      false,
+      false,
+    ]);
+    expect(testRailDrag(g, { type: 'buildRailroadTrack', ...line(g, 12) })).toEqual([
+      false,
+      true,
+      true,
+      true,
+      true,
+    ]);
+    execute(g, { type: 'buildRailroadTrack', ...line(g, 14) }, 'exec');
+    const before = hashGameState(g);
+    expect(testRailDrag(g, { type: 'removeRailroadTrack', ...line(g, 14) })).toEqual([
+      true,
+      true,
+      true,
+      true,
+      true,
+    ]);
+    expect(hashGameState(g)).toBe(before);
   });
 
   it('leaves the game untouched in test mode for removals and drags', () => {

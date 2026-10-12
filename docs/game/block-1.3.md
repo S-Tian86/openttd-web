@@ -32,7 +32,12 @@ move the map; a long press queries a tile.
 
 ## What is new
 
-- Rail track with the autorail drag: drag diagonally and the track follows as a staircase.
+- Rail track with OpenTTD's autorail: a drag lays one straight line, along a tile row or
+  diagonally (a zigzag of corner pieces). To turn, start a new drag where the line ends. A
+  click without dragging lays one piece chosen by where you click: near a corner of the tile
+  it is a corner piece, the curve that joins a straight line to a diagonal or turns it.
+- A drag that hits an obstacle builds up to it, as in OpenTTD; the ghost shows the part past
+  the obstacle in red.
 - Rail stations (build, extend, join, rename by OpenTTD's rules) and train depots.
 - Level crossings where track meets a town road.
 - The bulldozer, for single tiles and for areas: natural ground, trees, houses, rail,
@@ -46,8 +51,10 @@ move the map; a long press queries a tile.
 
 ## What to try on the phone
 
-- [ ] Build a line from a coal mine towards a power station. Drag diagonally and watch the
-      staircase.
+- [ ] Build a line from a coal mine towards a power station: a straight drag, a diagonal drag,
+      and a corner piece to turn between them.
+- [ ] Drag a line across a house or an industry: the ghost turns red past it, and only the
+      green part is built.
 - [ ] Build a station of 1×5 and extend it.
 - [ ] Build a depot facing the track and see the extra pieces it adds.
 - [ ] Cross a town road with track, then bulldoze the crossing: only the rail goes.
