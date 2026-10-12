@@ -1,6 +1,6 @@
 import type { BuildGesture } from '../render/gesture';
 import type { MapPreview } from '../render/preview';
-import { commandTile, execute, type Command } from '../sim/command/command';
+import { commandTile, execute, testRailDrag, type Command } from '../sim/command/command';
 import type { CommandError } from '../sim/command/cost';
 import { checkCompanyHasMoney } from '../sim/economy/company';
 import { tick, type GameOptions, type GameState } from '../sim/game';
@@ -184,7 +184,13 @@ export class GameSession implements UiSession {
     const test = execute(this.state, plan.command, 'test');
     // `clearArea` is NO_TEST, so `execute` does not check the cash for it: checked here (R31).
     const ok = test.ok && checkCompanyHasMoney(this.state.company, test.cost);
-    const ghost: MapPreview = { ok, rails: plan.rails, tiles: plan.tiles };
+    const c = plan.command;
+    const done =
+      c.type === 'buildRailroadTrack' || c.type === 'removeRailroadTrack'
+        ? testRailDrag(this.state, c)
+        : null;
+    const rails = plan.rails.map((rail, i) => ({ ...rail, ok: done?.[i] ?? true }));
+    const ghost: MapPreview = { ok, rails, tiles: plan.tiles };
     this.deps.onPreview?.(ghost);
     if (g.phase === 'hover') return;
     const preview: UiPreview = {

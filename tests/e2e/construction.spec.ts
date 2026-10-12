@@ -18,6 +18,18 @@ function findRun(map: MapState, length: number): number {
   }
   return -1;
 }
+/** Two flat clear tiles along X, then a house or an industry (or -1): a drag's obstacle. */
+function findBlockedRun(map: MapState): number {
+  const blocks: TileType[] = [TileType.House, TileType.Industry];
+  for (let y = 6; y < map.sizeY - 6; y++) {
+    for (let x = 6; x < map.sizeX - 10; x++) {
+      const [a, b, c] = [0, 1, 2].map((i) => tileXY(map, x + i, y)) as [number, number, number];
+      const clear = (t: number) => getTileType(map, t) === TileType.Clear && isTileFlat(map, t);
+      if (clear(a) && clear(b) && blocks.includes(getTileType(map, c))) return a;
+    }
+  }
+  return -1;
+}
 const gbp = (n: number): string =>
   new Intl.NumberFormat('en-GB', {
     style: 'currency',
@@ -77,6 +89,33 @@ test('a rail drag builds the piece OpenTTD would and charges for it (Review Focu
   const cost = Number(await page.locator('html').getAttribute('data-last-cost'));
   expect(cost).toBeGreaterThanOrEqual(5 * 75);
   await expect(page.getByLabel('Money')).toHaveText(gbp(100000 - cost));
+});
+
+test('a rail drag into a house shows the pieces past it in red, then builds up to it', async ({
+  page,
+  isMobile,
+}) => {
+  const start = findBlockedRun(world.map);
+  expect(start).toBeGreaterThanOrEqual(0);
+  const end = start + 4;
+  await openWorld(page, world, SEED, start);
+  await page.getByRole('button', { name: 'Build railway track' }).click();
+  const a = await tileCentre(page, world, start);
+  const b = await tileCentre(page, world, end);
+  if (isMobile) {
+    await touchDrag(page, a, b);
+  } else {
+    await page.mouse.move(a.x, a.y);
+    await page.mouse.down();
+    await page.mouse.move(b.x, b.y, { steps: 8 });
+  }
+  await expect(page.locator('html')).toHaveAttribute('data-preview', 'partial');
+  if (isMobile) await page.getByRole('button', { name: 'Build', exact: true }).tap();
+  else await page.mouse.up();
+  await expect
+    .poll(() => lastCommand(page))
+    .toEqual({ type: 'buildRailroadTrack', endTile: end, startTile: start, track: 0 });
+  expect(Number(await page.locator('html').getAttribute('data-last-cost'))).toBe(2 * 90);
 });
 
 test('a station drag builds one platform along X', async ({ page, isMobile }) => {

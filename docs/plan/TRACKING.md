@@ -90,6 +90,7 @@ the issue.
   - [x] 1.3.16 Use OpenTTD's mouse and keyboard controls for the map — #141
   - [x] 1.3.17 Show the names of icon buttons as themed tooltips — #142
   - [ ] 1.3.18 Audit OpenTTD settings for the features of blocks 1.1 to 1.3 — #143
+  - [x] 1.3.19 Show in the rail ghost where a drag will stop — #146
 - [ ] 1.4 Trains — _(to create)_
 - [ ] 1.5 Cargo and economy — _(to create)_
 - [ ] 1.6 Art and release — _(to create)_
