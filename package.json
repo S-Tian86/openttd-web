@@ -29,7 +29,7 @@
     "@playwright/test": "^1.64.0",
     "@testing-library/preact": "^3.2.4",
     "@types/node": "^22.20.5",
-    "happy-dom": "^20.14.6",
+    "happy-dom": "^21.0.4",
     "husky": "^9.1.7",
     "oxlint": "^1.87.0",
     "prettier": "^3.9.9",
